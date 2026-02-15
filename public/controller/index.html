@@ -117,6 +117,52 @@
         </div>
     </div>
 
+    <!-- Dalgona : Rythme -->
+    <div id="screen-dalgona" class="screen">
+        <div class="status-bar">
+            <span class="game-title">Dalgona</span>
+            <span id="dalgona-score" class="game-title">0/12</span>
+        </div>
+        <div id="control-dalgona" class="control-zone">
+            <div class="dalgona-info">
+                <div id="dalgona-cracks" class="dalgona-cracks"></div>
+                <p class="tap-hint" id="dalgona-hint">Tape en rythme avec le beat !</p>
+            </div>
+            <div class="tap-area" id="dalgona-tap-area">
+                <div class="tap-feedback" id="dalgona-feedback"></div>
+                <p class="beat-indicator" id="beat-indicator">🔵</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Billes : Pair/Impair -->
+    <div id="screen-marbles" class="screen">
+        <div class="status-bar">
+            <span class="game-title">Billes</span>
+            <span id="marbles-opponent" class="game-title"></span>
+        </div>
+        <div class="bridge-choice">
+            <p class="bridge-prompt">Pair ou Impair ?</p>
+            <p class="bridge-timer" id="marbles-timer">8s</p>
+            <div class="bridge-buttons">
+                <button class="btn-choice left" id="btn-pair">Pair</button>
+                <button class="btn-choice right" id="btn-impair">Impair</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Billes : Attente résultat -->
+    <div id="screen-marbles-wait" class="screen">
+        <div class="status-bar">
+            <span class="game-title">Billes</span>
+            <span class="status-dot live"></span>
+        </div>
+        <div class="waiting">
+            <div class="spinner"></div>
+            <p id="marbles-wait-text">En attente...</p>
+        </div>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="controller.js"></script>
 </body>

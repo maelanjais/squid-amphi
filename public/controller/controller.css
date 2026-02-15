@@ -539,3 +539,28 @@ body {
     color: var(--text-tertiary);
     margin-top: 4px;
 }
+
+/* ── Dalgona ─────────────────────────────────── */
+
+.dalgona-info {
+    text-align: center;
+    padding: 24px 16px 0;
+}
+
+.dalgona-cracks {
+    font-size: 24px;
+    letter-spacing: 8px;
+    margin-bottom: 8px;
+}
+
+.beat-indicator {
+    font-size: 64px;
+    line-height: 1;
+    text-align: center;
+    transition: transform 0.15s ease;
+    pointer-events: none;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}

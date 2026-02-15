@@ -16,7 +16,10 @@ const screens = {
     countdown: document.getElementById('screen-countdown'),
     bridge: document.getElementById('screen-bridge'),
     bridgeWait: document.getElementById('screen-bridge-wait'),
-    groups: document.getElementById('screen-groups')
+    groups: document.getElementById('screen-groups'),
+    dalgona: document.getElementById('screen-dalgona'),
+    marbles: document.getElementById('screen-marbles'),
+    marblesWait: document.getElementById('screen-marbles-wait')
 };
 
 const elements = {
@@ -42,7 +45,20 @@ const elements = {
     // Groups
     targetSize: document.getElementById('target-size'),
     groupsButtons: document.getElementById('groups-buttons'),
-    groupsTimer: document.getElementById('groups-timer')
+    groupsTimer: document.getElementById('groups-timer'),
+    // Dalgona
+    dalgonaScore: document.getElementById('dalgona-score'),
+    dalgonaCracks: document.getElementById('dalgona-cracks'),
+    dalgonaHint: document.getElementById('dalgona-hint'),
+    dalgonaTapArea: document.getElementById('dalgona-tap-area'),
+    dalgonaFeedback: document.getElementById('dalgona-feedback'),
+    beatIndicator: document.getElementById('beat-indicator'),
+    // Marbles
+    marblesOpponent: document.getElementById('marbles-opponent'),
+    marblesTimer: document.getElementById('marbles-timer'),
+    btnPair: document.getElementById('btn-pair'),
+    btnImpair: document.getElementById('btn-impair'),
+    marblesWaitText: document.getElementById('marbles-wait-text')
 };
 
 // ─── État local ──────────────────────────────────────────────
@@ -127,7 +143,9 @@ socket.on('player:state', (data) => {
     // Déterminer le type de jeu en cours
     if (data.currentGame) {
         if (data.currentGame.includes('Soleil')) currentGameType = 'redlight';
+        else if (data.currentGame.includes('Dalgona')) currentGameType = 'dalgona';
         else if (data.currentGame.includes('Corde')) currentGameType = 'tugofwar';
+        else if (data.currentGame.includes('Billes')) currentGameType = 'marbles';
         else if (data.currentGame.includes('Pont')) currentGameType = 'bridge';
         else if (data.currentGame.includes('Manège')) currentGameType = 'groups';
         else if (data.currentGame.includes('Duel')) currentGameType = 'duel';
@@ -144,7 +162,10 @@ socket.on('player:state', (data) => {
         const onGameScreen = screens.game.classList.contains('active')
             || screens.bridge.classList.contains('active')
             || screens.bridgeWait.classList.contains('active')
-            || screens.groups.classList.contains('active');
+            || screens.groups.classList.contains('active')
+            || screens.dalgona.classList.contains('active')
+            || screens.marbles.classList.contains('active')
+            || screens.marblesWait.classList.contains('active');
         const isEliminated = screens.eliminated.classList.contains('active');
 
         if (!onGameScreen && !isEliminated) {
@@ -152,6 +173,11 @@ socket.on('player:state', (data) => {
                 showScreen('bridgeWait');
             } else if (currentGameType === 'groups') {
                 // Groups screen shown by groupTarget event
+            } else if (currentGameType === 'dalgona') {
+                elements.dalgonaScore.textContent = '0/12';
+                showScreen('dalgona');
+            } else if (currentGameType === 'marbles') {
+                showScreen('marblesWait');
             } else {
                 elements.gameName.textContent = data.currentGame || 'Mini-jeu';
                 showScreen('game');
@@ -375,4 +401,93 @@ document.addEventListener('gesturestart', (e) => e.preventDefault());
 // Reset de la partie
 socket.on('game:reset', () => {
     window.location.reload();
+});
+
+// ─── Dalgona ─────────────────────────────────────────────────
+
+// Tap sur le dalgona
+if (elements.dalgonaTapArea) {
+    elements.dalgonaTapArea.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        socket.emit('player:input', { type: 'tap' });
+    });
+    elements.dalgonaTapArea.addEventListener('mousedown', (e) => {
+        socket.emit('player:input', { type: 'tap' });
+    });
+}
+
+// Beat visuel
+socket.on('game:beat', (data) => {
+    if (elements.beatIndicator) {
+        elements.beatIndicator.textContent = '🔴';
+        elements.beatIndicator.style.transform = 'scale(1.5)';
+        setTimeout(() => {
+            elements.beatIndicator.textContent = '🔵';
+            elements.beatIndicator.style.transform = 'scale(1)';
+        }, 300);
+    }
+    if (navigator.vibrate) navigator.vibrate(50);
+});
+
+// Feedback Dalgona
+socket.on('game:dalgonaFeedback', (data) => {
+    if (data.result === 'good') {
+        elements.dalgonaScore.textContent = `${data.score}/${data.target}`;
+        elements.dalgonaHint.textContent = 'Bien !';
+        elements.dalgonaHint.style.color = '#00FF85';
+    } else {
+        elements.dalgonaHint.textContent = `Fissure ! (${data.cracks}/${data.maxCracks})`;
+        elements.dalgonaHint.style.color = '#FF3B30';
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    }
+    setTimeout(() => {
+        elements.dalgonaHint.textContent = 'Tape en rythme !';
+        elements.dalgonaHint.style.color = '';
+    }, 600);
+});
+
+// ─── Billes ──────────────────────────────────────────────────
+
+socket.on('game:marblesChoose', (data) => {
+    elements.marblesOpponent.textContent = `vs ${data.opponent}`;
+    elements.marblesTimer.textContent = data.timeLimit + 's';
+    showScreen('marbles');
+
+    let time = data.timeLimit;
+    const interval = setInterval(() => {
+        time--;
+        if (time > 0) {
+            elements.marblesTimer.textContent = time + 's';
+        } else {
+            clearInterval(interval);
+        }
+    }, 1000);
+});
+
+if (elements.btnPair) {
+    elements.btnPair.addEventListener('click', () => {
+        socket.emit('player:input', { type: 'chooseParity', choice: 'pair' });
+    });
+}
+
+if (elements.btnImpair) {
+    elements.btnImpair.addEventListener('click', () => {
+        socket.emit('player:input', { type: 'chooseParity', choice: 'impair' });
+    });
+}
+
+socket.on('game:marblesChosen', (data) => {
+    showScreen('marblesWait');
+    elements.marblesWaitText.textContent = `Tu as choisi : ${data.choice}`;
+});
+
+socket.on('game:marblesResult', (data) => {
+    elements.marblesWaitText.textContent = `Nombre tiré : ${data.drawnNumber} (${data.correct})`;
+});
+
+socket.on('game:marblesMatch', (data) => {
+    if (!screens.marbles.classList.contains('active') && !screens.marblesWait.classList.contains('active')) {
+        elements.marblesWaitText.textContent = `${data.playerA.name} vs ${data.playerB.name}`;
+        showScreen('marblesWait');
+    }
 });

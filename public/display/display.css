@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════
-   SQUID AMPHI — Écran Géant (Projecteur)
+   SQUID AMPHI — Écran Géant (Projecteur / Amphi)
    Squid Game × Apple · Ultra minimal dark mode
+   Optimisé pour la visibilité à 50+ joueurs
    ═══════════════════════════════════════════════════ */
 
 *,
@@ -17,6 +18,7 @@
     --vert: #00FF85;
     --vert-soft: rgba(0, 255, 133, 0.10);
     --rouge: #FF3B30;
+    --orange: #FF9500;
 
     --bg: #000000;
     --surface: rgba(255, 255, 255, 0.04);
@@ -89,21 +91,21 @@ body {
 }
 
 .pill {
-    padding: 4px 16px;
+    padding: 5px 18px;
     background: var(--rose);
     border-radius: var(--radius-pill);
     font-weight: 600;
-    font-size: 11px;
+    font-size: 13px;
     letter-spacing: 2px;
     text-transform: uppercase;
     color: #fff;
 }
 
 .game-name {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 500;
     color: var(--text-secondary);
-    margin-left: 14px;
+    margin-left: 16px;
 }
 
 #player-count {
@@ -113,7 +115,7 @@ body {
 }
 
 #alive-count {
-    font-size: 40px;
+    font-size: 48px;
     font-weight: 700;
     color: var(--vert);
     font-variant-numeric: tabular-nums;
@@ -121,14 +123,14 @@ body {
 }
 
 .count-sep {
-    font-size: 20px;
+    font-size: 22px;
     color: var(--text-tertiary);
     font-weight: 300;
     margin: 0 2px;
 }
 
 #total-count {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 500;
     color: var(--text-tertiary);
     font-variant-numeric: tabular-nums;
@@ -143,9 +145,9 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 15;
-    background: rgba(0, 0, 0, 0.50);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .overlay.active {
@@ -158,8 +160,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 24px;
-    margin-bottom: 32px;
+    gap: 28px;
+    margin-bottom: 28px;
 }
 
 .shapes-row.small {
@@ -168,13 +170,13 @@ body {
 }
 
 .shape {
-    border: 2px solid var(--rose);
-    opacity: 0.7;
+    border: 2.5px solid var(--rose);
+    opacity: 0.6;
 }
 
 .shape.circle {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
 }
 
@@ -187,12 +189,11 @@ body {
     width: 0;
     height: 0;
     border: none;
-    border-left: 20px solid transparent;
-    border-right: 20px solid transparent;
-    border-bottom: 36px solid transparent;
+    border-left: 22px solid transparent;
+    border-right: 22px solid transparent;
+    border-bottom: 40px solid transparent;
     border-bottom-color: var(--rose);
-    opacity: 0.7;
-    position: relative;
+    opacity: 0.6;
 }
 
 .shapes-row.small .shape.triangle {
@@ -202,9 +203,9 @@ body {
 }
 
 .shape.square {
-    width: 36px;
-    height: 36px;
-    border-radius: 2px;
+    width: 40px;
+    height: 40px;
+    border-radius: 3px;
 }
 
 .shapes-row.small .shape.square {
@@ -212,7 +213,36 @@ body {
     height: 22px;
 }
 
-/* ── Lobby ────────────────────────────────────── */
+/* ── Lobby Layout ────────────────────────────── */
+
+.lobby-layout {
+    display: flex;
+    align-items: center;
+    gap: 80px;
+}
+
+.doll-container {
+    flex-shrink: 0;
+}
+
+.doll-svg {
+    width: 220px;
+    height: auto;
+    filter: drop-shadow(0 8px 40px rgba(255, 0, 127, 0.15));
+    animation: dollFloat 4s ease-in-out infinite;
+}
+
+@keyframes dollFloat {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-12px);
+    }
+}
 
 .lobby-card {
     display: flex;
@@ -229,23 +259,36 @@ body {
     line-height: 0.95;
     text-transform: uppercase;
     color: var(--text-primary);
-    margin-bottom: 40px;
+    margin-bottom: 36px;
 }
 
 .join-label {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 400;
     color: var(--text-tertiary);
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     text-transform: uppercase;
+    margin-bottom: 16px;
+}
+
+/* ── QR Code ─────────────────────────────────── */
+
+.qr-box {
+    padding: 16px;
+    background: #ffffff;
+    border-radius: var(--radius);
     margin-bottom: 12px;
 }
 
+.qr-box canvas {
+    display: block;
+}
+
 .url-box {
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 600;
-    color: var(--text-primary);
-    padding: 14px 36px;
+    color: var(--text-secondary);
+    padding: 10px 28px;
     background: var(--surface);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius);
@@ -261,14 +304,14 @@ body {
 }
 
 .meta-count {
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 700;
     color: var(--rose);
     font-variant-numeric: tabular-nums;
 }
 
 .meta-label {
-    font-size: 15px;
+    font-size: 16px;
     color: var(--text-tertiary);
     font-weight: 400;
 }
@@ -276,17 +319,17 @@ body {
 .lobby-actions {
     display: flex;
     gap: 12px;
-    margin-top: 32px;
+    margin-top: 28px;
 }
 
 /* ── Buttons ─────────────────────────────────── */
 
 .btn-primary {
-    padding: 14px 48px;
-    font-size: 15px;
+    padding: 16px 52px;
+    font-size: 16px;
     font-family: var(--font);
     font-weight: 600;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
     background: var(--rose);
     border: none;
@@ -305,7 +348,7 @@ body {
 }
 
 .btn-ghost {
-    padding: 14px 32px;
+    padding: 16px 32px;
     font-size: 14px;
     font-family: var(--font);
     font-weight: 500;
@@ -330,16 +373,16 @@ body {
 }
 
 .countdown-label {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 500;
-    letter-spacing: 4px;
+    letter-spacing: 5px;
     text-transform: uppercase;
     color: var(--text-tertiary);
     margin-bottom: 16px;
 }
 
 .countdown-number {
-    font-size: 180px;
+    font-size: 200px;
     font-weight: 800;
     color: var(--rose);
     font-variant-numeric: tabular-nums;
@@ -350,7 +393,7 @@ body {
 
 .glass-card {
     text-align: center;
-    padding: 48px 72px;
+    padding: 56px 80px;
     background: var(--glass);
     backdrop-filter: blur(32px);
     -webkit-backdrop-filter: blur(32px);
@@ -359,16 +402,16 @@ body {
 }
 
 .card-label {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
-    letter-spacing: 3px;
+    letter-spacing: 4px;
     text-transform: uppercase;
     color: var(--text-tertiary);
-    margin-bottom: 12px;
+    margin-bottom: 16px;
 }
 
 .card-stat {
-    font-size: 36px;
+    font-size: 44px;
     font-weight: 700;
     color: var(--vert);
 }
@@ -376,20 +419,20 @@ body {
 /* ── Victory ─────────────────────────────────── */
 
 .glass-card.victory {
-    padding: 56px 80px;
+    padding: 64px 100px;
 }
 
 .victory-label {
-    font-size: 48px;
+    font-size: 56px;
     font-weight: 800;
-    letter-spacing: 10px;
+    letter-spacing: 12px;
     text-transform: uppercase;
     color: var(--vert);
     margin-bottom: 8px;
 }
 
 .victory-name {
-    font-size: 20px;
+    font-size: 24px;
     color: var(--text-secondary);
     font-weight: 500;
 }
@@ -403,8 +446,8 @@ body {
     transform: translateX(-50%);
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 12px 28px;
+    gap: 16px;
+    padding: 14px 32px;
     background: var(--glass);
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
@@ -417,27 +460,27 @@ body {
 }
 
 .hud-dot {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    transition: background 0.3s ease;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
     flex-shrink: 0;
 }
 
 .hud-dot.green {
     background: var(--vert);
-    box-shadow: 0 0 12px rgba(0, 255, 133, 0.4);
+    box-shadow: 0 0 16px rgba(0, 255, 133, 0.5);
 }
 
 .hud-dot.red {
     background: var(--rouge);
-    box-shadow: 0 0 12px rgba(255, 59, 48, 0.4);
+    box-shadow: 0 0 16px rgba(255, 59, 48, 0.5);
 }
 
 .hud-text {
-    font-size: 15px;
-    font-weight: 500;
-    letter-spacing: 1px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
     color: var(--text-secondary);
     transition: color 0.3s ease;
     white-space: nowrap;
@@ -452,10 +495,10 @@ body {
 }
 
 .hud-timer {
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 700;
     color: var(--text-primary);
-    min-width: 36px;
+    min-width: 42px;
     text-align: right;
     font-variant-numeric: tabular-nums;
 }

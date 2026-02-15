@@ -1,20 +1,28 @@
 /**
- * Squid Amphi — Écran d'Affichage (Projecteur)
- * Phaser.js pour le rendu graphique + Socket.io pour la synchro serveur
+ * Squid Amphi — Écran d'Affichage (Projecteur / Amphi)
+ * Phaser.js + Socket.io
+ * Optimisé pour 50+ joueurs visibles depuis le fond de l'amphi
  */
 
-// ─── Connexion Socket.io ─────────────────────────────────────
 const socket = io();
 
 // ─── État global ─────────────────────────────────────────────
 let gameState = {
     phase: 'LOBBY',
     players: [],
-    gameData: null
+    gameData: null,
+    playerCount: 0,
+    aliveCount: 0
 };
 
 const playerSprites = {};
 const playerLabels = {};
+const playerNumbers = {};
+
+// ─── Configuration visuelle pour amphi ───────────────────────
+const SPRITE_RADIUS = 22;       // Gros points visibles de loin
+const LABEL_FONT_SIZE = 14;     // Labels lisibles
+const NUMBER_FONT_SIZE = 16;    // Numéro du joueur bien visible
 
 // ─── Configuration Phaser ────────────────────────────────────
 const config = {
@@ -48,54 +56,60 @@ function create() {
 
     // Grille de fond subtile
     const graphics = this.add.graphics();
-    graphics.lineStyle(1, 0x1a1a2e, 0.08);
-    for (let x = 0; x < this.scale.width; x += 80) {
+    graphics.lineStyle(1, 0x1a1a2e, 0.06);
+    for (let x = 0; x < this.scale.width; x += 100) {
         graphics.lineBetween(x, 0, x, this.scale.height);
     }
-    for (let y = 0; y < this.scale.height; y += 80) {
+    for (let y = 0; y < this.scale.height; y += 100) {
         graphics.lineBetween(0, y, this.scale.width, y);
     }
 
-    // Ligne d'arrivée (cachée au début)
+    // Ligne d'arrivée
     finishLine = this.add.rectangle(
         this.scale.width - 80, this.scale.height / 2,
-        4, this.scale.height,
-        0x00ff85, 0.3
+        6, this.scale.height,
+        0x00ff85, 0.4
     );
     finishLine.setVisible(false);
 
-    this.finishText = this.add.text(this.scale.width - 80, 80, 'ARRIVÉE', {
-        font: '14px -apple-system, sans-serif',
+    this.finishText = this.add.text(this.scale.width - 80, 100, 'ARRIVÉE', {
+        font: `bold 18px -apple-system, sans-serif`,
         fill: '#00ff85',
         align: 'center'
     }).setOrigin(0.5).setVisible(false);
 
     this.startLine = this.add.rectangle(
         80, this.scale.height / 2,
-        3, this.scale.height,
-        0xff007f, 0.2
+        4, this.scale.height,
+        0xff007f, 0.25
     ).setVisible(false);
 }
 
 function update() {
+    // Interpoler les positions des sprites
     for (const [id, sprite] of Object.entries(playerSprites)) {
         const player = gameState.players.find(p => p.id === id);
         if (player && sprite.active) {
             const targetX = scaleX(player.position.x);
             const targetY = scaleY(player.position.y);
-            sprite.x += (targetX - sprite.x) * 0.15;
-            sprite.y += (targetY - sprite.y) * 0.15;
+            sprite.x += (targetX - sprite.x) * 0.12;
+            sprite.y += (targetY - sprite.y) * 0.12;
 
             if (playerLabels[id]) {
                 playerLabels[id].x = sprite.x;
-                playerLabels[id].y = sprite.y - 28;
+                playerLabels[id].y = sprite.y - SPRITE_RADIUS - 16;
+            }
+            if (playerNumbers[id]) {
+                playerNumbers[id].x = sprite.x;
+                playerNumbers[id].y = sprite.y;
             }
         }
     }
 
+    // Particules d'élimination
     for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-        p.life -= 0.02;
+        p.life -= 0.015;
         if (p.life <= 0) {
             p.obj.destroy();
             particles.splice(i, 1);
@@ -103,7 +117,7 @@ function update() {
             p.obj.setAlpha(p.life);
             p.obj.x += p.vx;
             p.obj.y += p.vy;
-            p.vy += 0.3;
+            p.vy += 0.25;
         }
     }
 }
@@ -129,41 +143,54 @@ function cssColorToHex(cssColor) {
     return (r << 16) | (g << 8) | b;
 }
 
-// ─── Gestion des sprites joueurs ─────────────────────────────
+// Compteur pour numéroter les joueurs
+let playerCounter = 0;
+
+// ─── Gestion des sprites joueurs (gros, visibles de loin) ────
 
 function addPlayerSprite(player) {
     if (!scene || playerSprites[player.id]) return;
 
+    playerCounter++;
     const x = scaleX(player.position.x);
     const y = scaleY(player.position.y);
     const color = cssColorToHex(player.color);
 
     const container = scene.add.container(x, y);
 
-    const body = scene.add.circle(0, 0, 14, color, 1);
-    body.setStrokeStyle(1.5, 0xffffff, 0.4);
+    // Cercle principal — gros et bien visible
+    const body = scene.add.circle(0, 0, SPRITE_RADIUS, color, 1);
+    body.setStrokeStyle(2.5, 0xffffff, 0.5);
 
-    const eyeL = scene.add.circle(-4, -3, 2.5, 0xffffff);
-    const eyeR = scene.add.circle(4, -3, 2.5, 0xffffff);
-    const pupilL = scene.add.circle(-3, -3, 1.2, 0x000000);
-    const pupilR = scene.add.circle(5, -3, 1.2, 0x000000);
+    // Glow effect pour visibilité
+    const glow = scene.add.circle(0, 0, SPRITE_RADIUS + 4, color, 0.15);
 
-    container.add([body, eyeL, eyeR, pupilL, pupilR]);
+    container.add([glow, body]);
     playerSprites[player.id] = container;
 
-    const label = scene.add.text(x, y - 28, player.username, {
-        font: 'bold 11px -apple-system, sans-serif',
+    // Numéro du joueur (au centre du cercle)
+    const num = scene.add.text(x, y, String(playerCounter), {
+        font: `bold ${NUMBER_FONT_SIZE}px -apple-system, sans-serif`,
+        fill: '#ffffff',
+        align: 'center'
+    }).setOrigin(0.5);
+    playerNumbers[player.id] = num;
+
+    // Label du pseudo (au-dessus)
+    const label = scene.add.text(x, y - SPRITE_RADIUS - 16, player.username, {
+        font: `bold ${LABEL_FONT_SIZE}px -apple-system, sans-serif`,
         fill: '#ffffff',
         align: 'center',
-        shadow: { offsetX: 0, offsetY: 0, blur: 4, color: '#000000', fill: true }
+        shadow: { offsetX: 0, offsetY: 1, blur: 6, color: '#000000', fill: true }
     }).setOrigin(0.5);
     playerLabels[player.id] = label;
 
+    // Animation d'entrée
     container.setScale(0);
     scene.tweens.add({
         targets: container,
         scaleX: 1, scaleY: 1,
-        duration: 350,
+        duration: 400,
         ease: 'Back.easeOut'
     });
 }
@@ -177,6 +204,10 @@ function removePlayerSprite(id) {
         playerLabels[id].destroy();
         delete playerLabels[id];
     }
+    if (playerNumbers[id]) {
+        playerNumbers[id].destroy();
+        delete playerNumbers[id];
+    }
 }
 
 function eliminatePlayerSprite(id) {
@@ -185,10 +216,12 @@ function eliminatePlayerSprite(id) {
 
     const x = sprite.x;
     const y = sprite.y;
-    for (let i = 0; i < 10; i++) {
-        const angle = (Math.PI * 2 / 10) * i;
-        const speed = 2 + Math.random() * 3;
-        const size = 2 + Math.random() * 4;
+
+    // Explosion de particules rose
+    for (let i = 0; i < 14; i++) {
+        const angle = (Math.PI * 2 / 14) * i;
+        const speed = 2 + Math.random() * 4;
+        const size = 3 + Math.random() * 5;
         const particle = scene.add.circle(x, y, size, 0xff0040);
         particles.push({
             obj: particle,
@@ -198,17 +231,28 @@ function eliminatePlayerSprite(id) {
         });
     }
 
+    // Animation de mort
     scene.tweens.add({
         targets: sprite,
         scaleX: 0, scaleY: 0, alpha: 0,
-        duration: 250,
+        duration: 300,
         ease: 'Power2',
         onComplete: () => sprite.setVisible(false)
     });
 
+    // Croix rouge sur le label
     if (playerLabels[id]) {
-        playerLabels[id].setColor('#333333');
-        playerLabels[id].setText('✕ ' + playerLabels[id].text);
+        playerLabels[id].setColor('#ff3b30');
+        playerLabels[id].setText('✕');
+        scene.tweens.add({
+            targets: playerLabels[id],
+            alpha: 0.3,
+            duration: 1000
+        });
+    }
+
+    if (playerNumbers[id]) {
+        playerNumbers[id].setVisible(false);
     }
 }
 
@@ -227,6 +271,7 @@ const ui = {
     totalCount: document.getElementById('total-count'),
     lobbyCount: document.getElementById('lobby-count'),
     serverUrl: document.getElementById('server-url'),
+    qrContainer: document.getElementById('qr-container'),
     btnStart: document.getElementById('btn-start'),
     btnReset: document.getElementById('btn-reset'),
     btnResetVictory: document.getElementById('btn-reset-victory'),
@@ -254,7 +299,21 @@ function hideAllOverlays() {
 }
 
 // Afficher l'URL du serveur
-ui.serverUrl.textContent = window.location.origin + '/controller';
+const controllerUrl = window.location.origin + '/controller';
+ui.serverUrl.textContent = controllerUrl;
+
+// Générer le QR Code
+if (typeof QRCode !== 'undefined' && ui.qrContainer) {
+    QRCode.toCanvas(controllerUrl, {
+        width: 180,
+        margin: 0,
+        color: { dark: '#000000', light: '#ffffff' }
+    }, (err, canvas) => {
+        if (!err && canvas) {
+            ui.qrContainer.appendChild(canvas);
+        }
+    });
+}
 
 // ─── Boutons ─────────────────────────────────────────────────
 ui.btnStart.addEventListener('click', () => {
@@ -307,12 +366,12 @@ socket.on('player:eliminated', (data) => {
         const flash = scene.add.rectangle(
             scene.scale.width / 2, scene.scale.height / 2,
             scene.scale.width, scene.scale.height,
-            0xff0040, 0.1
+            0xff0040, 0.08
         );
         scene.tweens.add({
             targets: flash,
             alpha: 0,
-            duration: 400,
+            duration: 500,
             onComplete: () => flash.destroy()
         });
     }
@@ -378,9 +437,7 @@ socket.on('game:victory', (data) => {
     ui.btnEndGame.classList.add('hidden');
 });
 
-// Reset response
 socket.on('game:reset', () => {
-    // Reload the page for a clean state
     window.location.reload();
 });
 
@@ -408,7 +465,8 @@ function updateUI() {
         if (gd) {
             const gameType = gd.type || '';
 
-            if (gd.light !== undefined) {
+            // Red Light Green Light
+            if (gd.light !== undefined && gameType === 'redlightgreenlight') {
                 if (finishLine) finishLine.setVisible(true);
                 if (scene?.finishText) scene.finishText.setVisible(true);
                 if (scene?.startLine) scene.startLine.setVisible(true);
@@ -420,6 +478,15 @@ function updateUI() {
                 if (scene?.startLine) scene.startLine.setVisible(false);
             }
 
+            // Dalgona
+            if (gameType === 'dalgona') {
+                ui.lightDisplay.classList.remove('hidden');
+                ui.lightText.textContent = `Dalgona — Tape en rythme !`;
+                ui.lightText.className = 'hud-text';
+                ui.lightCircle.className = 'hud-dot green';
+            }
+
+            // Tug of War
             if (gameType === 'tugofwar') {
                 ui.lightDisplay.classList.remove('hidden');
                 const pos = gd.ropePosition || 0;
@@ -429,6 +496,15 @@ function updateUI() {
                 ui.lightCircle.className = 'hud-dot ' + (pos <= 0 ? 'green' : 'red');
             }
 
+            // Marbles
+            if (gameType === 'marbles' && gd.currentMatch) {
+                ui.lightDisplay.classList.remove('hidden');
+                ui.lightText.textContent = `${gd.currentMatch.nameA} vs ${gd.currentMatch.nameB} — Match ${gd.matchNumber}/${gd.totalMatches}`;
+                ui.lightText.className = 'hud-text';
+                ui.lightCircle.className = 'hud-dot green';
+            }
+
+            // Glass Bridge
             if (gameType === 'glassbridge') {
                 ui.lightDisplay.classList.remove('hidden');
                 ui.lightText.textContent = gd.currentPlayerName
@@ -438,6 +514,7 @@ function updateUI() {
                 ui.lightCircle.className = 'hud-dot green';
             }
 
+            // Group Game
             if (gameType === 'groupgame') {
                 ui.lightDisplay.classList.remove('hidden');
                 ui.lightText.textContent = `Groupes de ${gd.targetSize} — Manche ${gd.round}/${gd.totalRounds}`;
@@ -445,6 +522,7 @@ function updateUI() {
                 ui.lightCircle.className = 'hud-dot green';
             }
 
+            // Final Duel
             if (gameType === 'finalduel' && gd.currentDuel) {
                 ui.lightDisplay.classList.remove('hidden');
                 const d = gd.currentDuel;
@@ -453,6 +531,7 @@ function updateUI() {
                 ui.lightCircle.className = 'hud-dot green';
             }
 
+            // Timer
             if (gd.timeRemaining !== undefined) {
                 ui.timerDisplay.textContent = gd.timeRemaining + 's';
             }

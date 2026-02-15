@@ -5,7 +5,9 @@
  */
 
 const RedLightGreenLight = require('./minigames/RedLightGreenLight');
+const Dalgona = require('./minigames/Dalgona');
 const TugOfWar = require('./minigames/TugOfWar');
+const Marbles = require('./minigames/Marbles');
 const GlassBridge = require('./minigames/GlassBridge');
 const GroupGame = require('./minigames/GroupGame');
 const FinalDuel = require('./minigames/FinalDuel');
@@ -23,7 +25,9 @@ const PHASE = {
 // Liste ordonnée des mini-jeux
 const MINIGAME_LIST = [
     { name: '1, 2, 3 Soleil', factory: (gm) => new RedLightGreenLight(gm) },
+    { name: 'Dalgona', factory: (gm) => new Dalgona(gm) },
     { name: 'Jeu de la Corde', factory: (gm) => new TugOfWar(gm) },
+    { name: 'Billes', factory: (gm) => new Marbles(gm) },
     { name: 'Pont de Verre', factory: (gm) => new GlassBridge(gm) },
     { name: 'Jeu du Manège', factory: (gm) => new GroupGame(gm) },
     { name: 'Duel Final', factory: (gm) => new FinalDuel(gm) }
