@@ -137,6 +137,27 @@ class GameManager {
 
     // ── Contrôle du jeu ─────────────────────────────────────
 
+    resetGame() {
+        this.phase = PHASE.LOBBY;
+        this.currentGameIndex = -1;
+        this.currentMinigame = null;
+        this.roundNumber = 0;
+        this.countdownTimer = 0;
+
+        // Réinitialiser tous les joueurs
+        for (const player of Object.values(this.players)) {
+            player.alive = true;
+            player.score = 0;
+            player.position = {
+                x: 100 + Math.random() * 400,
+                y: 200 + Math.random() * 300
+            };
+        }
+
+        this._broadcastPlayerList();
+        console.log(`[Game] 🔄 Partie réinitialisée — ${this.getPlayerCount()} joueurs`);
+    }
+
     startGame() {
         if (this.phase !== PHASE.LOBBY) return;
         if (this.getPlayerCount() < 2) {

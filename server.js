@@ -70,6 +70,13 @@ io.on('connection', (socket) => {
         gameManager.startGame();
     });
 
+    // ── Admin : réinitialiser la partie ──
+    socket.on('admin:reset', () => {
+        console.log('[Admin] Reset de la partie');
+        gameManager.resetGame();
+        io.emit('game:reset');
+    });
+
     // ── Déconnexion ──
     socket.on('disconnect', () => {
         const removed = gameManager.removePlayer(socket.id);

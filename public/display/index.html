@@ -11,62 +11,86 @@
 <body>
     <!-- UI par-dessus le canvas Phaser -->
     <div id="ui-overlay">
+
+        <!-- Top Bar -->
         <div id="top-bar">
             <div id="game-info">
-                <span id="round-label" class="label">LOBBY</span>
+                <span id="round-label" class="pill">lobby</span>
                 <span id="game-name" class="game-name"></span>
             </div>
             <div id="player-count">
                 <span id="alive-count">0</span>
-                <span class="count-label">/ <span id="total-count">0</span> joueurs</span>
+                <span class="count-sep">/</span>
+                <span id="total-count">0</span>
             </div>
         </div>
 
         <!-- Lobby -->
         <div id="overlay-lobby" class="overlay active">
-            <div class="logo-display">
-                <div class="logo-squid">🦑</div>
-                <h1>SQUID<br>AMPHI</h1>
-                <p class="subtitle">Rejoignez la partie sur</p>
-                <div id="server-url" class="server-url"></div>
-                <div class="lobby-players">
-                    <span id="lobby-count">0</span> joueur(s) connecté(s)
+            <div class="lobby-card">
+                <!-- Squid Game shapes -->
+                <div class="shapes-row">
+                    <div class="shape circle"></div>
+                    <div class="shape triangle"></div>
+                    <div class="shape square"></div>
                 </div>
-                <button id="btn-start" class="btn-start">Lancer la partie</button>
+
+                <h1 class="title">squid<br>amphi</h1>
+
+                <p class="join-label">Rejoins la partie</p>
+                <div id="server-url" class="url-box"></div>
+
+                <div class="lobby-meta">
+                    <span id="lobby-count" class="meta-count">0</span>
+                    <span class="meta-label">connecté(s)</span>
+                </div>
+
+                <div class="lobby-actions">
+                    <button id="btn-start" class="btn-primary">Lancer</button>
+                    <button id="btn-reset" class="btn-ghost">Réinitialiser</button>
+                </div>
             </div>
         </div>
 
         <!-- Countdown -->
         <div id="overlay-countdown" class="overlay">
-            <div class="countdown-display">
-                <h2 id="countdown-title">Prochain jeu</h2>
-                <div id="countdown-num" class="countdown-big">5</div>
+            <div class="countdown-card">
+                <p class="countdown-label" id="countdown-title">prochain jeu</p>
+                <div id="countdown-num" class="countdown-number">5</div>
             </div>
         </div>
 
         <!-- Fin de manche -->
         <div id="overlay-roundend" class="overlay">
-            <div class="roundend-display">
-                <h2>Manche terminée</h2>
-                <p><span id="roundend-alive">0</span> survivants</p>
+            <div class="glass-card">
+                <p class="card-label">manche terminée</p>
+                <div class="card-stat"><span id="roundend-alive">0</span> survivants</div>
             </div>
         </div>
 
         <!-- Victoire -->
         <div id="overlay-victory" class="overlay">
-            <div class="victory-display">
-                <div class="victory-icon">🏆</div>
-                <h2>Victoire</h2>
-                <p id="victory-winner"></p>
+            <div class="glass-card victory">
+                <div class="shapes-row small">
+                    <div class="shape circle"></div>
+                    <div class="shape triangle"></div>
+                    <div class="shape square"></div>
+                </div>
+                <p class="victory-label">Victoire</p>
+                <p id="victory-winner" class="victory-name"></p>
+                <button id="btn-reset-victory" class="btn-ghost" style="margin-top:24px">Nouvelle partie</button>
             </div>
         </div>
 
-        <!-- Indicateur de feu -->
-        <div id="light-display" class="light-display hidden">
-            <div id="light-circle" class="light-circle green"></div>
-            <span id="light-text" class="light-text">Feu vert</span>
-            <span id="timer-display" class="timer">60s</span>
+        <!-- Indicateur de jeu (feu / info) -->
+        <div id="light-display" class="game-hud hidden">
+            <div id="light-circle" class="hud-dot green"></div>
+            <span id="light-text" class="hud-text">Feu vert</span>
+            <span id="timer-display" class="hud-timer">60s</span>
         </div>
+
+        <!-- Bouton fin de partie (visible pendant le jeu) -->
+        <button id="btn-end-game" class="btn-end hidden">Terminer</button>
     </div>
 
     <div id="game-container"></div>

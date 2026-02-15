@@ -13,7 +13,6 @@ let gameState = {
     gameData: null
 };
 
-// Map des sprites Phaser par ID joueur
 const playerSprites = {};
 const playerLabels = {};
 
@@ -23,7 +22,7 @@ const config = {
     parent: 'game-container',
     width: window.innerWidth,
     height: window.innerHeight,
-    backgroundColor: '#05050a',
+    backgroundColor: '#000000',
     scene: {
         preload: preload,
         create: create,
@@ -42,66 +41,58 @@ let particles = [];
 
 // ─── Phaser Scene ────────────────────────────────────────────
 
-function preload() {
-    // Pas d'assets externes pour l'instant, on utilise des formes géométriques
-}
+function preload() { }
 
 function create() {
     scene = this;
 
     // Grille de fond subtile
     const graphics = this.add.graphics();
-    graphics.lineStyle(1, 0x1a1a2e, 0.15);
-    for (let x = 0; x < this.scale.width; x += 60) {
+    graphics.lineStyle(1, 0x1a1a2e, 0.08);
+    for (let x = 0; x < this.scale.width; x += 80) {
         graphics.lineBetween(x, 0, x, this.scale.height);
     }
-    for (let y = 0; y < this.scale.height; y += 60) {
+    for (let y = 0; y < this.scale.height; y += 80) {
         graphics.lineBetween(0, y, this.scale.width, y);
     }
 
     // Ligne d'arrivée (cachée au début)
     finishLine = this.add.rectangle(
         this.scale.width - 80, this.scale.height / 2,
-        6, this.scale.height,
-        0x00ff85, 0.4
+        4, this.scale.height,
+        0x00ff85, 0.3
     );
     finishLine.setVisible(false);
 
-    // Texte "Ligne d'arrivée"
-    this.finishText = this.add.text(this.scale.width - 80, 80, '🏁 ARRIVÉE', {
-        font: '18px Outfit',
+    this.finishText = this.add.text(this.scale.width - 80, 80, 'ARRIVÉE', {
+        font: '14px -apple-system, sans-serif',
         fill: '#00ff85',
         align: 'center'
     }).setOrigin(0.5).setVisible(false);
 
-    // Ligne de départ
     this.startLine = this.add.rectangle(
         80, this.scale.height / 2,
-        4, this.scale.height,
-        0xff007f, 0.3
+        3, this.scale.height,
+        0xff007f, 0.2
     ).setVisible(false);
 }
 
 function update() {
-    // Interpolation douce des positions des joueurs
     for (const [id, sprite] of Object.entries(playerSprites)) {
         const player = gameState.players.find(p => p.id === id);
         if (player && sprite.active) {
-            // Lerp vers la position cible
             const targetX = scaleX(player.position.x);
             const targetY = scaleY(player.position.y);
             sprite.x += (targetX - sprite.x) * 0.15;
             sprite.y += (targetY - sprite.y) * 0.15;
 
-            // Mettre à jour le label
             if (playerLabels[id]) {
                 playerLabels[id].x = sprite.x;
-                playerLabels[id].y = sprite.y - 30;
+                playerLabels[id].y = sprite.y - 28;
             }
         }
     }
 
-    // Mettre à jour les particules
     for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.life -= 0.02;
@@ -112,14 +103,13 @@ function update() {
             p.obj.setAlpha(p.life);
             p.obj.x += p.vx;
             p.obj.y += p.vy;
-            p.vy += 0.3; // gravité
+            p.vy += 0.3;
         }
     }
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
 
-// Convertir les coordonnées du jeu (0-1000) en pixels écran
 function scaleX(x) {
     return (x / 1000) * (scene?.scale?.width || window.innerWidth);
 }
@@ -128,7 +118,6 @@ function scaleY(y) {
     return (y / 600) * (scene?.scale?.height || window.innerHeight);
 }
 
-// Convertir une couleur CSS en hex Phaser
 function cssColorToHex(cssColor) {
     if (!cssColor) return 0xff007f;
     const canvas = document.createElement('canvas');
@@ -149,38 +138,32 @@ function addPlayerSprite(player) {
     const y = scaleY(player.position.y);
     const color = cssColorToHex(player.color);
 
-    // Avatar : cercle coloré avec contour
     const container = scene.add.container(x, y);
 
-    // Corps (cercle)
-    const body = scene.add.circle(0, 0, 16, color, 1);
-    body.setStrokeStyle(2, 0xffffff, 0.6);
+    const body = scene.add.circle(0, 0, 14, color, 1);
+    body.setStrokeStyle(1.5, 0xffffff, 0.4);
 
-    // Yeux
-    const eyeL = scene.add.circle(-5, -4, 3, 0xffffff);
-    const eyeR = scene.add.circle(5, -4, 3, 0xffffff);
-    const pupilL = scene.add.circle(-4, -4, 1.5, 0x000000);
-    const pupilR = scene.add.circle(6, -4, 1.5, 0x000000);
+    const eyeL = scene.add.circle(-4, -3, 2.5, 0xffffff);
+    const eyeR = scene.add.circle(4, -3, 2.5, 0xffffff);
+    const pupilL = scene.add.circle(-3, -3, 1.2, 0x000000);
+    const pupilR = scene.add.circle(5, -3, 1.2, 0x000000);
 
     container.add([body, eyeL, eyeR, pupilL, pupilR]);
     playerSprites[player.id] = container;
 
-    // Label (pseudo)
-    const label = scene.add.text(x, y - 30, player.username, {
-        font: 'bold 12px Outfit',
+    const label = scene.add.text(x, y - 28, player.username, {
+        font: 'bold 11px -apple-system, sans-serif',
         fill: '#ffffff',
         align: 'center',
         shadow: { offsetX: 0, offsetY: 0, blur: 4, color: '#000000', fill: true }
     }).setOrigin(0.5);
     playerLabels[player.id] = label;
 
-    // Animation d'apparition
     container.setScale(0);
     scene.tweens.add({
         targets: container,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 400,
+        scaleX: 1, scaleY: 1,
+        duration: 350,
         ease: 'Back.easeOut'
     });
 }
@@ -200,43 +183,36 @@ function eliminatePlayerSprite(id) {
     const sprite = playerSprites[id];
     if (!sprite || !scene) return;
 
-    // Explosion de particules
     const x = sprite.x;
     const y = sprite.y;
-    for (let i = 0; i < 12; i++) {
-        const angle = (Math.PI * 2 / 12) * i;
-        const speed = 2 + Math.random() * 4;
-        const size = 3 + Math.random() * 5;
+    for (let i = 0; i < 10; i++) {
+        const angle = (Math.PI * 2 / 10) * i;
+        const speed = 2 + Math.random() * 3;
+        const size = 2 + Math.random() * 4;
         const particle = scene.add.circle(x, y, size, 0xff0040);
         particles.push({
             obj: particle,
             vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed - 3,
+            vy: Math.sin(angle) * speed - 2,
             life: 1
         });
     }
 
-    // Faire disparaître le sprite
     scene.tweens.add({
         targets: sprite,
-        scaleX: 0,
-        scaleY: 0,
-        alpha: 0,
-        duration: 300,
+        scaleX: 0, scaleY: 0, alpha: 0,
+        duration: 250,
         ease: 'Power2',
-        onComplete: () => {
-            sprite.setVisible(false);
-        }
+        onComplete: () => sprite.setVisible(false)
     });
 
-    // Griser le label
     if (playerLabels[id]) {
-        playerLabels[id].setColor('#555555');
-        playerLabels[id].setText('💀 ' + playerLabels[id].text);
+        playerLabels[id].setColor('#333333');
+        playerLabels[id].setText('✕ ' + playerLabels[id].text);
     }
 }
 
-// ─── UI Overlay Controls ─────────────────────────────────────
+// ─── UI Elements ─────────────────────────────────────────────
 const overlays = {
     lobby: document.getElementById('overlay-lobby'),
     countdown: document.getElementById('overlay-countdown'),
@@ -252,6 +228,9 @@ const ui = {
     lobbyCount: document.getElementById('lobby-count'),
     serverUrl: document.getElementById('server-url'),
     btnStart: document.getElementById('btn-start'),
+    btnReset: document.getElementById('btn-reset'),
+    btnResetVictory: document.getElementById('btn-reset-victory'),
+    btnEndGame: document.getElementById('btn-end-game'),
     countdownTitle: document.getElementById('countdown-title'),
     countdownNum: document.getElementById('countdown-num'),
     roundendAlive: document.getElementById('roundend-alive'),
@@ -277,28 +256,37 @@ function hideAllOverlays() {
 // Afficher l'URL du serveur
 ui.serverUrl.textContent = window.location.origin + '/controller';
 
-// Bouton Start
+// ─── Boutons ─────────────────────────────────────────────────
 ui.btnStart.addEventListener('click', () => {
     socket.emit('admin:start');
 });
 
+ui.btnReset.addEventListener('click', () => {
+    socket.emit('admin:reset');
+});
+
+ui.btnResetVictory.addEventListener('click', () => {
+    socket.emit('admin:reset');
+});
+
+ui.btnEndGame.addEventListener('click', () => {
+    if (confirm('Terminer la partie en cours ?')) {
+        socket.emit('admin:reset');
+    }
+});
+
 // ─── Socket.io Events ───────────────────────────────────────
 
-// S'enregistrer comme écran d'affichage
 socket.emit('display:join');
 
-// État initial complet
 socket.on('display:state', (state) => {
     gameState = state;
     updateUI();
-
-    // Créer les sprites pour tous les joueurs existants
     for (const player of state.players) {
         addPlayerSprite(player);
     }
 });
 
-// Nouveau joueur
 socket.on('player:add', (player) => {
     gameState.players.push(player);
     gameState.playerCount++;
@@ -306,7 +294,6 @@ socket.on('player:add', (player) => {
     updatePlayerCounts();
 });
 
-// Joueur déconnecté
 socket.on('player:remove', (data) => {
     gameState.players = gameState.players.filter(p => p.id !== data.id);
     gameState.playerCount--;
@@ -314,28 +301,24 @@ socket.on('player:remove', (data) => {
     updatePlayerCounts();
 });
 
-// Joueur éliminé
 socket.on('player:eliminated', (data) => {
     eliminatePlayerSprite(data.id);
-    // Petit flash rouge sur l'écran
     if (scene) {
         const flash = scene.add.rectangle(
             scene.scale.width / 2, scene.scale.height / 2,
             scene.scale.width, scene.scale.height,
-            0xff0040, 0.15
+            0xff0040, 0.1
         );
         scene.tweens.add({
             targets: flash,
             alpha: 0,
-            duration: 500,
+            duration: 400,
             onComplete: () => flash.destroy()
         });
     }
 });
 
-// État du jeu (chaque tick)
 socket.on('game:state', (state) => {
-    // Mettre à jour les positions des joueurs
     for (const player of state.players) {
         const existing = gameState.players.find(p => p.id === player.id);
         if (existing) {
@@ -354,11 +337,10 @@ socket.on('game:state', (state) => {
     updateUI();
 });
 
-// Countdown
 socket.on('game:countdown', (data) => {
     ui.countdownTitle.textContent = data.gameName;
     showOverlay('countdown');
-    ui.roundLabel.textContent = `MANCHE ${data.roundNumber}`;
+    ui.roundLabel.textContent = `manche ${data.roundNumber}`;
     ui.gameName.textContent = data.gameName;
 
     let count = data.duration;
@@ -375,27 +357,31 @@ socket.on('game:countdown', (data) => {
     }, 1000);
 });
 
-// Changement de feu
 socket.on('game:lightChange', (data) => {
     updateLight(data.light);
 });
 
-// Fin de manche
 socket.on('game:roundEnd', (data) => {
     ui.roundendAlive.textContent = data.aliveCount;
     showOverlay('roundend');
     ui.lightDisplay.classList.add('hidden');
 });
 
-// Victoire
 socket.on('game:victory', (data) => {
     if (data.winner) {
-        ui.victoryWinner.textContent = `🎉 ${data.winner.username} est le dernier survivant !`;
+        ui.victoryWinner.textContent = data.winner.username + ' est le dernier survivant';
     } else {
-        ui.victoryWinner.textContent = 'Partie terminée !';
+        ui.victoryWinner.textContent = 'Partie terminée';
     }
     showOverlay('victory');
     ui.lightDisplay.classList.add('hidden');
+    ui.btnEndGame.classList.add('hidden');
+});
+
+// Reset response
+socket.on('game:reset', () => {
+    // Reload the page for a clean state
+    window.location.reload();
 });
 
 // ─── Mise à jour UI ──────────────────────────────────────────
@@ -405,10 +391,10 @@ function updateUI() {
 
     if (gameState.phase === 'LOBBY') {
         showOverlay('lobby');
-        ui.roundLabel.textContent = 'LOBBY';
+        ui.roundLabel.textContent = 'lobby';
         ui.lightDisplay.classList.add('hidden');
+        ui.btnEndGame.classList.add('hidden');
 
-        // Cacher les lignes de jeu
         if (finishLine) finishLine.setVisible(false);
         if (scene?.finishText) scene.finishText.setVisible(false);
         if (scene?.startLine) scene.startLine.setVisible(false);
@@ -416,12 +402,12 @@ function updateUI() {
 
     if (gameState.phase === 'PLAYING') {
         hideAllOverlays();
+        ui.btnEndGame.classList.remove('hidden');
         const gd = gameState.gameData;
 
         if (gd) {
             const gameType = gd.type || '';
 
-            // 1,2,3 Soleil
             if (gd.light !== undefined) {
                 if (finishLine) finishLine.setVisible(true);
                 if (scene?.finishText) scene.finishText.setVisible(true);
@@ -434,41 +420,37 @@ function updateUI() {
                 if (scene?.startLine) scene.startLine.setVisible(false);
             }
 
-            // Tug of War — rope position as light indicator
             if (gameType === 'tugofwar') {
                 ui.lightDisplay.classList.remove('hidden');
                 const pos = gd.ropePosition || 0;
                 const pct = Math.round((pos / gd.threshold) * 100);
                 ui.lightText.textContent = `Corde : ${pct > 0 ? '+' : ''}${pct}%`;
-                ui.lightText.className = 'light-text ' + (pos <= 0 ? 'green' : 'red');
-                ui.lightCircle.className = 'light-circle ' + (pos <= 0 ? 'green' : 'red');
+                ui.lightText.className = 'hud-text ' + (pos <= 0 ? 'green' : 'red');
+                ui.lightCircle.className = 'hud-dot ' + (pos <= 0 ? 'green' : 'red');
             }
 
-            // Glass Bridge — current player info
             if (gameType === 'glassbridge') {
                 ui.lightDisplay.classList.remove('hidden');
                 ui.lightText.textContent = gd.currentPlayerName
                     ? `Tour de ${gd.currentPlayerName} — Étape ${gd.currentStep}/${gd.totalSteps}`
-                    : 'Attente...';
-                ui.lightText.className = 'light-text green';
-                ui.lightCircle.className = 'light-circle green';
+                    : 'Attente…';
+                ui.lightText.className = 'hud-text';
+                ui.lightCircle.className = 'hud-dot green';
             }
 
-            // Group Game
             if (gameType === 'groupgame') {
                 ui.lightDisplay.classList.remove('hidden');
                 ui.lightText.textContent = `Groupes de ${gd.targetSize} — Manche ${gd.round}/${gd.totalRounds}`;
-                ui.lightText.className = 'light-text';
-                ui.lightCircle.className = 'light-circle green';
+                ui.lightText.className = 'hud-text';
+                ui.lightCircle.className = 'hud-dot green';
             }
 
-            // Final Duel
             if (gameType === 'finalduel' && gd.currentDuel) {
                 ui.lightDisplay.classList.remove('hidden');
                 const d = gd.currentDuel;
                 ui.lightText.textContent = `${d.nameA} (${d.tapsA}) vs ${d.nameB} (${d.tapsB})`;
-                ui.lightText.className = 'light-text';
-                ui.lightCircle.className = 'light-circle green';
+                ui.lightText.className = 'hud-text';
+                ui.lightCircle.className = 'hud-dot green';
             }
 
             if (gd.timeRemaining !== undefined) {
@@ -486,21 +468,15 @@ function updatePlayerCounts() {
 
 function updateLight(light) {
     if (light === 'GREEN') {
-        ui.lightCircle.className = 'light-circle green';
-        ui.lightText.className = 'light-text green';
+        ui.lightCircle.className = 'hud-dot green';
+        ui.lightText.className = 'hud-text green';
         ui.lightText.textContent = 'Feu vert — Avancez';
-
-        if (scene) {
-            scene.cameras.main.setBackgroundColor('#020805');
-        }
+        if (scene) scene.cameras.main.setBackgroundColor('#010804');
     } else {
-        ui.lightCircle.className = 'light-circle red';
-        ui.lightText.className = 'light-text red';
+        ui.lightCircle.className = 'hud-dot red';
+        ui.lightText.className = 'hud-text red';
         ui.lightText.textContent = 'Feu rouge — Stop';
-
-        if (scene) {
-            scene.cameras.main.setBackgroundColor('#080202');
-        }
+        if (scene) scene.cameras.main.setBackgroundColor('#060101');
     }
 }
 
