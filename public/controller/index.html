@@ -33,6 +33,7 @@
             <div class="spinner"></div>
             <h2>En attente</h2>
             <p>La partie va bientôt commencer</p>
+            <div id="lobby-player-list" class="lobby-list"></div>
         </div>
     </div>
 
@@ -73,6 +74,46 @@
         <div class="countdown-content">
             <h2 id="countdown-game-name"></h2>
             <div class="countdown-number" id="countdown-number">5</div>
+        </div>
+    </div>
+
+    <!-- Pont de Verre : Choix gauche/droite -->
+    <div id="screen-bridge" class="screen">
+        <div class="status-bar">
+            <span class="game-title">Pont de Verre</span>
+            <span id="bridge-step" class="game-title"></span>
+        </div>
+        <div class="bridge-choice">
+            <p class="bridge-prompt">Étape <span id="bridge-step-num">1</span>/<span id="bridge-total">5</span></p>
+            <p class="bridge-timer" id="bridge-timer">8s</p>
+            <div class="bridge-buttons">
+                <button class="btn-choice left" id="btn-left">Gauche</button>
+                <button class="btn-choice right" id="btn-right">Droite</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pont de Verre : Attente (pas ton tour) -->
+    <div id="screen-bridge-wait" class="screen">
+        <div class="status-bar">
+            <span class="game-title">Pont de Verre</span>
+            <span class="status-dot live"></span>
+        </div>
+        <div class="waiting">
+            <div class="spinner"></div>
+            <p id="bridge-current-player">En attente...</p>
+        </div>
+    </div>
+
+    <!-- Jeu du Manège : Choix de groupe -->
+    <div id="screen-groups" class="screen">
+        <div class="status-bar">
+            <span class="game-title">Jeu du Manège</span>
+            <span id="groups-timer" class="game-title"></span>
+        </div>
+        <div class="groups-choice">
+            <p class="groups-prompt">Forme un groupe de <span id="target-size" class="highlight">?</span></p>
+            <div id="groups-buttons" class="groups-grid"></div>
         </div>
     </div>
 

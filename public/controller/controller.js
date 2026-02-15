@@ -13,7 +13,10 @@ const screens = {
     game: document.getElementById('screen-game'),
     eliminated: document.getElementById('screen-eliminated'),
     victory: document.getElementById('screen-victory'),
-    countdown: document.getElementById('screen-countdown')
+    countdown: document.getElementById('screen-countdown'),
+    bridge: document.getElementById('screen-bridge'),
+    bridgeWait: document.getElementById('screen-bridge-wait'),
+    groups: document.getElementById('screen-groups')
 };
 
 const elements = {
@@ -27,17 +30,31 @@ const elements = {
     tapFeedback: document.getElementById('tap-feedback'),
     countdownGameName: document.getElementById('countdown-game-name'),
     countdownNumber: document.getElementById('countdown-number'),
-    victoryMessage: document.getElementById('victory-message')
+    victoryMessage: document.getElementById('victory-message'),
+    lobbyList: document.getElementById('lobby-player-list'),
+    // Bridge
+    bridgeStepNum: document.getElementById('bridge-step-num'),
+    bridgeTotal: document.getElementById('bridge-total'),
+    bridgeTimer: document.getElementById('bridge-timer'),
+    btnLeft: document.getElementById('btn-left'),
+    btnRight: document.getElementById('btn-right'),
+    bridgeCurrentPlayer: document.getElementById('bridge-current-player'),
+    // Groups
+    targetSize: document.getElementById('target-size'),
+    groupsButtons: document.getElementById('groups-buttons'),
+    groupsTimer: document.getElementById('groups-timer')
 };
 
 // ─── État local ──────────────────────────────────────────────
 let myPlayer = null;
 let currentLight = 'GREEN';
+let currentGameType = null;
+let selectedGroup = null;
 
 // ─── Navigation entre écrans ─────────────────────────────────
 function showScreen(screenName) {
     for (const [name, el] of Object.entries(screens)) {
-        el.classList.toggle('active', name === screenName);
+        if (el) el.classList.toggle('active', name === screenName);
     }
 }
 
@@ -77,6 +94,14 @@ socket.on('error', (data) => {
     elements.btnJoin.disabled = false;
 });
 
+// Liste des joueurs dans le lobby
+socket.on('lobby:players', (data) => {
+    if (!elements.lobbyList) return;
+    elements.lobbyList.innerHTML = data.players.map(p =>
+        `<span class="lobby-chip">${p.username}</span>`
+    ).join('');
+});
+
 // Countdown avant un mini-jeu
 socket.on('game:countdown', (data) => {
     elements.countdownGameName.textContent = data.gameName;
@@ -99,6 +124,15 @@ socket.on('game:countdown', (data) => {
 socket.on('player:state', (data) => {
     if (!myPlayer) return;
 
+    // Déterminer le type de jeu en cours
+    if (data.currentGame) {
+        if (data.currentGame.includes('Soleil')) currentGameType = 'redlight';
+        else if (data.currentGame.includes('Corde')) currentGameType = 'tugofwar';
+        else if (data.currentGame.includes('Pont')) currentGameType = 'bridge';
+        else if (data.currentGame.includes('Manège')) currentGameType = 'groups';
+        else if (data.currentGame.includes('Duel')) currentGameType = 'duel';
+    }
+
     // Mettre à jour le feu (1,2,3 Soleil)
     if (data.light !== undefined && data.light !== currentLight) {
         currentLight = data.light;
@@ -106,16 +140,30 @@ socket.on('player:state', (data) => {
     }
 
     // Transition vers l'écran de jeu si on est en phase PLAYING
-    if (data.gamePhase === 'PLAYING' && screens.game.classList.contains('active') === false
-        && screens.eliminated.classList.contains('active') === false) {
-        elements.gameName.textContent = data.currentGame || 'MINI-JEU';
-        showScreen('game');
-        updateLightUI();
+    if (data.gamePhase === 'PLAYING') {
+        const onGameScreen = screens.game.classList.contains('active')
+            || screens.bridge.classList.contains('active')
+            || screens.bridgeWait.classList.contains('active')
+            || screens.groups.classList.contains('active');
+        const isEliminated = screens.eliminated.classList.contains('active');
+
+        if (!onGameScreen && !isEliminated) {
+            if (currentGameType === 'bridge') {
+                showScreen('bridgeWait');
+            } else if (currentGameType === 'groups') {
+                // Groups screen shown by groupTarget event
+            } else {
+                elements.gameName.textContent = data.currentGame || 'Mini-jeu';
+                showScreen('game');
+                updateLightUI();
+            }
+        }
     }
 
     // Retour au lobby entre les manches
     if (data.gamePhase === 'LOBBY') {
         showScreen('lobby');
+        currentGameType = null;
     }
 });
 
@@ -128,7 +176,6 @@ socket.on('game:lightChange', (data) => {
 // Éliminé !
 socket.on('player:eliminated', () => {
     showScreen('eliminated');
-    // Vibration haptique
     if (navigator.vibrate) {
         navigator.vibrate([200, 100, 200, 100, 400]);
     }
@@ -154,9 +201,130 @@ socket.on('game:victory', (data) => {
 });
 
 // Ligne franchie (1,2,3 Soleil)
-socket.on('player:finished', (data) => {
-    elements.tapHint.textContent = '✅ EN SÉCURITÉ';
+socket.on('player:finished', () => {
+    elements.tapHint.textContent = 'En sécurité';
     elements.tapHint.className = 'tap-hint go';
+});
+
+// ─── Corde : Assignation d'équipe ────────────────────────────
+socket.on('game:teamAssign', (data) => {
+    elements.gameName.textContent = `Jeu de la Corde — Équipe ${data.team}`;
+    elements.tapHint.textContent = 'Tape le plus vite possible !';
+    elements.tapHint.className = 'tap-hint go';
+    showScreen('game');
+});
+
+// ─── Pont de Verre ───────────────────────────────────────────
+socket.on('game:choosePanel', (data) => {
+    elements.bridgeStepNum.textContent = data.step;
+    elements.bridgeTotal.textContent = data.totalSteps;
+    elements.bridgeTimer.textContent = data.timeLimit + 's';
+    showScreen('bridge');
+
+    // Timer countdown
+    let time = data.timeLimit;
+    const interval = setInterval(() => {
+        time--;
+        if (time > 0) {
+            elements.bridgeTimer.textContent = time + 's';
+        } else {
+            clearInterval(interval);
+        }
+    }, 1000);
+});
+
+socket.on('game:bridgeTurn', (data) => {
+    if (screens.bridge.classList.contains('active')) return; // C'est mon tour
+    elements.bridgeCurrentPlayer.textContent = `C'est le tour de ${data.playerName}`;
+    if (!screens.eliminated.classList.contains('active')) {
+        showScreen('bridgeWait');
+    }
+});
+
+socket.on('game:bridgeResult', (data) => {
+    if (data.result === 'safe') {
+        showScreen('bridgeWait');
+        elements.bridgeCurrentPlayer.textContent = 'En sécurité !';
+    }
+});
+
+elements.btnLeft.addEventListener('click', () => {
+    socket.emit('player:input', { type: 'choose', choice: 'left' });
+    elements.btnLeft.style.borderColor = 'var(--rose)';
+    elements.btnRight.disabled = true;
+    elements.btnLeft.disabled = true;
+});
+
+elements.btnRight.addEventListener('click', () => {
+    socket.emit('player:input', { type: 'choose', choice: 'right' });
+    elements.btnRight.style.borderColor = 'var(--rose)';
+    elements.btnLeft.disabled = true;
+    elements.btnRight.disabled = true;
+});
+
+// ─── Jeu du Manège : Choix de groupe ─────────────────────────
+socket.on('game:groupTarget', (data) => {
+    elements.targetSize.textContent = data.targetSize;
+
+    // Générer les boutons de groupe
+    elements.groupsButtons.innerHTML = '';
+    selectedGroup = null;
+    for (let i = 1; i <= data.numGroups; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'btn-group';
+        btn.innerHTML = `${i}<span class="group-count">0 joueurs</span>`;
+        btn.addEventListener('click', () => {
+            selectedGroup = i;
+            socket.emit('player:input', { type: 'chooseGroup', groupId: i });
+            // Highlight selected
+            document.querySelectorAll('.btn-group').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        });
+        elements.groupsButtons.appendChild(btn);
+    }
+
+    elements.groupsTimer.textContent = data.timeLimit + 's';
+    showScreen('groups');
+
+    // Timer
+    let time = data.timeLimit;
+    const interval = setInterval(() => {
+        time--;
+        if (time > 0) {
+            elements.groupsTimer.textContent = time + 's';
+        } else {
+            clearInterval(interval);
+        }
+    }, 1000);
+});
+
+socket.on('game:groupsUpdate', (data) => {
+    // Update group counts
+    const buttons = elements.groupsButtons.querySelectorAll('.btn-group');
+    buttons.forEach((btn, idx) => {
+        const gid = idx + 1;
+        const group = data.groups[gid];
+        if (group) {
+            btn.innerHTML = `${gid}<span class="group-count">${group.count} joueur${group.count > 1 ? 's' : ''}</span>`;
+            if (gid === selectedGroup) btn.classList.add('selected');
+        }
+    });
+});
+
+socket.on('game:groupJoined', (data) => {
+    selectedGroup = data.groupId;
+});
+
+// ─── Duel ────────────────────────────────────────────────────
+socket.on('game:duelStart', (data) => {
+    elements.gameName.textContent = `Duel vs ${data.opponent}`;
+    elements.tapHint.textContent = 'Tape le plus vite possible !';
+    elements.tapHint.className = 'tap-hint go';
+    showScreen('game');
+});
+
+socket.on('game:duelScore', (data) => {
+    // On pourrait afficher le score en temps réel, mais gardons la manette simple
 });
 
 // ─── Contrôles : Tap ─────────────────────────────────────────

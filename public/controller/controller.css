@@ -405,3 +405,137 @@ body {
     color: var(--rose);
     font-variant-numeric: tabular-nums;
 }
+
+/* ── Lobby : Liste des joueurs ────────────────── */
+
+.lobby-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 24px;
+    max-width: 340px;
+}
+
+.lobby-chip {
+    padding: 6px 14px;
+    background: var(--surface);
+    border: 1px solid var(--separator);
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* ── Pont de Verre ────────────────────────────── */
+
+.bridge-choice {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding-top: 80px;
+    height: 100%;
+}
+
+.bridge-prompt {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.bridge-timer {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--rose);
+    font-variant-numeric: tabular-nums;
+}
+
+.bridge-buttons {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    max-width: 340px;
+}
+
+.btn-choice {
+    flex: 1;
+    padding: 32px 16px;
+    font-size: 18px;
+    font-family: var(--font);
+    font-weight: 600;
+    border: 1px solid var(--separator);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.btn-choice:active {
+    transform: scale(0.96);
+    background: var(--surface-raised);
+    border-color: var(--rose);
+}
+
+/* ── Jeu du Manège ────────────────────────────── */
+
+.groups-choice {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding-top: 80px;
+    height: 100%;
+}
+
+.groups-prompt {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.highlight {
+    color: var(--rose);
+    font-weight: 700;
+    font-size: 28px;
+}
+
+.groups-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 340px;
+}
+
+.btn-group {
+    padding: 20px 8px;
+    font-size: 16px;
+    font-family: var(--font);
+    font-weight: 600;
+    border: 1px solid var(--separator);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    text-align: center;
+}
+
+.btn-group.selected {
+    border-color: var(--vert);
+    background: var(--vert-soft);
+    color: var(--vert);
+}
+
+.btn-group .group-count {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+}

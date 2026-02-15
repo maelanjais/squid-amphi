@@ -5,6 +5,10 @@
  */
 
 const RedLightGreenLight = require('./minigames/RedLightGreenLight');
+const TugOfWar = require('./minigames/TugOfWar');
+const GlassBridge = require('./minigames/GlassBridge');
+const GroupGame = require('./minigames/GroupGame');
+const FinalDuel = require('./minigames/FinalDuel');
 
 // Phases du jeu
 const PHASE = {
@@ -18,8 +22,11 @@ const PHASE = {
 
 // Liste ordonnée des mini-jeux
 const MINIGAME_LIST = [
-    { name: '1, 2, 3 Soleil', factory: (gm) => new RedLightGreenLight(gm) }
-    // D'autres mini-jeux seront ajoutés ici
+    { name: '1, 2, 3 Soleil', factory: (gm) => new RedLightGreenLight(gm) },
+    { name: 'Jeu de la Corde', factory: (gm) => new TugOfWar(gm) },
+    { name: 'Pont de Verre', factory: (gm) => new GlassBridge(gm) },
+    { name: 'Jeu du Manège', factory: (gm) => new GroupGame(gm) },
+    { name: 'Duel Final', factory: (gm) => new FinalDuel(gm) }
 ];
 
 class GameManager {
@@ -66,6 +73,9 @@ class GameManager {
         // Notifier l'écran d'affichage
         this.io.to('display').emit('player:add', player);
 
+        // Notifier tous les joueurs de la liste mise à jour
+        this._broadcastPlayerList();
+
         return player;
     }
 
@@ -74,8 +84,17 @@ class GameManager {
         if (player) {
             delete this.players[socketId];
             this.io.to('display').emit('player:remove', { id: socketId });
+            this._broadcastPlayerList();
         }
         return player;
+    }
+
+    _broadcastPlayerList() {
+        const list = Object.values(this.players).map(p => ({
+            username: p.username,
+            color: p.color
+        }));
+        this.io.emit('lobby:players', { players: list, count: list.length });
     }
 
     getPlayers() {
@@ -139,7 +158,7 @@ class GameManager {
             this.phase = PHASE.VICTORY;
             const winner = this.getAlivePlayers()[0];
             console.log(`[Game] 🏆 ${winner ? winner.username : 'Personne'} a gagné !`);
-            this.io.to('display').emit('game:victory', {
+            this.io.emit('game:victory', {
                 winner: winner || null
             });
             return;
@@ -154,7 +173,7 @@ class GameManager {
 
         console.log(`[Game] ⏳ Prochain jeu : ${nextGame.name} (Manche ${this.roundNumber})`);
 
-        this.io.to('display').emit('game:countdown', {
+        this.io.emit('game:countdown', {
             gameName: nextGame.name,
             roundNumber: this.roundNumber,
             duration: 5

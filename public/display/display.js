@@ -416,18 +416,63 @@ function updateUI() {
 
     if (gameState.phase === 'PLAYING') {
         hideAllOverlays();
+        const gd = gameState.gameData;
 
-        // Afficher les lignes pour 1,2,3 Soleil
-        if (gameState.gameData) {
-            if (finishLine) finishLine.setVisible(true);
-            if (scene?.finishText) scene.finishText.setVisible(true);
-            if (scene?.startLine) scene.startLine.setVisible(true);
+        if (gd) {
+            const gameType = gd.type || '';
 
-            ui.lightDisplay.classList.remove('hidden');
-            updateLight(gameState.gameData.light);
+            // 1,2,3 Soleil
+            if (gd.light !== undefined) {
+                if (finishLine) finishLine.setVisible(true);
+                if (scene?.finishText) scene.finishText.setVisible(true);
+                if (scene?.startLine) scene.startLine.setVisible(true);
+                ui.lightDisplay.classList.remove('hidden');
+                updateLight(gd.light);
+            } else {
+                if (finishLine) finishLine.setVisible(false);
+                if (scene?.finishText) scene.finishText.setVisible(false);
+                if (scene?.startLine) scene.startLine.setVisible(false);
+            }
 
-            if (gameState.gameData.timeRemaining !== undefined) {
-                ui.timerDisplay.textContent = gameState.gameData.timeRemaining + 's';
+            // Tug of War — rope position as light indicator
+            if (gameType === 'tugofwar') {
+                ui.lightDisplay.classList.remove('hidden');
+                const pos = gd.ropePosition || 0;
+                const pct = Math.round((pos / gd.threshold) * 100);
+                ui.lightText.textContent = `Corde : ${pct > 0 ? '+' : ''}${pct}%`;
+                ui.lightText.className = 'light-text ' + (pos <= 0 ? 'green' : 'red');
+                ui.lightCircle.className = 'light-circle ' + (pos <= 0 ? 'green' : 'red');
+            }
+
+            // Glass Bridge — current player info
+            if (gameType === 'glassbridge') {
+                ui.lightDisplay.classList.remove('hidden');
+                ui.lightText.textContent = gd.currentPlayerName
+                    ? `Tour de ${gd.currentPlayerName} — Étape ${gd.currentStep}/${gd.totalSteps}`
+                    : 'Attente...';
+                ui.lightText.className = 'light-text green';
+                ui.lightCircle.className = 'light-circle green';
+            }
+
+            // Group Game
+            if (gameType === 'groupgame') {
+                ui.lightDisplay.classList.remove('hidden');
+                ui.lightText.textContent = `Groupes de ${gd.targetSize} — Manche ${gd.round}/${gd.totalRounds}`;
+                ui.lightText.className = 'light-text';
+                ui.lightCircle.className = 'light-circle green';
+            }
+
+            // Final Duel
+            if (gameType === 'finalduel' && gd.currentDuel) {
+                ui.lightDisplay.classList.remove('hidden');
+                const d = gd.currentDuel;
+                ui.lightText.textContent = `${d.nameA} (${d.tapsA}) vs ${d.nameB} (${d.tapsB})`;
+                ui.lightText.className = 'light-text';
+                ui.lightCircle.className = 'light-circle green';
+            }
+
+            if (gd.timeRemaining !== undefined) {
+                ui.timerDisplay.textContent = gd.timeRemaining + 's';
             }
         }
     }

@@ -170,6 +170,7 @@ class RedLightGreenLight {
 
     getState() {
         return {
+            type: 'redlightgreenlight',
             light: this.light,
             timeRemaining: Math.max(0, Math.ceil((this.maxGameTicks - this.gameTimer) / TICK_RATE)),
             finishLine: CONFIG.FINISH_LINE,
