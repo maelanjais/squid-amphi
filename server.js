@@ -64,6 +64,11 @@ io.on('connection', (socket) => {
         gameManager.handleInput(socket.id, data);
     });
 
+    // ── Logs client ──
+    socket.on('client:error', (data) => {
+        console.error(`[Client Error] ${socket.id} (${data.ua}): ${data.msg} @ ${data.url}:${data.line}`);
+    });
+
     // ── Admin : lancer la partie ──
     socket.on('admin:start', () => {
         console.log(`[Admin] Bouton START pressé — ${gameManager.getPlayerCount()} joueurs, phase: ${gameManager.phase}`);
@@ -88,24 +93,29 @@ io.on('connection', (socket) => {
 
 // ─── Game Loop (20 ticks/sec) ────────────────────────────────
 const TICK_RATE = 20;
+
 setInterval(() => {
-    gameManager.update();
+    try {
+        gameManager.update();
 
-    // Envoyer l'état du jeu à l'écran d'affichage
-    const state = gameManager.getFullState();
-    io.to('display').emit('game:state', state);
+        // Envoyer l'état du jeu à l'écran d'affichage
+        const state = gameManager.getFullState();
+        io.to('display').emit('game:state', state);
 
-    // Envoyer le feedback individuel à chaque joueur
-    const players = gameManager.getPlayers();
-    for (const [socketId, player] of Object.entries(players)) {
-        io.to(socketId).emit('player:state', {
-            alive: player.alive,
-            position: player.position,
-            score: player.score,
-            gamePhase: state.phase,
-            currentGame: state.currentGame,
-            light: state.gameData?.light // pour 1,2,3 Soleil
-        });
+        // Envoyer le feedback individuel à chaque joueur
+        const players = gameManager.getPlayers();
+        for (const [socketId, player] of Object.entries(players)) {
+            io.to(socketId).emit('player:state', {
+                alive: player.alive,
+                position: player.position,
+                score: player.score,
+                gamePhase: state.phase,
+                currentGame: state.currentGame,
+                light: state.gameData?.light // pour 1,2,3 Soleil
+            });
+        }
+    } catch (error) {
+        console.error('[GameLoop Error]', error);
     }
 }, 1000 / TICK_RATE);
 

@@ -6,6 +6,17 @@
 // ─── Connexion Socket.io ─────────────────────────────────────
 const socket = io();
 
+// ─── Gestion des erreurs globale ─────────────────────────────
+window.onerror = function (msg, url, lineNo, columnNo, error) {
+    socket.emit('client:error', {
+        msg: msg,
+        url: url,
+        line: lineNo,
+        ua: navigator.userAgent
+    });
+    return false;
+};
+
 // ─── Éléments DOM ────────────────────────────────────────────
 const screens = {
     join: document.getElementById('screen-join'),
