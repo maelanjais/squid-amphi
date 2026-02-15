@@ -1,0 +1,17 @@
+{
+  "name": "squid-amphi",
+  "version": "1.0.0",
+  "description": "Squid Amphi - Jeu massivement multijoueur colocalisé inspiré de Squid Game",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": ["game", "multiplayer", "squid-game", "socket.io", "phaser"],
+  "author": "JAHIER Maëlan, GRILLOT Thomas, SALLE-PIERRET Maxence",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.0",
+    "socket.io": "^4.7.5"
+  }
+}

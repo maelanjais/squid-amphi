@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>Squid Amphi</title>
+    <link rel="stylesheet" href="controller.css">
+</head>
+
+<body>
+    <!-- Écran de connexion -->
+    <div id="screen-join" class="screen active">
+        <div class="logo">
+            <div class="logo-icon">🦑</div>
+            <h1>SQUID<br>AMPHI</h1>
+        </div>
+        <div class="join-form">
+            <input type="text" id="input-username" placeholder="Pseudo" maxlength="15" autocomplete="off"
+                autocapitalize="off">
+            <button id="btn-join" class="btn-primary">Rejoindre</button>
+        </div>
+        <p class="hint">Entre ton pseudo pour rejoindre la partie</p>
+    </div>
+
+    <!-- Lobby -->
+    <div id="screen-lobby" class="screen">
+        <div class="status-bar">
+            <span id="player-name" class="player-name"></span>
+            <span class="status-dot live"></span>
+        </div>
+        <div class="waiting">
+            <div class="spinner"></div>
+            <h2>En attente</h2>
+            <p>La partie va bientôt commencer</p>
+        </div>
+    </div>
+
+    <!-- Jeu (manette) -->
+    <div id="screen-game" class="screen">
+        <div class="status-bar">
+            <span id="game-name" class="game-title"></span>
+            <span id="game-light" class="light-indicator"></span>
+        </div>
+        <div id="control-tap" class="control-zone">
+            <div class="tap-area" id="tap-area">
+                <div class="tap-feedback" id="tap-feedback"></div>
+                <p class="tap-hint" id="tap-hint">Tapote pour avancer</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Éliminé -->
+    <div id="screen-eliminated" class="screen">
+        <div class="eliminated-content">
+            <div class="skull">✕</div>
+            <h2>ÉLIMINÉ</h2>
+            <p>Regarde l'écran principal</p>
+        </div>
+    </div>
+
+    <!-- Victoire -->
+    <div id="screen-victory" class="screen">
+        <div class="victory-content">
+            <div class="trophy">●</div>
+            <h2>VICTOIRE</h2>
+            <p id="victory-message"></p>
+        </div>
+    </div>
+
+    <!-- Countdown -->
+    <div id="screen-countdown" class="screen">
+        <div class="countdown-content">
+            <h2 id="countdown-game-name"></h2>
+            <div class="countdown-number" id="countdown-number">5</div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="controller.js"></script>
+</body>
+
+</html>

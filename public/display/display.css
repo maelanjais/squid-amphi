@@ -1,0 +1,370 @@
+/* ═══════════════════════════════════════════════════
+   SQUID AMPHI — Écran Géant (Projecteur)
+   Palette : Rose #FF007F · Vert #00FF85 · Noir/Gris
+   Style : Minimaliste Apple Dark Mode, haute lisibilité
+   ═══════════════════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --rose: #FF007F;
+    --rose-soft: rgba(255, 0, 127, 0.10);
+    --vert: #00FF85;
+    --vert-soft: rgba(0, 255, 133, 0.08);
+    --rouge: #FF3B30;
+
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --surface-raised: #2c2c2e;
+    --separator: rgba(255, 255, 255, 0.08);
+    --glass: rgba(28, 28, 30, 0.72);
+
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.55);
+    --text-tertiary: rgba(255, 255, 255, 0.30);
+
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-xl: 28px;
+
+    --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+html,
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text-primary);
+    cursor: default;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Phaser Container ─────────────────────────── */
+
+#game-container {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+#game-container canvas {
+    display: block;
+    width: 100vw !important;
+    height: 100vh !important;
+}
+
+/* ── UI Overlay ───────────────────────────────── */
+
+#ui-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+}
+
+#ui-overlay * {
+    pointer-events: auto;
+}
+
+/* ── Top Bar ──────────────────────────────────── */
+
+#top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+    z-index: 20;
+}
+
+#game-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.label {
+    padding: 5px 14px;
+    background: var(--rose);
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.game-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+#player-count {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+#alive-count {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--vert);
+    font-variant-numeric: tabular-nums;
+}
+
+.count-label {
+    font-size: 16px;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+/* ── Overlays ─────────────────────────────────── */
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 15;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.overlay.active {
+    display: flex;
+}
+
+/* ── Lobby ────────────────────────────────────── */
+
+.logo-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+}
+
+.logo-squid {
+    font-size: 80px;
+}
+
+.logo-display h1 {
+    font-size: 72px;
+    font-weight: 700;
+    letter-spacing: 10px;
+    line-height: 1.1;
+    color: var(--text-primary);
+}
+
+.subtitle {
+    font-size: 18px;
+    color: var(--text-secondary);
+    font-weight: 400;
+    margin-top: 12px;
+}
+
+.server-url {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--vert);
+    padding: 14px 32px;
+    background: var(--surface);
+    border: 1px solid var(--separator);
+    border-radius: var(--radius-md);
+    letter-spacing: 0.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.lobby-players {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-top: 12px;
+}
+
+#lobby-count {
+    color: var(--rose);
+    font-weight: 700;
+    font-size: 24px;
+}
+
+.btn-start {
+    margin-top: 28px;
+    padding: 16px 40px;
+    font-size: 18px;
+    font-family: var(--font);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    background: var(--rose);
+    border: none;
+    border-radius: var(--radius-md);
+    color: #fff;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.btn-start:hover {
+    opacity: 0.88;
+}
+
+.btn-start:active {
+    opacity: 0.7;
+    transform: scale(0.98);
+}
+
+/* ── Countdown ────────────────────────────────── */
+
+.countdown-display {
+    text-align: center;
+}
+
+.countdown-display h2 {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    text-transform: uppercase;
+}
+
+.countdown-big {
+    font-size: 160px;
+    font-weight: 700;
+    color: var(--rose);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+/* ── Round End ────────────────────────────────── */
+
+.roundend-display {
+    text-align: center;
+    padding: 48px 60px;
+    background: var(--glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--separator);
+}
+
+.roundend-display h2 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.roundend-display p {
+    font-size: 24px;
+    color: var(--vert);
+    font-weight: 600;
+}
+
+/* ── Victory ──────────────────────────────────── */
+
+.victory-display {
+    text-align: center;
+    padding: 48px 60px;
+    background: var(--glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--separator);
+}
+
+.victory-icon {
+    font-size: 100px;
+    margin-bottom: 8px;
+}
+
+.victory-display h2 {
+    font-size: 52px;
+    font-weight: 700;
+    letter-spacing: 8px;
+    color: var(--vert);
+    margin-bottom: 12px;
+}
+
+.victory-display p {
+    font-size: 24px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* ── Light Indicator (1,2,3 Soleil) ───────────── */
+
+.light-display {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 32px;
+    background: var(--glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 100px;
+    border: 1px solid var(--separator);
+}
+
+.light-display.hidden {
+    display: none;
+}
+
+.light-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    transition: background 0.25s ease;
+}
+
+.light-circle.green {
+    background: var(--vert);
+}
+
+.light-circle.red {
+    background: var(--rouge);
+}
+
+.light-text {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    transition: color 0.25s ease;
+}
+
+.light-text.green {
+    color: var(--vert);
+}
+
+.light-text.red {
+    color: var(--rouge);
+}
+
+.timer {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 40px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}

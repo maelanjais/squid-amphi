@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squid Amphi — Affichage</title>
+    <link rel="stylesheet" href="display.css">
+</head>
+
+<body>
+    <!-- UI par-dessus le canvas Phaser -->
+    <div id="ui-overlay">
+        <div id="top-bar">
+            <div id="game-info">
+                <span id="round-label" class="label">LOBBY</span>
+                <span id="game-name" class="game-name"></span>
+            </div>
+            <div id="player-count">
+                <span id="alive-count">0</span>
+                <span class="count-label">/ <span id="total-count">0</span> joueurs</span>
+            </div>
+        </div>
+
+        <!-- Lobby -->
+        <div id="overlay-lobby" class="overlay active">
+            <div class="logo-display">
+                <div class="logo-squid">🦑</div>
+                <h1>SQUID<br>AMPHI</h1>
+                <p class="subtitle">Rejoignez la partie sur</p>
+                <div id="server-url" class="server-url"></div>
+                <div class="lobby-players">
+                    <span id="lobby-count">0</span> joueur(s) connecté(s)
+                </div>
+                <button id="btn-start" class="btn-start">Lancer la partie</button>
+            </div>
+        </div>
+
+        <!-- Countdown -->
+        <div id="overlay-countdown" class="overlay">
+            <div class="countdown-display">
+                <h2 id="countdown-title">Prochain jeu</h2>
+                <div id="countdown-num" class="countdown-big">5</div>
+            </div>
+        </div>
+
+        <!-- Fin de manche -->
+        <div id="overlay-roundend" class="overlay">
+            <div class="roundend-display">
+                <h2>Manche terminée</h2>
+                <p><span id="roundend-alive">0</span> survivants</p>
+            </div>
+        </div>
+
+        <!-- Victoire -->
+        <div id="overlay-victory" class="overlay">
+            <div class="victory-display">
+                <div class="victory-icon">🏆</div>
+                <h2>Victoire</h2>
+                <p id="victory-winner"></p>
+            </div>
+        </div>
+
+        <!-- Indicateur de feu -->
+        <div id="light-display" class="light-display hidden">
+            <div id="light-circle" class="light-circle green"></div>
+            <span id="light-text" class="light-text">Feu vert</span>
+            <span id="timer-display" class="timer">60s</span>
+        </div>
+    </div>
+
+    <div id="game-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="display.js"></script>
+</body>
+
+</html>
