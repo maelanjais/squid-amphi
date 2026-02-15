@@ -371,3 +371,8 @@ function sendTap(event) {
 // Empêcher le zoom et le scroll sur mobile
 document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 document.addEventListener('gesturestart', (e) => e.preventDefault());
+
+// Reset de la partie
+socket.on('game:reset', () => {
+    window.location.reload();
+});
