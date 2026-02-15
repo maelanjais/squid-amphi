@@ -21,7 +21,7 @@ const CONFIG = {
     RED_MIN_DURATION: 2,        // Durée min du feu rouge (secondes)
     RED_MAX_DURATION: 5,        // Durée max du feu rouge (secondes)
     GRACE_PERIOD: 0.5,          // Délai de grâce après changement (secondes)
-    GAME_DURATION: 60,          // Durée max du jeu (secondes)
+    GAME_DURATION: 90,          // Durée max du jeu (secondes)
     ELIMINATE_PERCENT: 0.5      // % de joueurs à éliminer si le temps expire
 };
 

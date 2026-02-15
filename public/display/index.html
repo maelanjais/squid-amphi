@@ -25,79 +25,30 @@
             </div>
         </div>
 
-        <!-- Lobby -->
+        <!-- Lobby (sans la poupée — elle apparaît pendant 1,2,3 Soleil) -->
         <div id="overlay-lobby" class="overlay active">
-            <div class="lobby-layout">
-                <!-- Colonne gauche : Poupée Squid Game -->
-                <div class="doll-container">
-                    <svg class="doll-svg" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Cheveux -->
-                        <ellipse cx="100" cy="65" rx="52" ry="55" fill="#1a1a1a" />
-                        <!-- Visage -->
-                        <circle cx="100" cy="72" r="42" fill="#f5d4b3" />
-                        <!-- Yeux -->
-                        <circle cx="85" cy="66" r="7" fill="#1a1a1a" />
-                        <circle cx="115" cy="66" r="7" fill="#1a1a1a" />
-                        <circle cx="87" cy="64" r="2.5" fill="#ffffff" />
-                        <circle cx="117" cy="64" r="2.5" fill="#ffffff" />
-                        <!-- Nez -->
-                        <ellipse cx="100" cy="78" rx="3" ry="2" fill="#d4a574" />
-                        <!-- Bouche -->
-                        <path d="M92 88 Q100 95 108 88" stroke="#c44" fill="none" stroke-width="2"
-                            stroke-linecap="round" />
-                        <!-- Couettes -->
-                        <rect x="38" y="38" width="14" height="50" rx="7" fill="#1a1a1a" />
-                        <rect x="148" y="38" width="14" height="50" rx="7" fill="#1a1a1a" />
-                        <circle cx="45" cy="90" r="10" fill="#1a1a1a" />
-                        <circle cx="155" cy="90" r="10" fill="#1a1a1a" />
-                        <!-- Élastiques cheveux -->
-                        <circle cx="45" cy="42" r="5" fill="#FF007F" />
-                        <circle cx="155" cy="42" r="5" fill="#FF007F" />
-                        <!-- Robe -->
-                        <path d="M65 110 L55 260 L145 260 L135 110 Z" fill="#FF9500" />
-                        <!-- Col blanc -->
-                        <rect x="80" y="108" width="40" height="12" rx="3" fill="#ffffff" />
-                        <!-- Ceinture -->
-                        <rect x="60" y="175" width="80" height="6" rx="3" fill="#cc7700" />
-                        <!-- Bras -->
-                        <rect x="48" y="120" width="14" height="60" rx="7" fill="#f5d4b3" />
-                        <rect x="138" y="120" width="14" height="60" rx="7" fill="#f5d4b3" />
-                        <!-- Jambes -->
-                        <rect x="72" y="255" width="16" height="70" rx="6" fill="#f5d4b3" />
-                        <rect x="112" y="255" width="16" height="70" rx="6" fill="#f5d4b3" />
-                        <!-- Chaussettes -->
-                        <rect x="72" y="295" width="16" height="20" rx="4" fill="#ffffff" />
-                        <rect x="112" y="295" width="16" height="20" rx="4" fill="#ffffff" />
-                        <!-- Chaussures -->
-                        <ellipse cx="80" cy="330" rx="14" ry="8" fill="#1a1a1a" />
-                        <ellipse cx="120" cy="330" rx="14" ry="8" fill="#1a1a1a" />
-                    </svg>
+            <div class="lobby-card">
+                <!-- Formes Squid Game -->
+                <div class="shapes-row">
+                    <div class="shape circle"></div>
+                    <div class="shape triangle"></div>
+                    <div class="shape square"></div>
                 </div>
 
-                <!-- Colonne droite : Infos -->
-                <div class="lobby-card">
-                    <!-- Formes Squid Game -->
-                    <div class="shapes-row">
-                        <div class="shape circle"></div>
-                        <div class="shape triangle"></div>
-                        <div class="shape square"></div>
-                    </div>
+                <h1 class="title">squid<br>amphi</h1>
 
-                    <h1 class="title">squid<br>amphi</h1>
+                <p class="join-label">Scanne pour rejoindre</p>
+                <img id="qr-code" class="qr-img" alt="QR Code" />
+                <div id="server-url" class="url-box"></div>
 
-                    <p class="join-label">Scanne pour rejoindre</p>
-                    <div id="qr-container" class="qr-box"></div>
-                    <div id="server-url" class="url-box"></div>
+                <div class="lobby-meta">
+                    <span id="lobby-count" class="meta-count">0</span>
+                    <span class="meta-label">connecté(s)</span>
+                </div>
 
-                    <div class="lobby-meta">
-                        <span id="lobby-count" class="meta-count">0</span>
-                        <span class="meta-label">connecté(s)</span>
-                    </div>
-
-                    <div class="lobby-actions">
-                        <button id="btn-start" class="btn-primary">Lancer</button>
-                        <button id="btn-reset" class="btn-ghost">Réinitialiser</button>
-                    </div>
+                <div class="lobby-actions">
+                    <button id="btn-start" class="btn-primary">Lancer</button>
+                    <button id="btn-reset" class="btn-ghost">Réinitialiser</button>
                 </div>
             </div>
         </div>
@@ -132,6 +83,51 @@
             </div>
         </div>
 
+        <!-- Poupée Young-hee (visible uniquement pendant 1,2,3 Soleil) -->
+        <div id="doll-overlay" class="doll-game-container hidden">
+            <svg class="doll-svg" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">
+                <!-- Cheveux -->
+                <ellipse cx="100" cy="65" rx="52" ry="55" fill="#1a1a1a" />
+                <!-- Visage -->
+                <circle cx="100" cy="72" r="42" fill="#f5d4b3" />
+                <!-- Yeux -->
+                <circle cx="85" cy="66" r="7" fill="#1a1a1a" />
+                <circle cx="115" cy="66" r="7" fill="#1a1a1a" />
+                <circle cx="87" cy="64" r="2.5" fill="#ffffff" />
+                <circle cx="117" cy="64" r="2.5" fill="#ffffff" />
+                <!-- Nez -->
+                <ellipse cx="100" cy="78" rx="3" ry="2" fill="#d4a574" />
+                <!-- Bouche -->
+                <path d="M92 88 Q100 95 108 88" stroke="#c44" fill="none" stroke-width="2" stroke-linecap="round" />
+                <!-- Couettes -->
+                <rect x="38" y="38" width="14" height="50" rx="7" fill="#1a1a1a" />
+                <rect x="148" y="38" width="14" height="50" rx="7" fill="#1a1a1a" />
+                <circle cx="45" cy="90" r="10" fill="#1a1a1a" />
+                <circle cx="155" cy="90" r="10" fill="#1a1a1a" />
+                <!-- Élastiques cheveux -->
+                <circle cx="45" cy="42" r="5" fill="#FF007F" />
+                <circle cx="155" cy="42" r="5" fill="#FF007F" />
+                <!-- Robe -->
+                <path d="M65 110 L55 260 L145 260 L135 110 Z" fill="#FF9500" />
+                <!-- Col blanc -->
+                <rect x="80" y="108" width="40" height="12" rx="3" fill="#ffffff" />
+                <!-- Ceinture -->
+                <rect x="60" y="175" width="80" height="6" rx="3" fill="#cc7700" />
+                <!-- Bras -->
+                <rect x="48" y="120" width="14" height="60" rx="7" fill="#f5d4b3" />
+                <rect x="138" y="120" width="14" height="60" rx="7" fill="#f5d4b3" />
+                <!-- Jambes -->
+                <rect x="72" y="255" width="16" height="70" rx="6" fill="#f5d4b3" />
+                <rect x="112" y="255" width="16" height="70" rx="6" fill="#f5d4b3" />
+                <!-- Chaussettes -->
+                <rect x="72" y="295" width="16" height="20" rx="4" fill="#ffffff" />
+                <rect x="112" y="295" width="16" height="20" rx="4" fill="#ffffff" />
+                <!-- Chaussures -->
+                <ellipse cx="80" cy="330" rx="14" ry="8" fill="#1a1a1a" />
+                <ellipse cx="120" cy="330" rx="14" ry="8" fill="#1a1a1a" />
+            </svg>
+        </div>
+
         <!-- Indicateur de jeu (feu / info) -->
         <div id="light-display" class="game-hud hidden">
             <div id="light-circle" class="hud-dot green"></div>
@@ -145,8 +141,6 @@
 
     <div id="game-container"></div>
 
-    <!-- QR Code library -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="display.js"></script>

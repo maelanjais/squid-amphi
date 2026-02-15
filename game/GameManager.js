@@ -22,16 +22,30 @@ const PHASE = {
     VICTORY: 'VICTORY'
 };
 
-// Liste ordonnée des mini-jeux
-const MINIGAME_LIST = [
+// Jeux à mélanger aléatoirement
+const SHUFFLEABLE_GAMES = [
     { name: '1, 2, 3 Soleil', factory: (gm) => new RedLightGreenLight(gm) },
     { name: 'Dalgona', factory: (gm) => new Dalgona(gm) },
     { name: 'Jeu de la Corde', factory: (gm) => new TugOfWar(gm) },
     { name: 'Billes', factory: (gm) => new Marbles(gm) },
+    { name: 'Jeu du Manège', factory: (gm) => new GroupGame(gm) }
+];
+
+// Jeux fixes en fin de partie (dans l'ordre)
+const FIXED_END_GAMES = [
     { name: 'Pont de Verre', factory: (gm) => new GlassBridge(gm) },
-    { name: 'Jeu du Manège', factory: (gm) => new GroupGame(gm) },
     { name: 'Duel Final', factory: (gm) => new FinalDuel(gm) }
 ];
+
+// Fonction de mélange Fisher-Yates
+function shuffle(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
 
 class GameManager {
     constructor(io) {
@@ -43,6 +57,7 @@ class GameManager {
         this.countdownTimer = 0;
         this.eliminationTimer = 0;
         this.roundNumber = 0;
+        this.gameList = [];       // Ordre des jeux pour cette partie
     }
 
     // ── Gestion des joueurs ─────────────────────────────────
@@ -169,7 +184,10 @@ class GameManager {
             return;
         }
 
+        // Mélanger les jeux aléatoirement, sauf Pont de Verre (avant-dernier) et Duel Final (dernier)
+        this.gameList = [...shuffle(SHUFFLEABLE_GAMES), ...FIXED_END_GAMES];
         console.log(`[Game] 🎮 Partie lancée avec ${this.getPlayerCount()} joueurs !`);
+        console.log(`[Game] Ordre des jeux : ${this.gameList.map(g => g.name).join(' → ')}`);
         this.roundNumber = 0;
         this.nextRound();
     }
@@ -179,7 +197,7 @@ class GameManager {
         this.roundNumber++;
 
         // Vérifier victoire
-        if (this.getAliveCount() <= 1 || this.currentGameIndex >= MINIGAME_LIST.length) {
+        if (this.getAliveCount() <= 1 || this.currentGameIndex >= this.gameList.length) {
             this.phase = PHASE.VICTORY;
             const winner = this.getAlivePlayers()[0];
             console.log(`[Game] 🏆 ${winner ? winner.username : 'Personne'} a gagné !`);
@@ -193,7 +211,7 @@ class GameManager {
         this.phase = PHASE.COUNTDOWN;
         this.countdownTimer = 5 * 20; // 5 secondes à 20 ticks/s
 
-        const nextGame = MINIGAME_LIST[this.currentGameIndex];
+        const nextGame = this.gameList[this.currentGameIndex];
         this.currentMinigame = nextGame.factory(this);
 
         console.log(`[Game] ⏳ Prochain jeu : ${nextGame.name} (Manche ${this.roundNumber})`);

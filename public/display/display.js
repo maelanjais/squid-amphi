@@ -271,7 +271,7 @@ const ui = {
     totalCount: document.getElementById('total-count'),
     lobbyCount: document.getElementById('lobby-count'),
     serverUrl: document.getElementById('server-url'),
-    qrContainer: document.getElementById('qr-container'),
+    qrCode: document.getElementById('qr-code'),
     btnStart: document.getElementById('btn-start'),
     btnReset: document.getElementById('btn-reset'),
     btnResetVictory: document.getElementById('btn-reset-victory'),
@@ -283,7 +283,8 @@ const ui = {
     lightDisplay: document.getElementById('light-display'),
     lightCircle: document.getElementById('light-circle'),
     lightText: document.getElementById('light-text'),
-    timerDisplay: document.getElementById('timer-display')
+    timerDisplay: document.getElementById('timer-display'),
+    dollOverlay: document.getElementById('doll-overlay')
 };
 
 function showOverlay(name) {
@@ -298,22 +299,10 @@ function hideAllOverlays() {
     }
 }
 
-// Afficher l'URL du serveur
+// Afficher l'URL du serveur + QR code via API
 const controllerUrl = window.location.origin + '/controller';
 ui.serverUrl.textContent = controllerUrl;
-
-// Générer le QR Code
-if (typeof QRCode !== 'undefined' && ui.qrContainer) {
-    QRCode.toCanvas(controllerUrl, {
-        width: 180,
-        margin: 0,
-        color: { dark: '#000000', light: '#ffffff' }
-    }, (err, canvas) => {
-        if (!err && canvas) {
-            ui.qrContainer.appendChild(canvas);
-        }
-    });
-}
+ui.qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(controllerUrl)}&bgcolor=ffffff&color=000000`;
 
 // ─── Boutons ─────────────────────────────────────────────────
 ui.btnStart.addEventListener('click', () => {
@@ -451,6 +440,7 @@ function updateUI() {
         ui.roundLabel.textContent = 'lobby';
         ui.lightDisplay.classList.add('hidden');
         ui.btnEndGame.classList.add('hidden');
+        ui.dollOverlay.classList.add('hidden');
 
         if (finishLine) finishLine.setVisible(false);
         if (scene?.finishText) scene.finishText.setVisible(false);
@@ -465,17 +455,19 @@ function updateUI() {
         if (gd) {
             const gameType = gd.type || '';
 
-            // Red Light Green Light
+            // Red Light Green Light — avec poupée
             if (gd.light !== undefined && gameType === 'redlightgreenlight') {
                 if (finishLine) finishLine.setVisible(true);
                 if (scene?.finishText) scene.finishText.setVisible(true);
                 if (scene?.startLine) scene.startLine.setVisible(true);
                 ui.lightDisplay.classList.remove('hidden');
+                ui.dollOverlay.classList.remove('hidden');
                 updateLight(gd.light);
             } else {
                 if (finishLine) finishLine.setVisible(false);
                 if (scene?.finishText) scene.finishText.setVisible(false);
                 if (scene?.startLine) scene.startLine.setVisible(false);
+                ui.dollOverlay.classList.add('hidden');
             }
 
             // Dalgona
