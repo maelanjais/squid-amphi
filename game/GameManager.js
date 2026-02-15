@@ -296,7 +296,7 @@ class GameManager {
         return {
             phase: this.phase,
             roundNumber: this.roundNumber,
-            currentGame: this.currentMinigame ? MINIGAME_LIST[this.currentGameIndex]?.name : null,
+            currentGame: this.currentMinigame && this.gameList[this.currentGameIndex] ? this.gameList[this.currentGameIndex].name : null,
             playerCount: this.getPlayerCount(),
             aliveCount: this.getAliveCount(),
             players: Object.values(this.players).map(p => ({

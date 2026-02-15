@@ -66,11 +66,8 @@ class Marbles {
         this.currentPairIndex++;
 
         if (this.currentPairIndex >= this.pairs.length) {
-            if (this.gm.getAliveCount() > 1) {
-                this._setupPairs();
-            } else {
-                this._endGame();
-            }
+            // Tous les duels sont terminés — fin du mini-jeu
+            this._endGame();
             return;
         }
 
