@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🦑 Squid Amphi — Grand Écran</title>
+  <meta name="description" content="Squid Amphi — Jeu multijoueur pour amphithéâtre">
+  <link rel="stylesheet" href="/css/display.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Lobby Screen -->
+  <div id="lobby-screen" class="screen active">
+    <div class="lobby-container">
+      <div class="logo-section">
+        <div class="squid-shapes">
+          <div class="shape circle"></div>
+          <div class="shape triangle"></div>
+          <div class="shape square"></div>
+        </div>
+        <h1 class="game-title">SQUID<br><span>AMPHI</span></h1>
+        <p class="tagline">50 JOUEURS. 1 SEUL SURVIVANT.</p>
+      </div>
+      <div class="join-section">
+        <div class="qr-placeholder" id="qr-code">
+          <p class="join-url" id="join-url">Chargement...</p>
+        </div>
+        <p class="join-instruction">Scannez le QR code ou allez sur</p>
+        <p class="join-url-big" id="join-url-display"></p>
+      </div>
+      <div class="players-section">
+        <div class="player-count">
+          <span id="player-count-num">0</span>
+          <span class="player-count-label">JOUEURS</span>
+        </div>
+        <div class="player-list" id="player-list"></div>
+      </div>
+      <button class="btn-start" id="btn-start" style="display:none;">
+        COMMENCER LE JEU
+      </button>
+    </div>
+  </div>
+
+  <!-- Countdown Screen -->
+  <div id="countdown-screen" class="screen">
+    <div class="countdown-container">
+      <p class="game-name" id="game-name"></p>
+      <div class="countdown-number" id="countdown-number">5</div>
+      <p class="game-players" id="game-players"></p>
+    </div>
+  </div>
+
+  <!-- Game Canvas -->
+  <div id="game-screen" class="screen">
+    <canvas id="game-canvas"></canvas>
+    <div class="game-hud">
+      <div class="hud-left">
+        <span class="hud-game-name" id="hud-game-name"></span>
+        <span class="hud-game-progress" id="hud-game-progress"></span>
+      </div>
+      <div class="hud-center" id="hud-center"></div>
+      <div class="hud-right">
+        <span class="hud-alive" id="hud-alive"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transition Screen -->
+  <div id="transition-screen" class="screen">
+    <div class="transition-container">
+      <div class="eliminated-icon">☠️</div>
+      <p class="eliminated-count" id="eliminated-count"></p>
+      <p class="remaining-count" id="remaining-count"></p>
+      <p class="next-game" id="next-game"></p>
+    </div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="gameover-screen" class="screen">
+    <div class="gameover-container">
+      <div class="crown">👑</div>
+      <h1 class="winner-title">VICTOIRE !</h1>
+      <div class="winner-name" id="winner-name"></div>
+      <div class="confetti-container" id="confetti"></div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/display/renderer.js"></script>
+  <script src="/display/display.js"></script>
+</body>
+</html>

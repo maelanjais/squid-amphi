@@ -1,0 +1,511 @@
+/* ============================================
+   SQUID AMPHI — Controller (Phone) Stylesheet
+   Mobile-first, touch-optimized
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap');
+
+:root {
+  --bg: #0f0f1e;
+  --bg-light: #1a1a2e;
+  --pink: #e91e82;
+  --pink-glow: #ff2d95;
+  --teal: #00d4aa;
+  --teal-glow: #00ffcc;
+  --red: #ff3b3b;
+  --green: #39e75f;
+  --gold: #ffd700;
+  --white: #f0f0f0;
+  --gray: #8892a4;
+  --font: 'Outfit', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--white);
+  overflow: hidden;
+  width: 100vw;
+  height: 100dvh;
+  touch-action: none;
+}
+
+.ctrl-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.ctrl-screen.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* =============== JOIN =============== */
+.join-container {
+  text-align: center;
+  padding: 40px 24px;
+}
+
+.mini-shapes {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.s-circle, .s-triangle, .s-square {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--pink);
+}
+.s-circle { border-radius: 50%; }
+.s-triangle {
+  width: 0; height: 0;
+  border: none;
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-bottom: 24px solid var(--pink);
+}
+.s-square { border-radius: 3px; }
+
+.ctrl-title {
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  line-height: 1.1;
+  background: linear-gradient(135deg, var(--pink) 0%, var(--teal) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 40px;
+}
+
+.join-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+#player-name {
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 2px solid rgba(233, 30, 130, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--white);
+  font-family: var(--font);
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.3s;
+}
+#player-name:focus {
+  border-color: var(--pink);
+}
+#player-name::placeholder {
+  color: var(--gray);
+}
+
+.btn-join {
+  padding: 16px;
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(135deg, var(--pink) 0%, var(--pink-glow) 100%);
+  color: white;
+  font-family: var(--font);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  box-shadow: 0 4px 20px rgba(233, 30, 130, 0.4);
+}
+.btn-join:active {
+  transform: scale(0.95);
+}
+
+/* =============== WAITING =============== */
+.waiting-container {
+  text-align: center;
+}
+.player-badge {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-glow) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  box-shadow: 0 0 30px rgba(0, 212, 170, 0.4);
+}
+.badge-number {
+  font-size: 42px;
+  font-weight: 900;
+  color: var(--bg);
+}
+.player-name-display {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+.waiting-text {
+  color: var(--gray);
+  font-size: 16px;
+}
+.waiting-dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
+}
+.waiting-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pink);
+  animation: dot-pulse 1.5s ease-in-out infinite;
+}
+.waiting-dots span:nth-child(2) { animation-delay: 0.3s; }
+.waiting-dots span:nth-child(3) { animation-delay: 0.6s; }
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* =============== CONTROLLER =============== */
+#controller-screen {
+  flex-direction: column;
+}
+
+.ctrl-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  z-index: 100;
+}
+.ctrl-game-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--pink);
+  letter-spacing: 1px;
+}
+.ctrl-status {
+  font-size: 13px;
+  color: var(--teal);
+  font-weight: 600;
+}
+
+.ctrl-area {
+  position: absolute;
+  inset: 0;
+  padding-top: 50px;
+}
+
+/* ---- Move Zone (1,2,3 Soleil + Group Game) ---- */
+.move-zone {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.move-instruction {
+  position: absolute;
+  top: 30px;
+  text-align: center;
+  color: var(--gray);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.move-zone.pressing {
+  background: radial-gradient(circle at center, rgba(0,212,170,0.1) 0%, transparent 70%);
+}
+
+/* Light indicator on controller */
+.move-zone .light-indicator {
+  position: absolute;
+  top: 80px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.2);
+  transition: all 0.3s;
+}
+.move-zone .light-indicator.green {
+  background: var(--green);
+  box-shadow: 0 0 30px var(--green);
+}
+.move-zone .light-indicator.red {
+  background: var(--red);
+  box-shadow: 0 0 30px var(--red);
+}
+.move-zone .light-indicator.warning {
+  background: #ffaa00;
+  box-shadow: 0 0 30px #ffaa00;
+}
+
+/* Joystick */
+.joystick-area, .mini-joystick-area {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.joystick-base {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.joystick-thumb {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-glow) 100%);
+  box-shadow: 0 0 15px rgba(0, 212, 170, 0.5);
+  position: absolute;
+  transition: none;
+}
+
+/* ---- Tap Zone ---- */
+.tap-zone {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, rgba(233, 30, 130, 0.05) 0%, transparent 60%);
+  transition: background 0.1s;
+}
+.tap-zone.tapping {
+  background: radial-gradient(circle at center, rgba(233, 30, 130, 0.2) 0%, transparent 60%);
+}
+.tap-counter {
+  font-size: 80px;
+  font-weight: 900;
+  color: var(--pink-glow);
+  line-height: 1;
+}
+.tap-text {
+  font-size: 22px;
+  color: var(--gray);
+  margin-top: 12px;
+  letter-spacing: 4px;
+}
+
+/* ---- Tap + Move (Night Fight) ---- */
+.tap-move-container {
+  display: flex;
+  width: 100%;
+  height: calc(100% - 70px);
+  padding-top: 50px;
+}
+.mini-joystick-area {
+  position: relative !important;
+  left: auto !important;
+  transform: none !important;
+  bottom: auto !important;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.attack-zone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 60, 60, 0.05);
+  border-left: 1px solid rgba(255, 60, 60, 0.2);
+  transition: background 0.1s;
+}
+.attack-zone.attacking {
+  background: rgba(255, 60, 60, 0.2);
+}
+.attack-icon { font-size: 48px; }
+.attack-text {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--red);
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+.hp-bar-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+}
+.hp-bar {
+  flex: 1;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--green);
+  transition: width 0.3s ease;
+}
+.hp-text {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---- Choice (Glass Bridge) ---- */
+.choice-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px 20px;
+  gap: 20px;
+}
+.choice-info {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--teal);
+}
+.choice-timer {
+  font-size: 48px;
+  font-weight: 900;
+  color: var(--gold);
+}
+.choice-buttons {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  max-width: 400px;
+  flex: 1;
+  max-height: 300px;
+}
+.btn-choice {
+  flex: 1;
+  border: 3px solid rgba(150, 200, 255, 0.3);
+  border-radius: 20px;
+  background: rgba(150, 200, 255, 0.05);
+  color: var(--white);
+  font-family: var(--font);
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-choice:active {
+  transform: scale(0.95);
+  background: rgba(150, 200, 255, 0.15);
+  border-color: var(--teal);
+}
+.choice-progress {
+  font-size: 14px;
+  color: var(--gray);
+}
+
+/* ---- Swipe Zone (Final Duel) ---- */
+.swipe-zone {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.swipe-instruction {
+  font-size: 18px;
+  color: var(--gray);
+  margin-bottom: 30px;
+}
+.swipe-arrows {
+  display: grid;
+  grid-template-columns: repeat(3, 60px);
+  grid-template-rows: repeat(3, 60px);
+  gap: 4px;
+  font-size: 28px;
+  color: rgba(255, 255, 255, 0.2);
+}
+.swipe-arrows span:nth-child(1) { grid-column: 2; grid-row: 1; text-align: center; }
+.swipe-arrows span:nth-child(2) { grid-column: 1; grid-row: 2; text-align: center; }
+.swipe-arrows span:nth-child(3) { grid-column: 3; grid-row: 2; text-align: center; }
+.swipe-arrows span:nth-child(4) { grid-column: 2; grid-row: 3; text-align: center; }
+
+.swipe-zone.swiping {
+  background: radial-gradient(circle at center, rgba(233, 30, 130, 0.15) 0%, transparent 60%);
+}
+
+/* =============== ELIMINATED =============== */
+.elim-container {
+  text-align: center;
+  padding: 40px;
+}
+.elim-icon {
+  font-size: 80px;
+  animation: shake 0.5s ease-in-out;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+.elim-title {
+  font-size: 42px;
+  font-weight: 900;
+  color: var(--red);
+  letter-spacing: 6px;
+  margin: 20px 0;
+}
+.elim-game {
+  font-size: 16px;
+  color: var(--pink);
+  margin-bottom: 20px;
+}
+.elim-text {
+  color: var(--gray);
+  font-size: 15px;
+  line-height: 1.6;
+}

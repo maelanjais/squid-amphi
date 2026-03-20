@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>🎮 Squid Amphi</title>
+  <meta name="description" content="Squid Amphi — Manette de jeu">
+  <link rel="stylesheet" href="/css/controller.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Join Screen -->
+  <div id="join-screen" class="ctrl-screen active">
+    <div class="join-container">
+      <div class="mini-shapes">
+        <span class="s-circle"></span>
+        <span class="s-triangle"></span>
+        <span class="s-square"></span>
+      </div>
+      <h1 class="ctrl-title">SQUID<br>AMPHI</h1>
+      <div class="join-form">
+        <input type="text" id="player-name" placeholder="Votre pseudo" maxlength="12" autocomplete="off">
+        <button id="btn-join" class="btn-join">REJOINDRE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Waiting Screen -->
+  <div id="waiting-screen" class="ctrl-screen">
+    <div class="waiting-container">
+      <div class="player-badge" id="player-badge">
+        <span class="badge-number" id="badge-number">?</span>
+      </div>
+      <p class="player-name-display" id="player-name-display"></p>
+      <p class="waiting-text">En attente du début...</p>
+      <div class="waiting-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controller Screen — Dynamic controls -->
+  <div id="controller-screen" class="ctrl-screen">
+    <div class="ctrl-header">
+      <span class="ctrl-game-name" id="ctrl-game-name"></span>
+      <span class="ctrl-status" id="ctrl-status"></span>
+    </div>
+
+    <!-- Move Control (joystick + touch zone) -->
+    <div id="ctrl-move" class="ctrl-area" style="display:none;">
+      <div class="move-zone" id="move-zone">
+        <div class="move-instruction">TOUCHER pour courir<br>GLISSER pour diriger</div>
+        <div class="joystick-area" id="joystick-area">
+          <div class="joystick-base" id="joystick-base">
+            <div class="joystick-thumb" id="joystick-thumb"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tap Control -->
+    <div id="ctrl-tap" class="ctrl-area" style="display:none;">
+      <div class="tap-zone" id="tap-zone">
+        <div class="tap-counter" id="tap-counter">0</div>
+        <div class="tap-text">TAPEZ !</div>
+      </div>
+    </div>
+
+    <!-- Tap + Move Control (Night Fight) -->
+    <div id="ctrl-tap-move" class="ctrl-area" style="display:none;">
+      <div class="tap-move-container">
+        <div class="mini-joystick-area" id="mini-joystick-area">
+          <div class="joystick-base" id="mini-joystick-base">
+            <div class="joystick-thumb" id="mini-joystick-thumb"></div>
+          </div>
+        </div>
+        <div class="attack-zone" id="attack-zone">
+          <span class="attack-icon">⚔️</span>
+          <span class="attack-text">ATTAQUE</span>
+        </div>
+      </div>
+      <div class="hp-bar-container">
+        <div class="hp-bar" id="hp-bar"></div>
+        <span class="hp-text" id="hp-text">❤️ 3/3</span>
+      </div>
+    </div>
+
+    <!-- Choice Control (Glass Bridge) -->
+    <div id="ctrl-choice" class="ctrl-area" style="display:none;">
+      <div class="choice-container">
+        <div class="choice-info" id="choice-info">Choisissez un côté !</div>
+        <div class="choice-timer" id="choice-timer"></div>
+        <div class="choice-buttons">
+          <button class="btn-choice btn-left" id="btn-left">
+            ⬅️<br>GAUCHE
+          </button>
+          <button class="btn-choice btn-right" id="btn-right">
+            ➡️<br>DROITE
+          </button>
+        </div>
+        <div class="choice-progress" id="choice-progress"></div>
+      </div>
+    </div>
+
+    <!-- Swipe Control (Final Duel) -->
+    <div id="ctrl-swipe" class="ctrl-area" style="display:none;">
+      <div class="swipe-zone" id="swipe-zone">
+        <div class="swipe-instruction">GLISSEZ pour pousser</div>
+        <div class="swipe-arrows">
+          <span>↑</span>
+          <span>←</span>
+          <span>→</span>
+          <span>↓</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Eliminated Screen -->
+  <div id="eliminated-screen" class="ctrl-screen">
+    <div class="elim-container">
+      <div class="elim-icon">💀</div>
+      <h2 class="elim-title">ÉLIMINÉ</h2>
+      <p class="elim-game" id="elim-game"></p>
+      <p class="elim-text">Vous avez été éliminé.<br>Regardez la suite sur le grand écran !</p>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/controller/controller.js"></script>
+</body>
+</html>

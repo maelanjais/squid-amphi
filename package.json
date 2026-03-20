@@ -1,0 +1,27 @@
+{
+  "name": "squid-amphi",
+  "version": "1.0.0",
+  "description": "Squid Amphi — Jeu multijoueur pour amphithéâtre, inspiré de Squid Game",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "npx nodemon server/index.js"
+  },
+  "keywords": [
+    "game",
+    "multiplayer",
+    "squid-game",
+    "websocket"
+  ],
+  "authors": [
+    "JAHIER Maëlan",
+    "GRILLOT Thomas",
+    "SALLE-PIERRET Maxence"
+  ],
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.0",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.7.5"
+  }
+}
