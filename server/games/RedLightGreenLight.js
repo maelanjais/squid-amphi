@@ -86,6 +86,7 @@ class RedLightGreenLight {
       }
     }
 
+
     // Check for players crossing the finish line
     for (const player of players) {
       if (player.alive && player.y <= this.finishLine) {

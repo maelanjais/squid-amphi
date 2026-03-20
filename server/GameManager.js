@@ -6,6 +6,7 @@ const Player = require('./Player');
 // Game phases
 const PHASE = {
   LOBBY: 'lobby',
+  EXPLANATION: 'explanation',
   COUNTDOWN: 'countdown',
   PLAYING: 'playing',
   ELIMINATION: 'elimination',
@@ -32,6 +33,33 @@ const GAME_NAMES = {
   FinalDuel: 'Le Duel Final'
 };
 
+const GAME_RULES = {
+  RedLightGreenLight: {
+    description: "Avancez quand la poupée ne regarde pas. Arrêtez-vous au feu rouge.",
+    controls: "Maintenez pour avancer, glissez pour diriger."
+  },
+  TugOfWar: {
+    description: "Votre équipe est en danger. Tirez plus fort que les autres !",
+    controls: "Tapotez le plus vite possible pour tirer la corde."
+  },
+  GroupGame: {
+    description: "Formez des groupes complets du nombre annoncé avant la fin du temps.",
+    controls: "Déplacez-vous avec le joystick."
+  },
+  NightFight: {
+    description: "L'émeute éclate dans le noir. Défendez-vous pour survivre.",
+    controls: "Joystick pour bouger. Appuyez sur le bouton pour attaquer."
+  },
+  GlassBridge: {
+    description: "Traversez le pont. Attention : mémorisez les dalles solides, les fragiles cèdent.",
+    controls: "Choisissez Gauche ou Droite."
+  },
+  FinalDuel: {
+    description: "Il n'en restera qu'un. Poussez vos adversaires hors de l'arène.",
+    controls: "Glissez rapidement (swipe) pour frapper / repousser."
+  }
+};
+
 class GameManager {
   constructor(io) {
     this.io = io;
@@ -44,6 +72,7 @@ class GameManager {
     this.lastUpdate = Date.now();
     this.arenaWidth = 1920;
     this.arenaHeight = 1080;
+    this.explanationTimer = 0;
     this.countdownTimer = 0;
     this.transitionTimer = 0;
     this.eliminatedThisRound = [];
@@ -90,6 +119,18 @@ class GameManager {
       if (this.currentGame) {
         this.endCurrentGame();
       }
+    });
+
+    socket.on('admin-reset', () => {
+      this.players.clear();
+      this.playerCounter = 0;
+      this.currentGameIndex = -1;
+      this.currentGame = null;
+      this.phase = PHASE.LOBBY;
+      this.broadcastState();
+      this.broadcastPhase();
+      this.broadcastPlayerList();
+      console.log('🔄 Game reset by admin');
     });
 
     socket.on('disconnect', () => {
@@ -142,6 +183,15 @@ class GameManager {
     const now = Date.now();
     const dt = (now - this.lastUpdate) / 1000;
     this.lastUpdate = now;
+
+    if (this.phase === PHASE.EXPLANATION) {
+      this.explanationTimer -= dt;
+      if (this.explanationTimer <= 0) {
+        this.phase = PHASE.COUNTDOWN;
+        this.countdownTimer = 4;
+        this.broadcastPhase();
+      }
+    }
 
     if (this.phase === PHASE.COUNTDOWN) {
       this.countdownTimer -= dt;
@@ -212,12 +262,12 @@ class GameManager {
     // Setup players for this game
     this.currentGame.setup(alive);
 
-    // Countdown before game starts
-    this.phase = PHASE.COUNTDOWN;
-    this.countdownTimer = 5; // 5 seconds countdown
+    // Initial phase before game start
+    this.phase = PHASE.EXPLANATION;
+    this.explanationTimer = 10; // 10 seconds explanation
     this.broadcastPhase();
 
-    console.log(`🎲 Starting: ${GAME_NAMES[gameName]} (${alive.length} players alive)`);
+    console.log(`🎲 Explaining: ${GAME_NAMES[gameName]} (${alive.length} players alive)`);
   }
 
   endCurrentGame() {
@@ -240,10 +290,12 @@ class GameManager {
     const state = {
       phase: this.phase,
       players: Array.from(this.players.values()).map(p => p.toJSON()),
+      explanation: Math.ceil(this.explanationTimer),
       countdown: Math.ceil(this.countdownTimer),
       transition: Math.ceil(this.transitionTimer),
       currentGame: this.currentGameIndex >= 0 ? {
         name: GAME_NAMES[GAME_ORDER[this.currentGameIndex]],
+        rules: GAME_RULES[GAME_ORDER[this.currentGameIndex]],
         index: this.currentGameIndex,
         total: GAME_ORDER.length,
         state: this.currentGame ? this.currentGame.getState() : null
@@ -303,3 +355,4 @@ module.exports = GameManager;
 module.exports.PHASE = PHASE;
 module.exports.GAME_ORDER = GAME_ORDER;
 module.exports.GAME_NAMES = GAME_NAMES;
+module.exports.GAME_RULES = GAME_RULES;

@@ -30,9 +30,28 @@
     if (e.key === 'Enter') joinGame();
   });
 
+  let wakeLock = null;
+  async function requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        console.log('Wake Lock is active');
+      }
+    } catch (err) {
+      console.warn(`Wake Lock error: ${err.message}`);
+    }
+  }
+
+  document.addEventListener('visibilitychange', async () => {
+    if (wakeLock !== null && document.visibilityState === 'visible') {
+      requestWakeLock();
+    }
+  });
+
   function joinGame() {
     const name = document.getElementById('player-name').value.trim() || 'Joueur';
     socket.emit('register-player', { name });
+    requestWakeLock();
   }
 
   socket.on('registered', (data) => {

@@ -10,6 +10,7 @@
   // Screen elements
   const screens = {
     lobby: document.getElementById('lobby-screen'),
+    explanation: document.getElementById('explanation-screen'),
     countdown: document.getElementById('countdown-screen'),
     game: document.getElementById('game-screen'),
     transition: document.getElementById('transition-screen'),
@@ -45,6 +46,13 @@
     if (e.key === 's' || e.key === 'S') {
       socket.emit('admin-skip');
     }
+    if (e.key === 'r' || e.key === 'R') {
+      socket.emit('admin-reset');
+    }
+  });
+
+  document.getElementById('btn-reset')?.addEventListener('click', () => {
+    socket.emit('admin-reset');
   });
 
   // Handle phase changes
@@ -111,6 +119,16 @@
       }
     }
 
+    // Update explanation
+    if (state.phase === 'explanation') {
+      if (state.currentGame) {
+        document.getElementById('expl-game-name').textContent = state.currentGame.name;
+        document.getElementById('expl-game-desc').textContent = state.currentGame.rules.description;
+        document.getElementById('expl-game-controls').textContent = state.currentGame.rules.controls;
+      }
+      document.getElementById('expl-timer').textContent = state.explanation;
+    }
+
     // Update countdown
     if (state.phase === 'countdown') {
       document.getElementById('countdown-number').textContent = state.countdown;
@@ -151,10 +169,12 @@
   });
 
   function showScreen(phase) {
-    Object.values(screens).forEach(s => s.classList.remove('active'));
+    Object.values(screens).forEach(s => { if(s) s.classList.remove('active'); });
     switch (phase) {
       case 'lobby':
         screens.lobby.classList.add('active'); break;
+      case 'explanation':
+        screens.explanation.classList.add('active'); break;
       case 'countdown':
         screens.countdown.classList.add('active'); break;
       case 'playing':
