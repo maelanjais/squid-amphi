@@ -96,7 +96,39 @@ class FinalDuel {
 
       player.x += player.vx * dt;
       player.y += player.vy * dt;
+    }
 
+    // Handle collisions between players
+    const PLAYER_RADIUS = 15;
+    for (let i = 0; i < alive.length; i++) {
+      for (let j = i + 1; j < alive.length; j++) {
+        const p1 = alive[i];
+        const p2 = alive[j];
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const distSq = dx * dx + dy * dy;
+        const minDist = PLAYER_RADIUS * 2;
+
+        if (distSq < minDist * minDist && distSq > 0) {
+          const dist = Math.sqrt(distSq);
+          const overlap = minDist - dist;
+          const nx = dx / dist;
+          const ny = dy / dist;
+
+          p1.x -= nx * (overlap / 2);
+          p1.y -= ny * (overlap / 2);
+          p2.x += nx * (overlap / 2);
+          p2.y += ny * (overlap / 2);
+
+          p1.vx *= 0.8;
+          p1.vy *= 0.8;
+          p2.vx *= 0.8;
+          p2.vy *= 0.8;
+        }
+      }
+    }
+
+    for (const player of alive) {
       // Check if outside circle
       const dx = player.x - this.centerX;
       const dy = player.y - this.centerY;

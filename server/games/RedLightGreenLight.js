@@ -14,7 +14,7 @@ class RedLightGreenLight {
     this.phaseTimer = 0;
     this.greenDuration = 0;
     this.redDuration = 3;
-    this.roundDuration = 60; // total game time
+    this.roundDuration = 90; // total game time
     this.roundTimer = this.roundDuration;
     this.finished = false;
     this.toEliminate = [];
@@ -120,12 +120,20 @@ class RedLightGreenLight {
   }
 
   getControllerState(player) {
+    const startY = this.arenaHeight - 80;
+    const totalDist = startY - this.finishLine;
+    const currentDist = startY - player.y;
+    let progress = Math.round((currentDist / totalDist) * 100);
+    if (progress < 0) progress = 0;
+    if (progress > 100) progress = 100;
+
     return {
       controls: 'move',
       greenLight: this.greenLight,
       warning: this.warning,
       roundTimer: Math.ceil(this.roundTimer),
-      crossed: player.y <= this.finishLine
+      crossed: player.y <= this.finishLine,
+      progress: progress
     };
   }
 }

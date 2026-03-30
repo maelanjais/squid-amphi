@@ -66,18 +66,26 @@ class NightFight {
           timer: 0.3
         });
 
-        // Check for nearby players to hit
+        // Check for closest player to hit
+        let closestTarget = null;
+        let minTargetDist = this.attackRange;
+
         for (const target of players) {
           if (target.id === player.id || !target.alive) continue;
           const dx = player.x - target.x;
           const dy = player.y - target.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < this.attackRange) {
-            const hp = (this.playerHP.get(target.id) || this.maxHP) - 1;
-            this.playerHP.set(target.id, hp);
-            if (hp <= 0) {
-              toEliminate.push(target.id);
-            }
+          if (dist < minTargetDist) {
+            minTargetDist = dist;
+            closestTarget = target;
+          }
+        }
+        
+        if (closestTarget) {
+          const hp = (this.playerHP.get(closestTarget.id) || this.maxHP) - 1;
+          this.playerHP.set(closestTarget.id, hp);
+          if (hp <= 0 && !toEliminate.includes(closestTarget.id)) {
+            toEliminate.push(closestTarget.id);
           }
         }
       }

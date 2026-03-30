@@ -60,10 +60,10 @@
     showScreen(data.phase);
 
     if (data.phase === 'countdown' && data.currentGame) {
-      document.getElementById('game-name').textContent = data.currentGame.name;
-      document.getElementById('hud-game-name').textContent = data.currentGame.name;
+      document.getElementById('game-name').textContent = data.currentGame.name || '???';
+      document.getElementById('hud-game-name').textContent = data.currentGame.name || '???';
       document.getElementById('hud-game-progress').textContent =
-        `Épreuve ${data.currentGame.index + 1}/${data.currentGame.total}`;
+        `Épreuve ${data.currentGame.index !== undefined ? data.currentGame.index + 1 : '?'}/${data.currentGame.total || '?'}`;
     }
   });
 
@@ -122,9 +122,9 @@
     // Update explanation
     if (state.phase === 'explanation') {
       if (state.currentGame) {
-        document.getElementById('expl-game-name').textContent = state.currentGame.name;
-        document.getElementById('expl-game-desc').textContent = state.currentGame.rules.description;
-        document.getElementById('expl-game-controls').textContent = state.currentGame.rules.controls;
+        document.getElementById('expl-game-name').textContent = state.currentGame.name || 'Jeu Inconnu';
+        document.getElementById('expl-game-desc').textContent = state.currentGame.rules?.description || '...';
+        document.getElementById('expl-game-controls').textContent = state.currentGame.rules?.controls || '...';
       }
       document.getElementById('expl-timer').textContent = state.explanation;
     }

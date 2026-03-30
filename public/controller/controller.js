@@ -24,6 +24,23 @@
   let currentControls = null;
   let tapCount = 0;
 
+  // ---- LOCATE BUTTON ----
+  const btnLocate = document.getElementById('btn-locate');
+  if (btnLocate) {
+    btnLocate.addEventListener('click', () => {
+      if (btnLocate.disabled) return;
+      socket.emit('player-input', { type: 'locate' });
+      // Cooldown
+      btnLocate.disabled = true;
+      btnLocate.style.opacity = '0.5';
+      setTimeout(() => {
+        btnLocate.disabled = false;
+        btnLocate.style.opacity = '1';
+      }, 3000);
+      if (navigator.vibrate) navigator.vibrate(20);
+    });
+  }
+
   // ---- JOIN ----
   document.getElementById('btn-join').addEventListener('click', joinGame);
   document.getElementById('player-name').addEventListener('keydown', (e) => {
@@ -358,10 +375,14 @@
         indicator.classList.add('red');
       }
 
-      // Show crossed status
+      // Show crossed status or progress
       const inst = moveZone.querySelector('.move-instruction');
       if (gs.crossed) {
-        inst.textContent = '✅ Ligne d\'arrivée franchie !';
+        inst.innerHTML = '✅ Ligne d\'arrivée franchie !';
+      } else if (gs.progress !== undefined) {
+        inst.innerHTML = `Avancement : ${gs.progress}%<br>TOUCHER pour courir<br>GLISSER pour diriger`;
+      } else {
+        inst.innerHTML = 'TOUCHER pour courir<br>GLISSER pour diriger';
       }
     }
 

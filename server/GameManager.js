@@ -14,23 +14,14 @@ const PHASE = {
   GAME_OVER: 'gameover'
 };
 
-// Mini-game order
-const GAME_ORDER = [
-  'RedLightGreenLight',
-  'TugOfWar',
-  'GroupGame',
-  'NightFight',
-  'GlassBridge',
-  'FinalDuel'
-];
-
 const GAME_NAMES = {
   RedLightGreenLight: '1, 2, 3… Soleil !',
   TugOfWar: 'Le Jeu de la Corde',
   GroupGame: 'Le Jeu du Manège',
   NightFight: 'La Bataille du Dortoir',
   GlassBridge: 'Le Pont de Verre',
-  FinalDuel: 'Le Duel Final'
+  FinalDuel: 'Le Duel Final',
+  Dalgona: 'Le Sablé Dalgona'
 };
 
 const GAME_RULES = {
@@ -57,6 +48,10 @@ const GAME_RULES = {
   FinalDuel: {
     description: "Il n'en restera qu'un. Poussez vos adversaires hors de l'arène.",
     controls: "Glissez rapidement (swipe) pour frapper / repousser."
+  },
+  Dalgona: {
+    description: "Tapotez pour dévoiler la forme sans briser la structure sous la tension.",
+    controls: "Tapez pour avancer, mais ne remplissez pas la jauge de tension !"
   }
 };
 
@@ -76,12 +71,19 @@ class GameManager {
     this.countdownTimer = 0;
     this.transitionTimer = 0;
     this.eliminatedThisRound = [];
+    this.gameQueue = null; // Initialize gameQueue
+    this.upcomingPool = null; // Initialize upcomingPool
 
     // Load all mini-games
-    this.gameClasses = {};
-    for (const name of GAME_ORDER) {
-      this.gameClasses[name] = require(`./games/${name}`);
-    }
+    this.gameClasses = {
+      RedLightGreenLight: require('./games/RedLightGreenLight'),
+      TugOfWar: require('./games/TugOfWar'),
+      GroupGame: require('./games/GroupGame'),
+      NightFight: require('./games/NightFight'),
+      GlassBridge: require('./games/GlassBridge'),
+      FinalDuel: require('./games/FinalDuel'),
+      Dalgona: require('./games/Dalgona')
+    };
 
     // Game loop at 30fps
     this.loopInterval = setInterval(() => this.gameLoop(), 1000 / 30);
@@ -92,6 +94,7 @@ class GameManager {
    */
   handleConnection(socket) {
     socket.on('register-display', () => {
+      socket.join('displays');
       this.displaySocket = socket;
       socket.emit('phase', { phase: this.phase });
       this.broadcastState();
@@ -127,6 +130,8 @@ class GameManager {
       this.currentGameIndex = -1;
       this.currentGame = null;
       this.phase = PHASE.LOBBY;
+      this.gameQueue = null;
+      this.upcomingPool = null;
       this.broadcastState();
       this.broadcastPhase();
       this.broadcastPlayerList();
@@ -152,8 +157,8 @@ class GameManager {
       socket.emit('error', { message: 'La partie a déjà commencé !' });
       return;
     }
-    if (this.players.size >= 50) {
-      socket.emit('error', { message: 'La partie est pleine (50 joueurs max) !' });
+    if (this.players.size >= 100) {
+      socket.emit('error', { message: 'La partie est pleine (100 joueurs max) !' });
       return;
     }
 
@@ -197,7 +202,11 @@ class GameManager {
       this.countdownTimer -= dt;
       if (this.countdownTimer <= 0) {
         this.phase = PHASE.PLAYING;
-        this.currentGame.start(this.getAlivePlayers());
+        
+        const alive = this.getAlivePlayers();
+        this.playersAtGameStart = alive.length;
+        
+        this.currentGame.start(alive);
         this.broadcastPhase();
       }
     }
@@ -213,13 +222,29 @@ class GameManager {
             this.eliminatedThisRound.push(playerId);
             // Notify the eliminated player's controller
             this.io.to(playerId).emit('eliminated', {
-              game: GAME_NAMES[GAME_ORDER[this.currentGameIndex]]
+              game: GAME_NAMES[this.gameQueue[this.currentGameIndex]]
             });
           }
         }
       }
 
-      if (this.currentGame.isFinished()) {
+      const aliveCount = this.getAlivePlayers().length;
+      let prematureEnd = false;
+      const gameName = this.gameQueue[this.currentGameIndex];
+
+      if (gameName !== 'FinalDuel') {
+        // Prevent all players from dying: end game if we reach a critically low number of survivors
+        // Minimum 2 survivors, or at least 15% of the starting players for this mini-game
+        const minSurvivors = Math.max(2, Math.floor(this.playersAtGameStart * 0.15));
+        if (aliveCount <= minSurvivors && aliveCount > 0) {
+          prematureEnd = true;
+          console.log(`⚠️ Premature end to save players! Only ${aliveCount} left.`);
+        }
+      } else {
+        if (aliveCount <= 1) prematureEnd = true;
+      }
+
+      if (this.currentGame.isFinished() || prematureEnd) {
         this.endCurrentGame();
       }
     }
@@ -247,15 +272,65 @@ class GameManager {
     this.currentGameIndex++;
     this.eliminatedThisRound = [];
 
-    // Check if all games done or only 1 player left
     const alive = this.getAlivePlayers();
-    if (this.currentGameIndex >= GAME_ORDER.length || alive.length <= 1) {
+
+    // Check game over
+    if (alive.length <= 1) {
       this.phase = PHASE.GAME_OVER;
       this.broadcastPhase();
       return;
     }
 
-    const gameName = GAME_ORDER[this.currentGameIndex];
+    if (!this.gameQueue) {
+      this.gameQueue = ['RedLightGreenLight'];
+      this.upcomingPool = ['Dalgona', 'TugOfWar', 'GroupGame', 'NightFight', 'GlassBridge'];
+    }
+
+    let gameName = 'FinalDuel'; // Default fallback
+
+    if (this.currentGameIndex === 0) {
+      gameName = this.gameQueue[0];
+    } else if (this.currentGameIndex === 1) {
+      gameName = 'GroupGame';
+      const idx = this.upcomingPool.indexOf('GroupGame');
+      if (idx !== -1) {
+        this.upcomingPool.splice(idx, 1);
+      }
+      this.gameQueue.push(gameName);
+    } else {
+      if (alive.length <= 2) {
+        gameName = 'FinalDuel';
+      } else if (this.upcomingPool.length === 0) {
+        gameName = 'FinalDuel';
+      } else {
+        // Randomize securely (Fisher-Yates)
+        for (let i = this.upcomingPool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [this.upcomingPool[i], this.upcomingPool[j]] = [this.upcomingPool[j], this.upcomingPool[i]];
+        }
+        let pickedIndex = -1;
+        for (let i = 0; i < this.upcomingPool.length; i++) {
+          const g = this.upcomingPool[i];
+          if (g === 'TugOfWar' && alive.length < 4) continue;
+          if (g === 'GroupGame' && alive.length < 6) continue;
+          if (g === 'GlassBridge' && alive.length > 20) continue;
+          pickedIndex = i; break;
+        }
+
+        if (pickedIndex !== -1) {
+          gameName = this.upcomingPool[pickedIndex];
+          this.upcomingPool.splice(pickedIndex, 1);
+        } else {
+          gameName = 'FinalDuel';
+        }
+      }
+      this.gameQueue.push(gameName);
+    }
+
+    if (gameName === 'FinalDuel') {
+      this.upcomingPool = []; // Forcibly exhaust
+    }
+
     const GameClass = this.gameClasses[gameName];
     this.currentGame = new GameClass(this.arenaWidth, this.arenaHeight);
 
@@ -271,7 +346,7 @@ class GameManager {
   }
 
   endCurrentGame() {
-    const gameName = GAME_ORDER[this.currentGameIndex];
+    const gameName = this.gameQueue[this.currentGameIndex];
     const alive = this.getAlivePlayers();
     console.log(`✅ ${GAME_NAMES[gameName]} finished. ${alive.length} players remain.`);
     console.log(`💀 ${this.eliminatedThisRound.length} eliminated this round.`);
@@ -294,10 +369,10 @@ class GameManager {
       countdown: Math.ceil(this.countdownTimer),
       transition: Math.ceil(this.transitionTimer),
       currentGame: this.currentGameIndex >= 0 ? {
-        name: GAME_NAMES[GAME_ORDER[this.currentGameIndex]],
-        rules: GAME_RULES[GAME_ORDER[this.currentGameIndex]],
+        name: GAME_NAMES[this.gameQueue[this.currentGameIndex]],
+        rules: GAME_RULES[this.gameQueue[this.currentGameIndex]],
         index: this.currentGameIndex,
-        total: GAME_ORDER.length,
+        total: this.gameQueue.length + this.upcomingPool.length + (this.upcomingPool.length > 0 ? 1 : 0),
         state: this.currentGame ? this.currentGame.getState() : null
       } : null,
       alivePlayers: this.getAlivePlayers().length,
@@ -306,9 +381,7 @@ class GameManager {
     };
 
     // Send to display
-    if (this.displaySocket) {
-      this.displaySocket.emit('game-state', state);
-    }
+    this.io.to('displays').emit('game-state', state);
 
     // Send minimal state to each controller
     for (const [socketId, player] of this.players) {
@@ -328,9 +401,9 @@ class GameManager {
     const phaseData = {
       phase: this.phase,
       currentGame: this.currentGameIndex >= 0 ? {
-        name: GAME_NAMES[GAME_ORDER[this.currentGameIndex]],
+        name: GAME_NAMES[this.gameQueue[this.currentGameIndex]],
         index: this.currentGameIndex,
-        total: GAME_ORDER.length
+        total: this.gameQueue.length + this.upcomingPool.length + (this.upcomingPool.length > 0 ? 1 : 0)
       } : null
     };
     this.io.emit('phase', phaseData);
@@ -353,6 +426,5 @@ class GameManager {
 
 module.exports = GameManager;
 module.exports.PHASE = PHASE;
-module.exports.GAME_ORDER = GAME_ORDER;
 module.exports.GAME_NAMES = GAME_NAMES;
 module.exports.GAME_RULES = GAME_RULES;

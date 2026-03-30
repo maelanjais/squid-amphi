@@ -20,6 +20,8 @@ class Player {
     this.input = {}; // latest input from controller
     this.score = 0;
     this.lastInputTime = Date.now();
+    this.locating = false;
+    this.locateTimer = 0;
   }
 
   generateColor() {
@@ -34,6 +36,13 @@ class Player {
    */
   update(dt, bounds) {
     if (!this.alive) return;
+
+    if (this.locating) {
+      this.locateTimer -= dt;
+      if (this.locateTimer <= 0) {
+        this.locating = false;
+      }
+    }
 
     if (this.moving) {
       this.vx = this.direction.x * this.speed;
@@ -69,6 +78,9 @@ class Player {
           this.direction.y = data.dirY / len;
         }
       }
+    } else if (data.type === 'locate') {
+      this.locating = true;
+      this.locateTimer = 2.0;
     } else if (data.type === 'tap') {
       // Used by tug-of-war and night fight
       this.input.tap = true;
@@ -108,7 +120,8 @@ class Player {
       direction: this.direction,
       color: this.color,
       team: this.team,
-      score: this.score
+      score: this.score,
+      locating: this.locating
     };
   }
 }
