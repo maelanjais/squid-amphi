@@ -13,7 +13,6 @@ class BotPlayer extends Player {
 
     if (currentGameName === '1, 2, 3… Soleil !') this.actRLGL(gameState);
     else if (currentGameName === 'Le Jeu de la Corde') this.actTugOfWar();
-    else if (currentGameName === 'Le Jeu du Manège') this.actGroupGame(gameState, allPlayers);
     else if (currentGameName === 'La Bataille du Dortoir') this.actNightFight(allPlayers);
     else if (currentGameName === 'Le Pont de Verre') this.actGlassBridge(gameState);
     else if (currentGameName === 'Le Duel Final') this.actFinalDuel(gameState, allPlayers);
@@ -23,18 +22,18 @@ class BotPlayer extends Player {
   actRLGL(gs) {
     let shouldMove = false;
     if (gs.greenLight && !gs.warning) {
-      shouldMove = true;
+      shouldMove = Math.random() < 0.7; // 70% chance to move (hesitation)
     } else if (gs.greenLight && gs.warning) {
-      shouldMove = Math.random() > 0.4;
+      shouldMove = Math.random() > 0.6;
     } else {
-      shouldMove = Math.random() < 0.005;
+      shouldMove = Math.random() < 0.003;
     }
 
     if (this.y <= gs.finishLine) shouldMove = false;
 
     this.moving = shouldMove;
     if (shouldMove) {
-      this.direction.x = (Math.random() - 0.5) * 0.3;
+      this.direction.x = (Math.random() - 0.5) * 0.6; // more lateral drift = slower
       this.direction.y = -1;
       const len = Math.sqrt(this.direction.x ** 2 + this.direction.y ** 2);
       this.direction.x /= len;
@@ -45,46 +44,6 @@ class BotPlayer extends Player {
   actTugOfWar() {
     if (Math.random() < 0.4) {
       this.input.tap = true;
-    }
-  }
-
-  actGroupGame(gs, allPlayers) {
-    if (gs.phase === 'announce' || gs.phase === 'check') {
-      this.moving = false;
-      return;
-    }
-
-    if (!this.botTargetX || Math.random() < 0.02) {
-      this.botTargetX = 100 + Math.random() * 1700;
-      this.botTargetY = 100 + Math.random() * 800;
-    }
-
-    if (gs.groups) {
-      const myGroup = gs.groups.find(g => g.members.includes(this.id));
-      if (myGroup && myGroup.valid) {
-        this.moving = false;
-        return;
-      }
-
-      const invalidGroups = gs.groups.filter(g => !g.valid && g.members.length < gs.targetNumber);
-      if (invalidGroups.length > 0) {
-        const best = invalidGroups[0];
-        this.botTargetX = best.centerX;
-        this.botTargetY = best.centerY;
-      }
-    }
-
-    const dx = this.botTargetX - this.x;
-    const dy = this.botTargetY - this.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-
-    if (dist > 30) {
-      this.moving = true;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      this.direction.x = dx / len;
-      this.direction.y = dy / len;
-    } else {
-      this.moving = false;
     }
   }
 

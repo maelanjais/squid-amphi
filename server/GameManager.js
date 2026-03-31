@@ -303,20 +303,13 @@ class GameManager {
 
     if (!this.gameQueue) {
       this.gameQueue = ['RedLightGreenLight'];
-      this.upcomingPool = ['Dalgona', 'TugOfWar', 'GroupGame', 'NightFight', 'GlassBridge'];
+      this.upcomingPool = ['Dalgona', 'TugOfWar', 'NightFight', 'GlassBridge'];
     }
 
     let gameName = 'FinalDuel'; // Default fallback
 
     if (this.currentGameIndex === 0) {
       gameName = this.gameQueue[0];
-    } else if (this.currentGameIndex === 1) {
-      gameName = 'GroupGame';
-      const idx = this.upcomingPool.indexOf('GroupGame');
-      if (idx !== -1) {
-        this.upcomingPool.splice(idx, 1);
-      }
-      this.gameQueue.push(gameName);
     } else {
       if (alive.length <= 2) {
         gameName = 'FinalDuel';
@@ -332,7 +325,6 @@ class GameManager {
         for (let i = 0; i < this.upcomingPool.length; i++) {
           const g = this.upcomingPool[i];
           if (g === 'TugOfWar' && alive.length < 4) continue;
-          if (g === 'GroupGame' && alive.length < 6) continue;
           if (g === 'GlassBridge' && alive.length > 20) continue;
           pickedIndex = i; break;
         }
@@ -410,7 +402,11 @@ class GameManager {
         alive: player.alive,
         number: player.number,
         currentGame: state.currentGame ? state.currentGame.name : null,
+        currentGameRules: state.currentGame ? state.currentGame.rules : null,
         countdown: state.countdown,
+        explanation: state.explanation,
+        playerX: Math.round(player.x / this.arenaWidth * 100) / 100,
+        playerY: Math.round(player.y / this.arenaHeight * 100) / 100,
         gameState: this.currentGame ? this.currentGame.getControllerState(player) : null
       };
       this.io.to(socketId).emit('controller-state', controllerState);

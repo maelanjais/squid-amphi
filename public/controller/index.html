@@ -43,7 +43,12 @@
 
   <!-- Controller Screen — Dynamic controls -->
   <div id="controller-screen" class="ctrl-screen">
-    <button id="btn-locate" class="btn-locate" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 8px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 999; backdrop-filter: blur(5px); font-family: 'Outfit';">📍 Me trouver</button>
+    <div class="position-indicator" id="position-indicator">
+      <div class="position-map" id="position-map">
+        <div class="position-dot" id="position-dot"></div>
+      </div>
+      <span class="position-label" id="position-label">Vous</span>
+    </div>
     <div class="ctrl-header">
       <span class="ctrl-game-name" id="ctrl-game-name"></span>
       <span class="ctrl-status" id="ctrl-status"></span>

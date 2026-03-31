@@ -218,6 +218,45 @@ body {
   font-weight: 600;
 }
 
+/* ---- Position Indicator (mini-map) ---- */
+.position-indicator {
+  position: fixed;
+  top: 50px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 99;
+  opacity: 0.85;
+}
+.position-map {
+  width: 64px;
+  height: 36px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  position: relative;
+  backdrop-filter: blur(5px);
+}
+.position-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--teal-glow);
+  box-shadow: 0 0 8px var(--teal-glow);
+  transform: translate(-50%, -50%);
+  transition: left 0.15s ease, top 0.15s ease;
+  left: 50%;
+  top: 50%;
+}
+.position-label {
+  font-size: 10px;
+  color: var(--gray);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
 .ctrl-area {
   position: absolute;
   inset: 0;

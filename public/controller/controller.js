@@ -24,21 +24,15 @@
   let currentControls = null;
   let tapCount = 0;
 
-  // ---- LOCATE BUTTON ----
-  const btnLocate = document.getElementById('btn-locate');
-  if (btnLocate) {
-    btnLocate.addEventListener('click', () => {
-      if (btnLocate.disabled) return;
-      socket.emit('player-input', { type: 'locate' });
-      // Cooldown
-      btnLocate.disabled = true;
-      btnLocate.style.opacity = '0.5';
-      setTimeout(() => {
-        btnLocate.disabled = false;
-        btnLocate.style.opacity = '1';
-      }, 3000);
-      if (navigator.vibrate) navigator.vibrate(20);
-    });
+  // ---- POSITION INDICATOR ----
+  const positionDot = document.getElementById('position-dot');
+  const positionLabel = document.getElementById('position-label');
+  function updatePositionDot(px, py) {
+    if (!positionDot) return;
+    const x = Math.max(0, Math.min(1, px)) * 100;
+    const y = Math.max(0, Math.min(1, py)) * 100;
+    positionDot.style.left = x + '%';
+    positionDot.style.top = y + '%';
   }
 
   // ---- JOIN ----
@@ -89,7 +83,7 @@
   socket.on('phase', (data) => {
     if (!playerInfo) return;
     if (data.phase === 'lobby') showScreen('waiting');
-    if (data.phase === 'countdown') {
+    if (data.phase === 'explanation' || data.phase === 'countdown') {
       showScreen('controller');
       if (data.currentGame) {
         document.getElementById('ctrl-game-name').textContent = data.currentGame.name;
@@ -110,33 +104,43 @@
     // Check elimination
     if (!state.alive) {
       showScreen('eliminated');
-      // Vibrate on elimination
       if (navigator.vibrate) {
         navigator.vibrate([200, 100, 200, 100, 400]);
       }
       return;
     }
 
-    if (state.phase === 'playing' && state.gameState) {
-      const gs = state.gameState;
-      const controls = gs.controls;
+    // Always update position dot
+    if (state.playerX !== undefined) {
+      updatePositionDot(state.playerX, state.playerY);
+    }
 
-      // Show correct control area
-      if (controls !== currentControls) {
-        switchControls(controls);
-        currentControls = controls;
-      }
-
-      // Update controller-specific UI
+    if (state.phase === 'explanation') {
+      document.getElementById('ctrl-game-name').textContent = state.currentGame || '';
       document.getElementById('ctrl-status').textContent =
-        state.countdown > 0 ? `Début dans ${state.countdown}...` : '';
-
-      updateControllerUI(gs);
+        `Préparation... ${state.explanation || ''}s`;
+      // Hide game controls, show position only
+      switchControls(null);
     }
 
     if (state.phase === 'countdown') {
       document.getElementById('ctrl-status').textContent =
         `Début dans ${state.countdown}...`;
+    }
+
+    if (state.phase === 'playing' && state.gameState) {
+      const gs = state.gameState;
+      const controls = gs.controls;
+
+      if (controls !== currentControls) {
+        switchControls(controls);
+        currentControls = controls;
+      }
+
+      document.getElementById('ctrl-status').textContent =
+        state.countdown > 0 ? `Début dans ${state.countdown}...` : '';
+
+      updateControllerUI(gs);
     }
   });
 
