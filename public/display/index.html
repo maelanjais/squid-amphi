@@ -12,32 +12,46 @@
   <!-- Lobby Screen -->
   <div id="lobby-screen" class="screen active">
     <div class="lobby-container">
-      <div class="logo-section">
-        <div class="squid-shapes">
-          <div class="shape circle"></div>
-          <div class="shape triangle"></div>
-          <div class="shape square"></div>
+      <div class="lobby-main">
+        <div class="logo-section">
+          <div class="squid-shapes">
+            <div class="shape circle"></div>
+            <div class="shape triangle"></div>
+            <div class="shape square"></div>
+          </div>
+          <h1 class="game-title">SQUID<br><span>AMPHI</span></h1>
+          <p class="tagline">À LA FIN IL N'EN RESTERA QU'UN.</p>
         </div>
-        <h1 class="game-title">SQUID<br><span>AMPHI</span></h1>
-        <p class="tagline">50 JOUEURS. 1 SEUL SURVIVANT.</p>
-      </div>
-      <div class="join-section">
-        <div class="qr-placeholder" id="qr-code">
-          <p class="join-url" id="join-url">Chargement...</p>
+        <div class="join-section">
+          <div class="qr-placeholder" id="qr-code">
+            <p class="join-url" id="join-url">Chargement...</p>
+          </div>
+          <p class="join-instruction">Scannez le QR code ou allez sur</p>
+          <p class="join-url-big" id="join-url-display"></p>
         </div>
-        <p class="join-instruction">Scannez le QR code ou allez sur</p>
-        <p class="join-url-big" id="join-url-display"></p>
+        <button class="btn-start" id="btn-start" style="display:none;">
+          COMMENCER LE JEU
+        </button>
       </div>
-      <div class="players-section">
-        <div class="player-count">
-          <span id="player-count-num">0</span>
-          <span class="player-count-label">JOUEURS</span>
+      <div class="lobby-sidebar">
+        <div class="players-section">
+          <div class="player-count">
+            <span id="player-count-num">0</span>
+            <span class="player-count-label">JOUEURS</span>
+          </div>
+          <div class="player-list" id="player-list"></div>
         </div>
-        <div class="player-list" id="player-list"></div>
+        <div class="bot-panel" id="bot-panel">
+          <div class="bot-panel-header">
+            <span class="bot-icon">🤖</span>
+            <span>BOTS</span>
+          </div>
+          <div class="bot-panel-body">
+            <input type="number" id="bot-count" min="1" max="50" value="5" class="bot-input" placeholder="Nb">
+            <button class="btn-add-bots" id="btn-add-bots">AJOUTER</button>
+          </div>
+        </div>
       </div>
-      <button class="btn-start" id="btn-start" style="display:none;">
-        COMMENCER LE JEU
-      </button>
     </div>
   </div>
 

@@ -55,6 +55,12 @@
     socket.emit('admin-reset');
   });
 
+  // Bot control
+  document.getElementById('btn-add-bots')?.addEventListener('click', () => {
+    const count = parseInt(document.getElementById('bot-count').value) || 5;
+    socket.emit('admin-add-bots', { count });
+  });
+
   // Handle phase changes
   socket.on('phase', (data) => {
     showScreen(data.phase);
@@ -143,7 +149,7 @@
       document.getElementById('remaining-count').textContent =
         `${state.alivePlayers} survivants`;
       const nextIdx = state.currentGame ? state.currentGame.index + 1 : 0;
-      if (nextIdx < state.currentGame.total) {
+      if (state.currentGame && nextIdx < state.currentGame.total) {
         document.getElementById('next-game').textContent =
           `Prochaine épreuve dans ${state.transition}s...`;
       } else {

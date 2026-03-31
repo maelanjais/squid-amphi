@@ -228,13 +228,13 @@ class Renderer {
 
     // Big traffic light in center
     const lightX = 960;
-    const lightY = 80;
-    const lightR = 40;
+    const lightY = 120;
+    const lightR = 60;
     
     // Light background
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.beginPath();
-    ctx.roundRect(lightX - 55, lightY - 55, 110, 110, 20);
+    ctx.roundRect(lightX - 80, lightY - 80, 160, 160, 20);
     ctx.fill();
 
     ctx.beginPath();
@@ -252,9 +252,9 @@ class Renderer {
 
     // Timer
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 24px Outfit';
+    ctx.font = 'bold 36px Outfit';
     ctx.textAlign = 'center';
-    ctx.fillText(`⏱ ${gs.roundTimer}s`, 960, 160);
+    ctx.fillText(`⏱ ${gs.roundTimer}s`, 960, 240);
   }
 
   renderTugOfWar(ctx, state, gs) {

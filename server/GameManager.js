@@ -2,6 +2,7 @@
  * GameManager — Controls the game flow, lobby, and mini-game transitions
  */
 const Player = require('./Player');
+const BotPlayer = require('./BotPlayer');
 
 // Game phases
 const PHASE = {
@@ -71,8 +72,9 @@ class GameManager {
     this.countdownTimer = 0;
     this.transitionTimer = 0;
     this.eliminatedThisRound = [];
-    this.gameQueue = null; // Initialize gameQueue
-    this.upcomingPool = null; // Initialize upcomingPool
+    this.gameQueue = null;
+    this.upcomingPool = null;
+    this.botCounter = 0;
 
     // Load all mini-games
     this.gameClasses = {
@@ -124,7 +126,15 @@ class GameManager {
       }
     });
 
+    socket.on('admin-add-bots', (data) => {
+      const count = Math.min(Math.max(parseInt(data.count) || 0, 0), 100 - this.players.size);
+      if (count > 0 && this.phase === PHASE.LOBBY) {
+        this.addBots(count);
+      }
+    });
+
     socket.on('admin-reset', () => {
+      this.botCounter = 0;
       this.players.clear();
       this.playerCounter = 0;
       this.currentGameIndex = -1;
@@ -233,12 +243,10 @@ class GameManager {
       const gameName = this.gameQueue[this.currentGameIndex];
 
       if (gameName !== 'FinalDuel') {
-        // Prevent all players from dying: end game if we reach a critically low number of survivors
-        // Minimum 2 survivors, or at least 15% of the starting players for this mini-game
-        const minSurvivors = Math.max(2, Math.floor(this.playersAtGameStart * 0.15));
-        if (aliveCount <= minSurvivors && aliveCount > 0) {
+        // Only end prematurely if everyone died
+        if (aliveCount <= 0) {
           prematureEnd = true;
-          console.log(`⚠️ Premature end to save players! Only ${aliveCount} left.`);
+          console.log(`⚠️ Premature end: everyone died.`);
         }
       } else {
         if (aliveCount <= 1) prematureEnd = true;
@@ -253,6 +261,18 @@ class GameManager {
       this.transitionTimer -= dt;
       if (this.transitionTimer <= 0) {
         this.startNextGame();
+      }
+    }
+
+    // Run bot AI during gameplay
+    if (this.phase === PHASE.PLAYING && this.currentGame) {
+      const gameName = GAME_NAMES[this.gameQueue[this.currentGameIndex]];
+      const gameState = this.currentGame.getState();
+      const allPlayers = Array.from(this.players.values());
+      for (const player of allPlayers) {
+        if (player.isBot && player.alive) {
+          player.botThink(gameState, gameName, allPlayers);
+        }
       }
     }
 
@@ -417,6 +437,21 @@ class GameManager {
       alive: p.alive
     }));
     this.io.emit('player-list', list);
+  }
+
+  addBots(count) {
+    for (let i = 0; i < count; i++) {
+      this.botCounter++;
+      this.playerCounter++;
+      const botId = `bot-${this.botCounter}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const bot = new BotPlayer(botId, `Bot ${this.botCounter}`);
+      bot.number = this.playerCounter;
+      bot.x = 200 + Math.random() * (this.arenaWidth - 400);
+      bot.y = 200 + Math.random() * (this.arenaHeight - 400);
+      this.players.set(botId, bot);
+    }
+    console.log(`🤖 ${count} bots added! [${this.players.size} players total]`);
+    this.broadcastPlayerList();
   }
 
   destroy() {
