@@ -13,7 +13,6 @@ class BotPlayer extends Player {
 
     if (currentGameName === '1, 2, 3… Soleil !') this.actRLGL(gameState);
     else if (currentGameName === 'Le Jeu de la Corde') this.actTugOfWar();
-    else if (currentGameName === 'La Bataille du Dortoir') this.actNightFight(allPlayers);
     else if (currentGameName === 'Le Pont de Verre') this.actGlassBridge(gameState);
     else if (currentGameName === 'Le Duel Final') this.actFinalDuel(gameState, allPlayers);
     else if (currentGameName === 'Le Sablé Dalgona') this.actDalgona(gameState);
@@ -22,7 +21,7 @@ class BotPlayer extends Player {
   actRLGL(gs) {
     let shouldMove = false;
     if (gs.greenLight && !gs.warning) {
-      shouldMove = Math.random() < 0.7; // 70% chance to move (hesitation)
+      shouldMove = Math.random() < 0.7;
     } else if (gs.greenLight && gs.warning) {
       shouldMove = Math.random() > 0.6;
     } else {
@@ -33,7 +32,7 @@ class BotPlayer extends Player {
 
     this.moving = shouldMove;
     if (shouldMove) {
-      this.direction.x = (Math.random() - 0.5) * 0.6; // more lateral drift = slower
+      this.direction.x = (Math.random() - 0.5) * 0.6;
       this.direction.y = -1;
       const len = Math.sqrt(this.direction.x ** 2 + this.direction.y ** 2);
       this.direction.x /= len;
@@ -47,42 +46,22 @@ class BotPlayer extends Player {
     }
   }
 
-  actNightFight(allPlayers) {
-    const enemies = allPlayers.filter(p => p.alive && p.id !== this.id);
-    if (enemies.length === 0) return;
-
-    let closest = null;
-    let minDist = Infinity;
-    for (const e of enemies) {
-      const dist = Math.sqrt((e.x - this.x) ** 2 + (e.y - this.y) ** 2);
-      if (dist < minDist) {
-        minDist = dist;
-        closest = e;
-      }
-    }
-
-    if (closest) {
-      if (minDist < 60 && Math.random() < 0.05) {
-        this.input.tap = true;
-      } else if (Math.random() < 0.5) {
-        const dx = closest.x - this.x;
-        const dy = closest.y - this.y;
-        const len = Math.sqrt(dx * dx + dy * dy);
-        this.moving = true;
-        this.direction.x = dx / len;
-        this.direction.y = dy / len;
-      } else {
-        this.moving = false;
-      }
-    }
-  }
-
   actGlassBridge(gs) {
-    if (!gs.playerChoosing || !gs.playerChoosing[this.id]) return;
-    
-    const timer = gs.playerTimers ? gs.playerTimers[this.id] : 8;
-    if (timer < 3 || Math.random() < 0.05) {
-      this.input.choice = Math.random() > 0.5 ? 'left' : 'right';
+    // Only act when it's my turn
+    if (gs.currentPlayerId !== this.id || !gs.choosing) return;
+
+    // Use revealed panels if available
+    const currentStep = gs.playerStep;
+    const panel = gs.panels[currentStep];
+
+    if (panel) {
+      // Panel is revealed — choose the safe side
+      this.input.choice = panel.safe;
+    } else {
+      // Unknown panel — wait a bit then guess
+      if (gs.choiceTimer < 6 || Math.random() < 0.08) {
+        this.input.choice = Math.random() > 0.5 ? 'left' : 'right';
+      }
     }
   }
 

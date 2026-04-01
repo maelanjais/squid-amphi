@@ -59,8 +59,6 @@ class Renderer {
         this.renderRedLightGreenLight(ctx, state, gameState);
       } else if (gameName.includes('Corde')) {
         this.renderTugOfWar(ctx, state, gameState);
-      } else if (gameName.includes('Manège')) {
-        this.renderGroupGame(ctx, state, gameState);
       } else if (gameName.includes('Pont')) {
         this.renderGlassBridge(ctx, state, gameState);
       } else if (gameName.includes('Duel')) {
@@ -75,9 +73,7 @@ class Renderer {
     if (state.currentGame && state.currentGame.state) {
       const gameName = state.currentGame.name;
       const gameState = state.currentGame.state;
-      if (gameName.includes('Dortoir')) {
-        this.renderNightFight(ctx, state, gameState);
-      } else if (gameName.includes('Dalgona')) {
+      if (gameName.includes('Dalgona')) {
         this.renderDalgona(ctx, state, gameState);
       }
     }
@@ -316,148 +312,115 @@ class Renderer {
     ctx.fillRect(barX, barY, barW * posNorm, barH);
   }
 
-  renderGroupGame(ctx, state, gs) {
-    // Show target number
-    if (gs.phase === 'announce' || gs.phase === 'move') {
-      ctx.fillStyle = this.pink;
-      ctx.font = 'bold 160px Outfit';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.globalAlpha = gs.phase === 'announce' ? 1 : 0.3;
-      ctx.fillText(gs.targetNumber, 960, 450);
-      ctx.globalAlpha = 1;
-
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 24px Outfit';
-      ctx.fillText(`Formez des groupes de ${gs.targetNumber} !`, 960, 580);
-
-      if (gs.phase === 'move') {
-        ctx.fillText(`⏱ ${gs.timer}s`, 960, 630);
-      }
-
-      ctx.fillStyle = '#8892a4';
-      ctx.font = '16px Outfit';
-      ctx.fillText(`Manche ${gs.round}/${gs.maxRounds}`, 960, 670);
-    }
-
-    // Draw group circles
-    if (gs.groups) {
-      for (const group of gs.groups) {
-        const r = 50 + group.members.length * 10;
-        ctx.beginPath();
-        ctx.arc(group.centerX, group.centerY, r, 0, Math.PI * 2);
-        ctx.strokeStyle = group.valid ? 'rgba(0, 255, 150, 0.4)' : 'rgba(255, 60, 60, 0.3)';
-        ctx.lineWidth = 3;
-        ctx.setLineDash([8, 4]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Group count
-        ctx.fillStyle = group.valid ? this.green : this.red;
-        ctx.font = 'bold 14px Outfit';
-        ctx.textAlign = 'center';
-        ctx.fillText(group.members.length, group.centerX, group.centerY - r - 8);
-      }
-    }
-  }
-
-  renderNightFight(ctx, state, gs) {
-    // Dark overlay
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-    ctx.fillRect(0, 0, 1920, 1080);
-
-    // Flash effects (brief moments of light)
-    if (gs.flashEffects) {
-      for (const flash of gs.flashEffects) {
-        const alpha = flash.timer / 0.3;
-        const gradient = ctx.createRadialGradient(
-          flash.x, flash.y, 0,
-          flash.x, flash.y, flash.radius * 1.5
-        );
-        gradient.addColorStop(0, `rgba(255, 200, 50, ${alpha * 0.6})`);
-        gradient.addColorStop(1, 'rgba(255, 200, 50, 0)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(flash.x - flash.radius * 2, flash.y - flash.radius * 2,
-                      flash.radius * 4, flash.radius * 4);
-      }
-    }
-
-    // Show HP bars over visible players (near flashes)
-    if (gs.playerHP && state.players) {
-      for (const p of state.players) {
-        if (!p.alive) continue;
-        const hp = gs.playerHP[p.id] || 0;
-        
-        // HP bar
-        const barW = 30;
-        const barH = 4;
-        ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        ctx.fillRect(p.x - barW / 2, p.y - 28, barW, barH);
-        ctx.fillStyle = hp > 1 ? this.green : this.red;
-        ctx.fillRect(p.x - barW / 2, p.y - 28, barW * (hp / gs.maxHP), barH);
-      }
-    }
-
-    // Timer
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.font = 'bold 30px Outfit';
-    ctx.textAlign = 'center';
-    ctx.fillText(`⏱ ${gs.timer}s`, 960, 60);
-
-    ctx.fillStyle = 'rgba(255,255,255,0.3)';
-    ctx.font = '20px Outfit';
-    ctx.fillText('🌙 BATAILLE DANS LE NOIR', 960, 100);
-  }
-
   renderGlassBridge(ctx, state, gs) {
-    const bridgeStartX = 1920 * 0.3;
-    const bridgeEndX = 1920 * 0.7;
+    const bridgeStartX = 1920 * 0.15;
+    const bridgeEndX = 1920 * 0.85;
     const bridgeY = 540;
-    const stepWidth = (bridgeEndX - bridgeStartX) / gs.totalSteps;
-    const panelH = 80;
+    const stepWidth = (bridgeEndX - bridgeStartX) / (gs.totalSteps + 1);
+    const panelW = Math.min(stepWidth * 0.8, 120);
+    const panelH = 100;
 
     // Abyss background
-    ctx.fillStyle = 'rgba(20, 0, 40, 0.5)';
-    ctx.fillRect(bridgeStartX - 40, bridgeY - panelH - 20,
-                  bridgeEndX - bridgeStartX + 80, panelH * 2 + 40);
+    ctx.fillStyle = 'rgba(20, 0, 40, 0.6)';
+    ctx.fillRect(0, 0, 1920, 1080);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(bridgeStartX - 100, bridgeY - panelH - 60,
+                  bridgeEndX - bridgeStartX + 200, panelH * 2 + 120);
 
     // Draw panels
     for (let i = 0; i < gs.totalSteps; i++) {
-      const x = bridgeStartX + i * stepWidth;
-      const panel = gs.panels[i];
+      const x = bridgeStartX + (i + 0.5) * stepWidth;
+      const panel = gs.panels[i]; // null if unrevealed, otherwise { safe: 'left'|'right' }
 
-      // Left panel
-      ctx.fillStyle = panel ? (panel.safe === 'left' ? 'rgba(0, 212, 170, 0.4)' : 'rgba(255, 60, 60, 0.3)') :
-                              'rgba(150, 200, 255, 0.15)';
-      ctx.strokeStyle = 'rgba(150, 200, 255, 0.3)';
-      ctx.lineWidth = 2;
-      ctx.fillRect(x + 4, bridgeY - panelH / 2 - 25, stepWidth / 2 - 8, panelH);
-      ctx.strokeRect(x + 4, bridgeY - panelH / 2 - 25, stepWidth / 2 - 8, panelH);
+      // Left panel (top visually)
+      ctx.fillStyle = panel ? (panel.safe === 'left' ? 'rgba(0, 212, 170, 0.6)' : 'rgba(255, 60, 60, 0.1)') :
+                              'rgba(150, 200, 255, 0.2)';
+      ctx.strokeStyle = panel && panel.safe !== 'left' ? 'rgba(255, 60, 60, 0.4)' : 'rgba(150, 200, 255, 0.5)';
+      ctx.lineWidth = 3;
+      // Draw left slightly higher
+      ctx.fillRect(x - panelW / 2, bridgeY - panelH - 10, panelW, panelH);
+      if (!panel || panel.safe === 'left') {
+        ctx.strokeRect(x - panelW / 2, bridgeY - panelH - 10, panelW, panelH);
+      } else {
+        // broken glass effect
+        ctx.beginPath();
+        ctx.moveTo(x - panelW/2, bridgeY - panelH - 10);
+        ctx.lineTo(x + panelW/2, bridgeY - 10);
+        ctx.moveTo(x - panelW/2, bridgeY - 10);
+        ctx.lineTo(x + panelW/2, bridgeY - panelH - 10);
+        ctx.stroke();
+      }
 
-      // Right panel
-      ctx.fillStyle = panel ? (panel.safe === 'right' ? 'rgba(0, 212, 170, 0.4)' : 'rgba(255, 60, 60, 0.3)') :
-                              'rgba(150, 200, 255, 0.15)';
-      ctx.fillRect(x + stepWidth / 2 + 4, bridgeY - panelH / 2 - 25, stepWidth / 2 - 8, panelH);
-      ctx.strokeRect(x + stepWidth / 2 + 4, bridgeY - panelH / 2 - 25, stepWidth / 2 - 8, panelH);
+      // Right panel (bottom visually)
+      ctx.fillStyle = panel ? (panel.safe === 'right' ? 'rgba(0, 212, 170, 0.6)' : 'rgba(255, 60, 60, 0.1)') :
+                              'rgba(150, 200, 255, 0.2)';
+      ctx.strokeStyle = panel && panel.safe !== 'right' ? 'rgba(255, 60, 60, 0.4)' : 'rgba(150, 200, 255, 0.5)';
+      ctx.fillRect(x - panelW / 2, bridgeY + 10, panelW, panelH);
+      if (!panel || panel.safe === 'right') {
+        ctx.strokeRect(x - panelW / 2, bridgeY + 10, panelW, panelH);
+      } else {
+        // broken glass effect
+        ctx.beginPath();
+        ctx.moveTo(x - panelW/2, bridgeY + 10);
+        ctx.lineTo(x + panelW/2, bridgeY + panelH + 10);
+        ctx.moveTo(x - panelW/2, bridgeY + panelH + 10);
+        ctx.lineTo(x + panelW/2, bridgeY + 10);
+        ctx.stroke();
+      }
 
       // Step number
-      ctx.fillStyle = 'rgba(255,255,255,0.4)';
-      ctx.font = '12px Outfit';
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = 'bold 20px Outfit';
       ctx.textAlign = 'center';
-      ctx.fillText(`${i + 1}`, x + stepWidth / 2, bridgeY + panelH / 2 + 10);
+      ctx.fillText(`${i + 1}`, x, bridgeY + 6);
     }
 
-    // Labels
-    ctx.font = 'bold 18px Outfit';
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
-    ctx.fillText('DÉPART', 1920 * 0.15, bridgeY);
-    ctx.fillText('ARRIVÉE', 1920 * 0.85, bridgeY);
+    // Platforms
+    ctx.fillStyle = '#333';
+    ctx.fillRect(bridgeStartX - stepWidth, bridgeY - 150, stepWidth, 300);
+    ctx.fillRect(bridgeStartX + gs.totalSteps * stepWidth, bridgeY - 150, stepWidth, 300);
 
-    // Title
-    ctx.fillStyle = this.teal;
+    // Labels
     ctx.font = 'bold 24px Outfit';
-    ctx.fillText('🌉 LE PONT DE VERRE', 960, bridgeY - panelH - 60);
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.textAlign = 'center';
+    ctx.fillText('DÉPART', bridgeStartX - stepWidth / 2, bridgeY + 190);
+    ctx.fillText('ARRIVÉE', bridgeStartX + (gs.totalSteps + 0.5) * stepWidth, bridgeY + 190);
+
+    // Active Player HUD
+    if (gs.currentPlayerId && gs.choosing) {
+      const p = state.players.find(pl => pl.id === gs.currentPlayerId);
+      if (p) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(1920 / 2 - 300, 80, 600, 120);
+        ctx.strokeStyle = this.teal;
+        ctx.lineWidth = 4;
+        ctx.strokeRect(1920 / 2 - 300, 80, 600, 120);
+
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 32px Outfit';
+        ctx.fillText(`Tour de : ${p.name.toUpperCase()}`, 1920 / 2, 130);
+        ctx.fillStyle = this.pink;
+        ctx.fillText(`Choix de la dalle ${gs.playerStep + 1} !`, 1920 / 2, 175);
+
+        // Timer
+        ctx.fillStyle = this.gold;
+        ctx.font = 'bold 48px Outfit';
+        ctx.fillText(`⏱ ${gs.choiceTimer}s`, 1920 / 2 + 200, 150);
+      }
+    } else if (gs.waitingForNext && !gs.finished) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.fillRect(1920 / 2 - 200, 80, 400, 80);
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 28px Outfit';
+      ctx.fillText('Joueur suivant...', 1920 / 2, 130);
+    }
+
+    // Progress
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '20px Outfit';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Joueur ${gs.currentPlayerIndex} sur ${gs.totalPlayers}`, 40, 60);
   }
 
   renderFinalDuel(ctx, state, gs) {

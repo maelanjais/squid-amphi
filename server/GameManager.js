@@ -18,8 +18,6 @@ const PHASE = {
 const GAME_NAMES = {
   RedLightGreenLight: '1, 2, 3… Soleil !',
   TugOfWar: 'Le Jeu de la Corde',
-  GroupGame: 'Le Jeu du Manège',
-  NightFight: 'La Bataille du Dortoir',
   GlassBridge: 'Le Pont de Verre',
   FinalDuel: 'Le Duel Final',
   Dalgona: 'Le Sablé Dalgona'
@@ -34,17 +32,9 @@ const GAME_RULES = {
     description: "Votre équipe est en danger. Tirez plus fort que les autres !",
     controls: "Tapotez le plus vite possible pour tirer la corde."
   },
-  GroupGame: {
-    description: "Formez des groupes complets du nombre annoncé avant la fin du temps.",
-    controls: "Déplacez-vous avec le joystick."
-  },
-  NightFight: {
-    description: "L'émeute éclate dans le noir. Défendez-vous pour survivre.",
-    controls: "Joystick pour bouger. Appuyez sur le bouton pour attaquer."
-  },
   GlassBridge: {
-    description: "Traversez le pont. Attention : mémorisez les dalles solides, les fragiles cèdent.",
-    controls: "Choisissez Gauche ou Droite."
+    description: "Un par un, traversez le pont. Choisissez la bonne dalle à chaque étape. Les dalles découvertes par les premiers sont visibles pour les suivants !",
+    controls: "Choisissez Gauche ou Droite quand c'est votre tour."
   },
   FinalDuel: {
     description: "Il n'en restera qu'un. Poussez vos adversaires hors de l'arène.",
@@ -80,8 +70,6 @@ class GameManager {
     this.gameClasses = {
       RedLightGreenLight: require('./games/RedLightGreenLight'),
       TugOfWar: require('./games/TugOfWar'),
-      GroupGame: require('./games/GroupGame'),
-      NightFight: require('./games/NightFight'),
       GlassBridge: require('./games/GlassBridge'),
       FinalDuel: require('./games/FinalDuel'),
       Dalgona: require('./games/Dalgona')
@@ -303,29 +291,30 @@ class GameManager {
 
     if (!this.gameQueue) {
       this.gameQueue = ['RedLightGreenLight'];
-      this.upcomingPool = ['Dalgona', 'TugOfWar', 'NightFight', 'GlassBridge'];
+      this.upcomingPool = ['Dalgona'];
     }
 
     let gameName = 'FinalDuel'; // Default fallback
 
     if (this.currentGameIndex === 0) {
       gameName = this.gameQueue[0];
+    } else if (this.currentGameIndex === 1) {
+      // Game 2: TugOfWar if even player count, GlassBridge if odd
+      if (alive.length % 2 === 0 && alive.length >= 4) {
+        gameName = 'TugOfWar';
+      } else {
+        gameName = 'GlassBridge';
+      }
+      this.gameQueue.push(gameName);
     } else {
       if (alive.length <= 2) {
         gameName = 'FinalDuel';
       } else if (this.upcomingPool.length === 0) {
+        // If TugOfWar or GlassBridge wasn't played in round 2, add it to pool
         gameName = 'FinalDuel';
       } else {
-        // Randomize securely (Fisher-Yates)
-        for (let i = this.upcomingPool.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [this.upcomingPool[i], this.upcomingPool[j]] = [this.upcomingPool[j], this.upcomingPool[i]];
-        }
         let pickedIndex = -1;
         for (let i = 0; i < this.upcomingPool.length; i++) {
-          const g = this.upcomingPool[i];
-          if (g === 'TugOfWar' && alive.length < 4) continue;
-          if (g === 'GlassBridge' && alive.length > 20) continue;
           pickedIndex = i; break;
         }
 
