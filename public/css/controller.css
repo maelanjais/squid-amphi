@@ -223,20 +223,37 @@ body {
   position: fixed;
   top: 50px;
   right: 12px;
-  display: flex;
+  display: none;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   z-index: 99;
-  opacity: 0.85;
+  transition: all 0.3s ease;
+}
+.position-indicator.large {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  transform: translate(-50%, -50%);
+  display: flex;
 }
 .position-map {
   width: 64px;
   height: 36px;
   border: 2px solid rgba(255, 255, 255, 0.25);
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.4);
+  border-radius: 6px;
+  background: rgba(15, 15, 30, 0.7);
   position: relative;
   backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+}
+.position-indicator.large .position-map {
+  width: 260px;
+  height: 146px;
+  border: 3px solid rgba(233, 30, 130, 0.4);
+  border-radius: 12px;
+  background: rgba(15, 15, 30, 0.85);
+  box-shadow: 0 0 40px rgba(233, 30, 130, 0.15), inset 0 0 30px rgba(0, 0, 0, 0.3);
 }
 .position-dot {
   position: absolute;
@@ -250,11 +267,27 @@ body {
   left: 50%;
   top: 50%;
 }
+.position-indicator.large .position-dot {
+  width: 16px;
+  height: 16px;
+  box-shadow: 0 0 16px var(--teal-glow), 0 0 32px rgba(0, 212, 170, 0.3);
+  animation: pos-pulse 1.5s ease-in-out infinite;
+}
+@keyframes pos-pulse {
+  0%, 100% { box-shadow: 0 0 16px var(--teal-glow); }
+  50% { box-shadow: 0 0 24px var(--teal-glow), 0 0 48px rgba(0, 212, 170, 0.4); }
+}
 .position-label {
   font-size: 10px;
   color: var(--gray);
   font-weight: 600;
   letter-spacing: 1px;
+}
+.position-indicator.large .position-label {
+  font-size: 16px;
+  color: var(--teal);
+  letter-spacing: 3px;
+  font-weight: 700;
 }
 
 .ctrl-area {

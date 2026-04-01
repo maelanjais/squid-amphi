@@ -378,7 +378,7 @@ class GameManager {
       phase: this.phase,
       players: Array.from(this.players.values()).map(p => p.toJSON()),
       explanation: Math.ceil(this.explanationTimer),
-      countdown: Math.ceil(this.countdownTimer),
+      countdown: Math.max(0, Math.floor(this.countdownTimer)),
       transition: Math.ceil(this.transitionTimer),
       currentGame: this.currentGameIndex >= 0 ? {
         name: GAME_NAMES[this.gameQueue[this.currentGameIndex]],

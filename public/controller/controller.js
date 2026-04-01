@@ -98,6 +98,8 @@
   });
 
   // ---- CONTROLLER STATE (from server, 30fps) ----
+  const positionIndicator = document.getElementById('position-indicator');
+
   socket.on('controller-state', (state) => {
     if (!playerInfo) return;
 
@@ -110,7 +112,7 @@
       return;
     }
 
-    // Always update position dot
+    // Update position dot
     if (state.playerX !== undefined) {
       updatePositionDot(state.playerX, state.playerY);
     }
@@ -119,13 +121,17 @@
       document.getElementById('ctrl-game-name').textContent = state.currentGame || '';
       document.getElementById('ctrl-status').textContent =
         `Préparation... ${state.explanation || ''}s`;
-      // Hide game controls, show position only
       switchControls(null);
+      // Show position map large
+      if (positionIndicator) positionIndicator.classList.add('large');
+      if (positionIndicator) positionIndicator.style.display = 'flex';
     }
 
     if (state.phase === 'countdown') {
       document.getElementById('ctrl-status').textContent =
-        `Début dans ${state.countdown}...`;
+        state.countdown > 0 ? `Début dans ${state.countdown}...` : 'GO !';
+      if (positionIndicator) positionIndicator.classList.add('large');
+      if (positionIndicator) positionIndicator.style.display = 'flex';
     }
 
     if (state.phase === 'playing' && state.gameState) {
@@ -139,6 +145,10 @@
 
       document.getElementById('ctrl-status').textContent =
         state.countdown > 0 ? `Début dans ${state.countdown}...` : '';
+
+      // Hide position map during gameplay
+      if (positionIndicator) positionIndicator.style.display = 'none';
+      if (positionIndicator) positionIndicator.classList.remove('large');
 
       updateControllerUI(gs);
     }
