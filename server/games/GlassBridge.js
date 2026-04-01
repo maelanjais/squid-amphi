@@ -30,16 +30,8 @@ class GlassBridge {
     const alive = players.filter(p => p.alive);
     const n = alive.length;
 
-    // Adapt steps based on player count
-    // With s steps, probability of crossing = (1/2)^(unrevealed steps)
-    // We want ~50% of players to survive on average
-    // Expected survivors = n * P(survive) where P depends on position in order
-    // Use a simple heuristic: fewer players = fewer steps
-    if (n <= 3) this.steps = 3;
-    else if (n <= 6) this.steps = 4;
-    else if (n <= 10) this.steps = 5;
-    else if (n <= 15) this.steps = 6;
-    else this.steps = 7;
+    // Adapt steps to eliminate roughly 75% of players so it is challenging
+    this.steps = Math.max(3, Math.floor(n * 0.75));
 
     // Generate random safe panels
     this.panels = [];

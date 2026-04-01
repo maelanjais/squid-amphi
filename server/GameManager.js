@@ -41,7 +41,7 @@ const GAME_RULES = {
     controls: "Glissez rapidement (swipe) pour frapper / repousser."
   },
   Dalgona: {
-    description: "Tapotez pour dévoiler la forme sans briser la structure sous la tension.",
+    description: "Écrémage Final : Seuls les 2 premiers à finir leur forme accéderont au Duel Final ! Le moindre faux pas (tension à 100%) est mortel.",
     controls: "Tapez pour avancer, mais ne remplissez pas la jauge de tension !"
   }
 };
@@ -191,7 +191,7 @@ class GameManager {
       this.explanationTimer -= dt;
       if (this.explanationTimer <= 0) {
         this.phase = PHASE.COUNTDOWN;
-        this.countdownTimer = 4;
+        this.countdownTimer = 5;
         this.broadcastPhase();
       }
     }
@@ -291,13 +291,13 @@ class GameManager {
 
     if (!this.gameQueue) {
       this.gameQueue = ['RedLightGreenLight'];
-      this.upcomingPool = ['Dalgona'];
+      this.upcomingPool = []; // No random pool needed anymore
     }
 
     let gameName = 'FinalDuel'; // Default fallback
 
     if (this.currentGameIndex === 0) {
-      gameName = this.gameQueue[0];
+      gameName = 'RedLightGreenLight';
     } else if (this.currentGameIndex === 1) {
       // Game 2: TugOfWar if even player count, GlassBridge if odd
       if (alive.length % 2 === 0 && alive.length >= 4) {
@@ -305,28 +305,23 @@ class GameManager {
       } else {
         gameName = 'GlassBridge';
       }
-      this.gameQueue.push(gameName);
-    } else {
+    } else if (this.currentGameIndex === 2) {
+      // Game 3: Dalgona
       if (alive.length <= 2) {
         gameName = 'FinalDuel';
-      } else if (this.upcomingPool.length === 0) {
-        // If TugOfWar or GlassBridge wasn't played in round 2, add it to pool
-        gameName = 'FinalDuel';
       } else {
-        let pickedIndex = -1;
-        for (let i = 0; i < this.upcomingPool.length; i++) {
-          pickedIndex = i; break;
-        }
-
-        if (pickedIndex !== -1) {
-          gameName = this.upcomingPool[pickedIndex];
-          this.upcomingPool.splice(pickedIndex, 1);
-        } else {
-          gameName = 'FinalDuel';
-        }
+        gameName = 'Dalgona';
       }
-      this.gameQueue.push(gameName);
+    } else {
+      // Game 4+: FinalDuel
+      gameName = 'FinalDuel';
     }
+
+    // Always keep track of what we are playing
+    if (this.currentGameIndex >= this.gameQueue.length) {
+      this.gameQueue.push(gameName);
+    } // wait, gameQueue should have the names in order. actually just push it if it's not there.
+    if (this.currentGameIndex > 0) this.gameQueue[this.currentGameIndex] = gameName;
 
     if (gameName === 'FinalDuel') {
       this.upcomingPool = []; // Forcibly exhaust
@@ -340,7 +335,7 @@ class GameManager {
 
     // Initial phase before game start
     this.phase = PHASE.EXPLANATION;
-    this.explanationTimer = 10; // 10 seconds explanation
+    this.explanationTimer = 15; // 15 seconds explanation
     this.broadcastPhase();
 
     console.log(`🎲 Explaining: ${GAME_NAMES[gameName]} (${alive.length} players alive)`);
@@ -353,7 +348,7 @@ class GameManager {
     console.log(`💀 ${this.eliminatedThisRound.length} eliminated this round.`);
 
     this.phase = PHASE.TRANSITION;
-    this.transitionTimer = 5; // 5 seconds transition screen
+    this.transitionTimer = 8; // 8 seconds transition screen
     this.currentGame = null;
     this.broadcastPhase();
   }
@@ -369,11 +364,11 @@ class GameManager {
       explanation: Math.ceil(this.explanationTimer),
       countdown: Math.max(0, Math.floor(this.countdownTimer)),
       transition: Math.ceil(this.transitionTimer),
-      currentGame: this.currentGameIndex >= 0 ? {
+      currentGame: this.currentGameIndex >= 0 && this.currentGameIndex < this.gameQueue.length ? {
         name: GAME_NAMES[this.gameQueue[this.currentGameIndex]],
         rules: GAME_RULES[this.gameQueue[this.currentGameIndex]],
         index: this.currentGameIndex,
-        total: this.gameQueue.length + this.upcomingPool.length + (this.upcomingPool.length > 0 ? 1 : 0),
+        total: 4, // Final Duel is always game 4 max
         state: this.currentGame ? this.currentGame.getState() : null
       } : null,
       alivePlayers: this.getAlivePlayers().length,

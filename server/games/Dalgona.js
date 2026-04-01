@@ -53,13 +53,19 @@ class Dalgona {
       }
     }
 
-    if (this.timer <= 0) {
+    const winners = players.filter(p => p.alive && this.playerStates.get(p.id).progress >= this.maxProgress);
+    
+    if (this.timer <= 0 || winners.length >= 2) {
       this.finished = true;
       for (const player of players) {
         if (player.alive) {
           const state = this.playerStates.get(player.id);
-          if (state && !state.done && state.progress < this.maxProgress) {
-            toEliminate.push(player.id);
+          // If you haven't finished the shape, you are eliminated!
+          if (state && (!state.done || state.progress < this.maxProgress)) {
+            // Prevent pushing the same ID twice if tension broke it this frame but we haven't eliminated them yet
+            if (!toEliminate.includes(player.id)) {
+              toEliminate.push(player.id);
+            }
             state.done = true;
           }
         }
