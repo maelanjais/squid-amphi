@@ -11,7 +11,9 @@ const PHASE = {
   COUNTDOWN: 'countdown',
   PLAYING: 'playing',
   ELIMINATION: 'elimination',
-  TRANSITION: 'transition',
+  TRANSITION_BANK: 'transition_bank',
+  TRANSITION_DEAD: 'transition_dead',
+  TRANSITION_ROULETTE: 'transition_roulette',
   GAME_OVER: 'gameover'
 };
 
@@ -53,6 +55,14 @@ class GameManager {
     this.lastUpdate = Date.now();
     this.arenaWidth = 1920;
     this.arenaHeight = 1080;
+    
+    // New tracked systems
+    this.prizePool = 0;
+    this.eliminatedDetails = [];
+    this.nextGameName = null;
+
+    // Wait 500ms before starting loop
+    setTimeout(() => this.gameLoop(), 500);
     this.explanationTimer = 0;
     this.countdownTimer = 0;
     this.transitionTimer = 0;
@@ -239,7 +249,30 @@ class GameManager {
       }
     }
 
-    if (this.phase === PHASE.TRANSITION) {
+    if (this.phase === PHASE.TRANSITION_BANK) {
+      this.transitionTimer -= dt;
+      if (this.transitionTimer <= 0) {
+        if (this.eliminatedDetails.length > 0) {
+          this.phase = PHASE.TRANSITION_DEAD;
+          this.transitionTimer = 10;
+        } else {
+          this.phase = PHASE.TRANSITION_ROULETTE;
+          this.transitionTimer = 10;
+        }
+        this.broadcastPhase();
+      }
+    }
+
+    if (this.phase === PHASE.TRANSITION_DEAD) {
+      this.transitionTimer -= dt;
+      if (this.transitionTimer <= 0) {
+        this.phase = PHASE.TRANSITION_ROULETTE;
+        this.transitionTimer = 10;
+        this.broadcastPhase();
+      }
+    }
+
+    if (this.phase === PHASE.TRANSITION_ROULETTE) {
       this.transitionTimer -= dt;
       if (this.transitionTimer <= 0) {
         this.startNextGame();
@@ -292,29 +325,14 @@ class GameManager {
 
     if (this.currentGameIndex === 0) {
       gameName = 'RedLightGreenLight';
-    } else if (this.currentGameIndex === 1) {
-      // Game 2: TugOfWar if even player count AND enough players, otherwise skip to GlassBridge
-      if (alive.length % 2 === 0 && alive.length >= 4) {
-        gameName = 'TugOfWar';
-      } else {
-        gameName = 'GlassBridge';
-      }
-    } else if (this.currentGameIndex === 2) {
-      // Game 3: GlassBridge if we played TugOfWar previously and have enough players
-      if (this.gameQueue[1] === 'TugOfWar' && alive.length >= 3) {
-        gameName = 'GlassBridge';
-      } else {
-        gameName = 'FinalDuel';
-      }
     } else {
-      // Game 4+: FinalDuel
-      gameName = 'FinalDuel';
+      gameName = this.nextGameName || 'FinalDuel';
     }
 
     // Always keep track of what we are playing
     if (this.currentGameIndex >= this.gameQueue.length) {
       this.gameQueue.push(gameName);
-    } // wait, gameQueue should have the names in order. actually just push it if it's not there.
+    } 
     if (this.currentGameIndex > 0) this.gameQueue[this.currentGameIndex] = gameName;
 
     if (gameName === 'FinalDuel') {
@@ -356,8 +374,39 @@ class GameManager {
 
     console.log(`💀 ${this.eliminatedThisRound.length} eliminated this round.`);
 
-    this.phase = PHASE.TRANSITION;
-    this.transitionTimer = 8; // 8 seconds transition screen
+    // 1. Calculate Prize Pool and Details
+    this.prizePool += this.eliminatedThisRound.length * 100000;
+    this.eliminatedDetails = this.eliminatedThisRound.map(id => {
+      const p = this.players.get(id);
+      return p ? { name: p.name, number: p.number, color: p.color } : null;
+    }).filter(d => d !== null);
+
+    // 2. Pre-determine the NEXT game so the Roulette can spin to it
+    const nextIndex = this.currentGameIndex + 1;
+    let fallbackGame = 'FinalDuel';
+    if (nextIndex === 1) {
+      if (alive.length % 2 === 0 && alive.length >= 4) {
+        fallbackGame = 'TugOfWar';
+      } else {
+        fallbackGame = 'GlassBridge';
+      }
+    } else if (nextIndex === 2) {
+      if (this.gameQueue[1] === 'TugOfWar' && alive.length >= 3) {
+        fallbackGame = 'GlassBridge';
+      } else {
+        fallbackGame = 'FinalDuel';
+      }
+    }
+
+    if (alive.length <= 1) {
+      this.nextGameName = null;
+    } else {
+      this.nextGameName = fallbackGame;
+    }
+
+    // 3. Initiate the animations trilogy
+    this.phase = PHASE.TRANSITION_BANK;
+    this.transitionTimer = 7; // 7 seconds bank screen
     this.currentGame = null;
     this.broadcastPhase();
   }
@@ -380,9 +429,13 @@ class GameManager {
         total: 4, // Final Duel is always game 4 max
         state: this.currentGame ? this.currentGame.getState() : null
       } : null,
+      nextGameName: this.nextGameName ? GAME_NAMES[this.nextGameName] : null,
+      allGameNames: Object.values(GAME_NAMES),
+      prizePool: this.prizePool,
+      eliminatedDetails: this.eliminatedDetails,
       alivePlayers: this.getAlivePlayers().length,
       totalPlayers: this.players.size,
-      eliminatedThisRound: this.eliminatedThisRound.length
+      eliminatedThisRoundCount: this.eliminatedThisRound.length
     };
 
     // Send to display

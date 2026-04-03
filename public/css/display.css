@@ -366,34 +366,152 @@ body {
 .traffic-light.green { background: var(--green); }
 .traffic-light.warning { background: #ffaa00; }
 
-/* =============== TRANSITION =============== */
-.transition-container {
+/* =============== TRANSITION: BANK =============== */
+.bank-container {
   text-align: center;
   animation: fade-up 0.5s ease-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
-@keyframes fade-up {
-  0% { transform: translateY(30px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
+.piggy-icon {
+  font-size: 150px;
+  animation: float 3s ease-in-out infinite, pulse-glow 2s infinite;
 }
-.eliminated-icon {
-  font-size: 80px;
-  margin-bottom: 20px;
+@keyframes pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 20px var(--gold)); }
+  50% { filter: drop-shadow(0 0 60px var(--gold)); }
 }
-.eliminated-count {
-  font-size: 36px;
-  font-weight: 800;
+.bank-container h2 {
+  font-size: 32px;
+  color: var(--gold);
+  letter-spacing: 6px;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+.prize-pool-display {
+  font-size: 120px;
+  font-weight: 900;
+  color: var(--white);
+  text-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
+}
+.eliminated-round {
+  font-size: 32px;
   color: var(--red);
+  font-weight: 700;
+  margin-top: 20px;
 }
-.remaining-count {
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--teal);
-  margin-top: 12px;
+
+/* =============== TRANSITION: MEMORIAL =============== */
+.memorial-container {
+  width: 100%;
+  height: 100%;
+  background: black;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80px 0;
+  box-sizing: border-box;
 }
-.next-game {
-  font-size: 20px;
+.memorial-title {
+  color: var(--red);
+  font-size: 24px;
+  letter-spacing: 12px;
+  margin-bottom: 60px;
+  opacity: 0.8;
+  text-align: center;
+}
+.memorial-scroll {
+  width: 600px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+  position: relative;
+  /* Simple CSS animation to slide up */
+  animation: scroll-up 10s linear;
+}
+.memorial-player {
+  font-size: 36px;
   color: var(--gray);
-  margin-top: 32px;
+  text-align: center;
+  font-weight: 300;
+  letter-spacing: 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding-bottom: 8px;
+}
+@keyframes scroll-up {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(-100%); }
+}
+
+/* =============== TRANSITION: ROULETTE =============== */
+.roulette-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+.roulette-container h2 {
+  font-size: 48px;
+  color: var(--pink);
+  letter-spacing: 8px;
+}
+.roulette-window {
+  width: 800px;
+  height: 240px; /* Show exactly 3 items */
+  background: var(--bg-darker);
+  border: 6px solid var(--teal);
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 0 50px rgba(0, 212, 170, 0.4);
+}
+.roulette-window::before, .roulette-window::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; height: 80px; z-index: 2;
+  pointer-events: none;
+}
+.roulette-window::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--bg-darker), transparent);
+}
+.roulette-window::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--bg-darker), transparent);
+}
+/* Center indicator line */
+.roulette-window-center {
+  position: absolute;
+  top: 50%; left: 0; right: 0; height: 4px;
+  background: var(--pink);
+  transform: translateY(-50%);
+  z-index: 1;
+  box-shadow: 0 0 10px var(--pink);
+}
+
+.roulette-reel {
+  display: flex;
+  flex-direction: column;
+  transition: transform 6s cubic-bezier(0.15, 0.85, 0.2, 1);
+  transform: translateY(0);
+}
+.roulette-item {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  font-weight: 800;
+  color: var(--gray);
+  letter-spacing: 2px;
+}
+.roulette-item.target-winner {
+  font-size: 56px;
+  color: var(--white);
+  text-shadow: 0 0 20px var(--gold);
 }
 
 /* =============== GAME OVER =============== */

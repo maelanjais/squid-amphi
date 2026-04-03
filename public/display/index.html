@@ -96,13 +96,35 @@
     </div>
   </div>
 
-  <!-- Transition Screen -->
-  <div id="transition-screen" class="screen">
-    <div class="transition-container">
-      <div class="eliminated-icon">☠️</div>
-      <p class="eliminated-count" id="eliminated-count"></p>
-      <p class="remaining-count" id="remaining-count"></p>
-      <p class="next-game" id="next-game"></p>
+  <!-- Transition: Piggy Bank -->
+  <div id="transition-bank-screen" class="screen">
+    <div class="bank-container">
+      <div class="piggy-icon">🏦</div>
+      <h2>CAGNOTTE TOTALE</h2>
+      <div class="prize-pool-display" id="prize-pool">0 ₩</div>
+      <p class="eliminated-round" id="bank-eliminated">+ 0 joueurs éliminés</p>
+    </div>
+  </div>
+
+  <!-- Transition: Dead Memorial -->
+  <div id="transition-dead-screen" class="screen">
+    <div class="memorial-container">
+      <div class="memorial-title">JOUEURS ÉLIMINÉS</div>
+      <div class="memorial-scroll" id="memorial-scroll">
+        <!-- JS va injecter les joueurs ici -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Transition: Fall Guys Roulette -->
+  <div id="transition-roulette-screen" class="screen">
+    <div class="roulette-container">
+      <h2>PROCHAINE ÉPREUVE</h2>
+      <div class="roulette-window">
+        <div class="roulette-reel" id="roulette-reel">
+          <!-- JS va injecter les noms de jeux -->
+        </div>
+      </div>
     </div>
   </div>
 

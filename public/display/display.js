@@ -13,7 +13,9 @@
     explanation: document.getElementById('explanation-screen'),
     countdown: document.getElementById('countdown-screen'),
     game: document.getElementById('game-screen'),
-    transition: document.getElementById('transition-screen'),
+    transition_bank: document.getElementById('transition-bank-screen'),
+    transition_dead: document.getElementById('transition-dead-screen'),
+    transition_roulette: document.getElementById('transition-roulette-screen'),
     gameover: document.getElementById('gameover-screen')
   };
 
@@ -142,18 +144,75 @@
         `${state.alivePlayers} joueurs en lice`;
     }
 
-    // Update transition
-    if (state.phase === 'transition') {
-      document.getElementById('eliminated-count').textContent =
-        `${state.eliminatedThisRound} joueurs éliminés`;
-      document.getElementById('remaining-count').textContent =
-        `${state.alivePlayers} survivants`;
-      const nextIdx = state.currentGame ? state.currentGame.index + 1 : 0;
-      if (state.currentGame && nextIdx < state.currentGame.total) {
-        document.getElementById('next-game').textContent =
-          `Prochaine épreuve dans ${state.transition}s...`;
+    // Transition: Piggy Bank
+    if (state.phase === 'transition_bank') {
+      document.getElementById('prize-pool').textContent = `${state.prizePool.toLocaleString()} ₩`;
+      document.getElementById('bank-eliminated').textContent = `+ ${state.eliminatedThisRoundCount} joueurs éliminés`;
+    }
+
+    // Transition: Memorial
+    if (state.phase === 'transition_dead') {
+      const scrollDiv = document.getElementById('memorial-scroll');
+      scrollDiv.innerHTML = '';
+      if (state.eliminatedDetails && state.eliminatedDetails.length > 0) {
+         state.eliminatedDetails.forEach(p => {
+           const pDiv = document.createElement('div');
+           pDiv.className = 'memorial-player';
+           pDiv.textContent = `#${p.number} - ${p.name}`;
+           scrollDiv.appendChild(pDiv);
+         });
       } else {
-        document.getElementById('next-game').textContent = 'Résultats finaux...';
+         scrollDiv.innerHTML = '<div class="memorial-player">Aucun mort ce tour-ci...</div>';
+      }
+    }
+
+    // Transition: Roulette
+    if (state.phase === 'transition_roulette') {
+      const reel = document.getElementById('roulette-reel');
+      if (!reel.hasAttribute('data-animating')) {
+        reel.setAttribute('data-animating', 'true');
+        reel.innerHTML = '';
+        
+        // Build the physical wheel (many items)
+        const items = [];
+        const pool = state.allGameNames || ['Jeu Inconnu'];
+        
+        // Add random filler
+        for (let i = 0; i < 20; i++) {
+          const item = document.createElement('div');
+          item.className = 'roulette-item';
+          item.textContent = pool[Math.floor(Math.random() * pool.length)];
+          reel.appendChild(item);
+        }
+        
+        // Add the winning target near the end
+        const winner = document.createElement('div');
+        winner.className = 'roulette-item target-winner';
+        winner.textContent = state.nextGameName || 'Duel Final';
+        winner.style.color = '#ffaa00';
+        reel.appendChild(winner);
+        
+        // Add a few more trailing elements
+        for (let i = 0; i < 5; i++) {
+          const item = document.createElement('div');
+          item.className = 'roulette-item';
+          item.textContent = pool[Math.floor(Math.random() * pool.length)];
+          reel.appendChild(item);
+        }
+
+        // Delay the CSS transition slightly to allow DOM to render
+        setTimeout(() => {
+          // Calculate exact scroll to place the winner in the middle
+          // Each item is e.g. 80px high
+          reel.style.transform = `translateY(-${20 * 80}px)`;
+        }, 100);
+      }
+    } else {
+      // Reset roulette when not in phase
+      const reel = document.getElementById('roulette-reel');
+      if (reel) {
+         reel.removeAttribute('data-animating');
+         reel.style.transform = 'translateY(0)';
       }
     }
 
@@ -185,8 +244,12 @@
         screens.countdown.classList.add('active'); break;
       case 'playing':
         screens.game.classList.add('active'); break;
-      case 'transition':
-        screens.transition.classList.add('active'); break;
+      case 'transition_bank':
+        screens.transition_bank.classList.add('active'); break;
+      case 'transition_dead':
+        screens.transition_dead.classList.add('active'); break;
+      case 'transition_roulette':
+        screens.transition_roulette.classList.add('active'); break;
       case 'gameover':
         screens.gameover.classList.add('active'); break;
     }
