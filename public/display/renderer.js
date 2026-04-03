@@ -69,15 +69,6 @@ class Renderer {
     // Draw all players
     this.drawPlayers(ctx, state.players);
 
-    // Draw game UI overlays
-    if (state.currentGame && state.currentGame.state) {
-      const gameName = state.currentGame.name;
-      const gameState = state.currentGame.state;
-      if (gameName.includes('Dalgona')) {
-        this.renderDalgona(ctx, state, gameState);
-      }
-    }
-
     // Draw elimination effects
     this.drawElimEffects(ctx);
 
@@ -451,59 +442,6 @@ class Renderer {
     ctx.font = 'bold 28px Outfit';
     ctx.fillText('⚔️ DUEL FINAL', gs.centerX, 60);
   }
-
-  renderDalgona(ctx, state, gs) {
-    if (!gs.playerStates) return;
-
-    // Timer
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 36px Outfit';
-    ctx.textAlign = 'center';
-    ctx.fillText(`⏱ ${gs.timer}s`, 960, 80);
-
-    // Draw progress rings over players
-    for (const p of state.players) {
-      if (!p.alive) continue;
-      const ps = gs.playerStates[p.id];
-      if (!ps) continue;
-
-      const progressNorm = ps.progress / 100;
-      const tensionNorm = ps.tension / 100;
-
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      
-      // Background ring
-      ctx.beginPath();
-      ctx.arc(0, 0, 24, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-      ctx.lineWidth = 4;
-      ctx.stroke();
-
-      // Progress
-      if (progressNorm > 0) {
-        ctx.beginPath();
-        ctx.arc(0, 0, 24, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * progressNorm));
-        ctx.strokeStyle = '#39e75f';
-        ctx.lineWidth = 4;
-        ctx.stroke();
-      }
-
-      // Tension Warning
-      if (tensionNorm > 0) {
-        const tensionColor = tensionNorm > 0.8 ? '#ff3b3b' : (tensionNorm > 0.5 ? '#ffaa00' : '#ffd700');
-        ctx.beginPath();
-        ctx.arc(0, 0, 30, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * tensionNorm));
-        ctx.strokeStyle = tensionColor;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-  }
-
-
-
   // =================== EFFECTS ===================
 
   addElimEffect(x, y) {

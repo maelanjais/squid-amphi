@@ -19,8 +19,7 @@ const GAME_NAMES = {
   RedLightGreenLight: '1, 2, 3… Soleil !',
   TugOfWar: 'Le Jeu de la Corde',
   GlassBridge: 'Le Pont de Verre',
-  FinalDuel: 'Le Duel Final',
-  Dalgona: 'Le Sablé Dalgona'
+  FinalDuel: 'Le Duel Final'
 };
 
 const GAME_RULES = {
@@ -39,10 +38,6 @@ const GAME_RULES = {
   FinalDuel: {
     description: "Il n'en restera qu'un. Poussez vos adversaires hors de l'arène.",
     controls: "Glissez rapidement (swipe) pour frapper / repousser."
-  },
-  Dalgona: {
-    description: "Écrémage Final : Seuls les 2 premiers à finir leur forme accéderont au Duel Final ! Le moindre faux pas (tension à 100%) est mortel.",
-    controls: "Tapez pour avancer, mais ne remplissez pas la jauge de tension !"
   }
 };
 
@@ -71,8 +66,7 @@ class GameManager {
       RedLightGreenLight: require('./games/RedLightGreenLight'),
       TugOfWar: require('./games/TugOfWar'),
       GlassBridge: require('./games/GlassBridge'),
-      FinalDuel: require('./games/FinalDuel'),
-      Dalgona: require('./games/Dalgona')
+      FinalDuel: require('./games/FinalDuel')
     };
 
     // Game loop at 30fps
@@ -299,18 +293,18 @@ class GameManager {
     if (this.currentGameIndex === 0) {
       gameName = 'RedLightGreenLight';
     } else if (this.currentGameIndex === 1) {
-      // Game 2: TugOfWar if even player count, GlassBridge if odd
+      // Game 2: TugOfWar if even player count AND enough players, otherwise skip to GlassBridge
       if (alive.length % 2 === 0 && alive.length >= 4) {
         gameName = 'TugOfWar';
       } else {
         gameName = 'GlassBridge';
       }
     } else if (this.currentGameIndex === 2) {
-      // Game 3: Dalgona
-      if (alive.length <= 2) {
-        gameName = 'FinalDuel';
+      // Game 3: GlassBridge if we played TugOfWar previously and have enough players
+      if (this.gameQueue[1] === 'TugOfWar' && alive.length >= 3) {
+        gameName = 'GlassBridge';
       } else {
-        gameName = 'Dalgona';
+        gameName = 'FinalDuel';
       }
     } else {
       // Game 4+: FinalDuel
@@ -343,8 +337,23 @@ class GameManager {
 
   endCurrentGame() {
     const gameName = this.gameQueue[this.currentGameIndex];
-    const alive = this.getAlivePlayers();
+    let alive = this.getAlivePlayers();
+
     console.log(`✅ ${GAME_NAMES[gameName]} finished. ${alive.length} players remain.`);
+
+    // If it's the end of RedLightGreenLight and we have an odd number of players,
+    // we must try to execute a Bot so TugOfWar can be played perfectly.
+    if (gameName === 'RedLightGreenLight' && alive.length % 2 !== 0 && alive.length > 2) {
+      const botToKill = alive.find(p => p.isBot);
+      if (botToKill) {
+        botToKill.eliminate();
+        this.eliminatedThisRound.push(botToKill.id);
+        console.log(`🤖 Bot silencieusement sacrifié pour garantir une parité: ${botToKill.name}`);
+        // Refresh alive players array for logging
+        alive = this.getAlivePlayers();
+      }
+    }
+
     console.log(`💀 ${this.eliminatedThisRound.length} eliminated this round.`);
 
     this.phase = PHASE.TRANSITION;
