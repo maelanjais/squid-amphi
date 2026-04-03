@@ -226,7 +226,7 @@
               const pDiv = document.createElement('div');
               pDiv.className = 'player-tile';
               pDiv.style.background = p.color;
-              pDiv.innerHTML = `<span class="number">${p.number}</span>`;
+              pDiv.innerHTML = `<span class="player-name">${p.name}</span>`;
               pDiv.style.animationDelay = `${(i % cols) * 0.08}s`;
               
               if (p.justDied) {

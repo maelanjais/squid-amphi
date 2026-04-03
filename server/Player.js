@@ -23,8 +23,9 @@ class Player {
   }
 
   generateColor() {
-    const hue = Math.random() * 360;
-    return `hsl(${Math.floor(hue)}, 70%, 55%)`;
+    Player.colorIndex = (Player.colorIndex || 0) + 1;
+    const hue = (Player.colorIndex * 137.5) % 360;
+    return `hsl(${Math.floor(hue)}, 80%, 60%)`;
   }
 
   /**

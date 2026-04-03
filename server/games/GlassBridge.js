@@ -30,8 +30,8 @@ class GlassBridge {
     const alive = players.filter(p => p.alive);
     const n = alive.length;
 
-    // Adapt steps to eliminate roughly 75% of players so it is challenging
-    this.steps = Math.max(3, Math.floor(n * 0.75));
+    // Adapt steps to eliminate roughly 90% of players so it is highly challenging
+    this.steps = Math.max(6, Math.floor(n * 0.9));
 
     // Generate random safe panels
     this.panels = [];

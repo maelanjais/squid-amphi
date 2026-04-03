@@ -12,13 +12,13 @@ class FinalDuel {
     this.centerY = arenaHeight / 2;
     this.maxRadius = 400;
     this.circleRadius = this.maxRadius;
-    this.minRadius = 80;
-    this.shrinkRate = 5; // pixels per second
-    this.duration = 60;
+    this.minRadius = 100;
+    this.shrinkRate = 3; // pixels per second (slower, more suspense)
+    this.duration = 90;
     this.timer = this.duration;
     this.finished = false;
-    this.pushForce = 300;
-    this.friction = 3;
+    this.pushForce = 500; // stronger pushes
+    this.friction = 5; // higher friction = less sliding, more control
   }
 
   setup(players) {
@@ -98,8 +98,8 @@ class FinalDuel {
       player.y += player.vy * dt;
     }
 
-    // Handle collisions between players
-    const PLAYER_RADIUS = 15;
+    // Handle collisions between players — elastic bounce
+    const PLAYER_RADIUS = 18;
     for (let i = 0; i < alive.length; i++) {
       for (let j = i + 1; j < alive.length; j++) {
         const p1 = alive[i];
@@ -115,15 +115,25 @@ class FinalDuel {
           const nx = dx / dist;
           const ny = dy / dist;
 
-          p1.x -= nx * (overlap / 2);
-          p1.y -= ny * (overlap / 2);
-          p2.x += nx * (overlap / 2);
-          p2.y += ny * (overlap / 2);
+          // Separate players so they never overlap
+          p1.x -= nx * (overlap / 2 + 1);
+          p1.y -= ny * (overlap / 2 + 1);
+          p2.x += nx * (overlap / 2 + 1);
+          p2.y += ny * (overlap / 2 + 1);
 
-          p1.vx *= 0.8;
-          p1.vy *= 0.8;
-          p2.vx *= 0.8;
-          p2.vy *= 0.8;
+          // Elastic velocity exchange along collision normal
+          const relVx = p1.vx - p2.vx;
+          const relVy = p1.vy - p2.vy;
+          const relDot = relVx * nx + relVy * ny;
+
+          // Only resolve if they are moving toward each other
+          if (relDot > 0) {
+            const bounceFactor = 1.2; // slightly > 1 for punchy feel
+            p1.vx -= bounceFactor * relDot * nx;
+            p1.vy -= bounceFactor * relDot * ny;
+            p2.vx += bounceFactor * relDot * nx;
+            p2.vy += bounceFactor * relDot * ny;
+          }
         }
       }
     }

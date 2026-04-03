@@ -229,26 +229,26 @@ body {
 }
 
 .player-tag {
-  padding: 5px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 800;
   color: var(--bg-dark);
   animation: pop-in 0.3s ease-out;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
 }
 .player-tag .player-number {
   background: rgba(0,0,0,0.2);
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 @keyframes pop-in {
@@ -475,10 +475,15 @@ body {
   transform: scale(0);
   animation: pop-in 0.8s forwards;
   transition: all 2s ease;
+  padding: 5px;
+  text-align: center;
 }
-.player-tile span.number {
-  font-size: 2vw; /* scalable */
+.player-tile span.player-name {
+  font-size: 1.6vw; /* scalable dependent on screen */
   pointer-events: none;
+  word-wrap: break-word;
+  line-height: +1.1;
+  max-width: 100%;
 }
 .player-tile.eliminated-anim {
   filter: grayscale(100%) opacity(0.25);

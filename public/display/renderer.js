@@ -94,25 +94,28 @@ class Renderer {
 
   drawPlayers(ctx, players) {
     if (!players) return;
-
-    // Draw dead players first (ghostly)
+    const aliveCount = players.filter(p => p.alive).length;
+    // Base formula: inverse square root relationship for packing. 
+    // 100 players -> ~12px, 50 players -> ~18px, 10 players -> ~35px, 2 players -> >50px
+    const adaptiveR = Math.min(60, Math.max(10, 100 / Math.max(1, Math.sqrt(aliveCount))));
+    
+    // Dead players on bottom
     for (const p of players) {
       if (!p.alive) {
-        this.drawPlayer(ctx, p, true);
+        this.drawPlayer(ctx, p, true, adaptiveR);
       }
     }
     // Then alive players on top
     for (const p of players) {
       if (p.alive) {
-        this.drawPlayer(ctx, p, false);
+        this.drawPlayer(ctx, p, false, adaptiveR);
       }
     }
   }
 
-  drawPlayer(ctx, p, dead) {
+  drawPlayer(ctx, p, dead, r) {
     const x = p.x;
     const y = p.y;
-    const r = 16;
 
     ctx.save();
     ctx.translate(x, y);
@@ -153,7 +156,7 @@ class Renderer {
 
     // Player number
     ctx.fillStyle = dead ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.7)';
-    ctx.font = 'bold 11px Outfit';
+    ctx.font = `bold ${Math.max(9, r * 0.7)}px Outfit`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(p.number, 0, 0);
