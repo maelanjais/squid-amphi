@@ -58,6 +58,7 @@ class GameManager {
     
     // New tracked systems
     this.prizePool = 0;
+    this.prizePoolOld = 0;
     this.eliminatedDetails = [];
     this.nextGameName = null;
 
@@ -255,9 +256,11 @@ class GameManager {
         if (this.eliminatedDetails.length > 0) {
           this.phase = PHASE.TRANSITION_DEAD;
           this.transitionTimer = 10;
-        } else {
+        } else if (this.nextGameName !== null) {
           this.phase = PHASE.TRANSITION_ROULETTE;
           this.transitionTimer = 10;
+        } else {
+          this.startNextGame();
         }
         this.broadcastPhase();
       }
@@ -266,9 +269,13 @@ class GameManager {
     if (this.phase === PHASE.TRANSITION_DEAD) {
       this.transitionTimer -= dt;
       if (this.transitionTimer <= 0) {
-        this.phase = PHASE.TRANSITION_ROULETTE;
-        this.transitionTimer = 10;
-        this.broadcastPhase();
+        if (this.nextGameName !== null) {
+          this.phase = PHASE.TRANSITION_ROULETTE;
+          this.transitionTimer = 10;
+          this.broadcastPhase();
+        } else {
+          this.startNextGame();
+        }
       }
     }
 
@@ -375,6 +382,7 @@ class GameManager {
     console.log(`💀 ${this.eliminatedThisRound.length} eliminated this round.`);
 
     // 1. Calculate Prize Pool and Details
+    this.prizePoolOld = this.prizePool;
     this.prizePool += this.eliminatedThisRound.length * 100000;
     this.eliminatedDetails = this.eliminatedThisRound.map(id => {
       const p = this.players.get(id);
@@ -432,6 +440,7 @@ class GameManager {
       nextGameName: this.nextGameName ? GAME_NAMES[this.nextGameName] : null,
       allGameNames: Object.values(GAME_NAMES),
       prizePool: this.prizePool,
+      prizePoolOld: this.prizePoolOld,
       eliminatedDetails: this.eliminatedDetails,
       alivePlayers: this.getAlivePlayers().length,
       totalPlayers: this.players.size,

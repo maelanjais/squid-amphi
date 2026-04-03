@@ -146,24 +146,82 @@
 
     // Transition: Piggy Bank
     if (state.phase === 'transition_bank') {
-      document.getElementById('prize-pool').textContent = `${state.prizePool.toLocaleString()} ₩`;
-      document.getElementById('bank-eliminated').textContent = `+ ${state.eliminatedThisRoundCount} joueurs éliminés`;
+      const bankEl = document.getElementById('prize-pool');
+      // Only start animation once per phase entry
+      if (!bankEl.hasAttribute('data-animating')) {
+        bankEl.setAttribute('data-animating', 'true');
+        document.getElementById('bank-eliminated').textContent = `+ ${state.eliminatedThisRoundCount} joueurs éliminés`;
+        
+        let startVal = state.prizePoolOld || 0;
+        let endVal = state.prizePool || 0;
+        let duration = 3000; // 3 seconds
+        let startTime = performance.now();
+        
+        function updateBank(time) {
+          let progress = (time - startTime) / duration;
+          if (progress > 1) progress = 1;
+          
+          let currentMoney = Math.floor(startVal + (endVal - startVal) * progress);
+          bankEl.textContent = `${currentMoney.toLocaleString()} ₩`;
+          
+          if (progress < 1) {
+            requestAnimationFrame(updateBank);
+          }
+        }
+        requestAnimationFrame(updateBank);
+      }
+    } else {
+      const bankEl = document.getElementById('prize-pool');
+      if (bankEl) bankEl.removeAttribute('data-animating');
     }
 
-    // Transition: Memorial
+    // Transition: Memorial Grid
     if (state.phase === 'transition_dead') {
-      const scrollDiv = document.getElementById('memorial-scroll');
-      scrollDiv.innerHTML = '';
-      if (state.eliminatedDetails && state.eliminatedDetails.length > 0) {
-         state.eliminatedDetails.forEach(p => {
-           const pDiv = document.createElement('div');
-           pDiv.className = 'memorial-player';
-           pDiv.textContent = `#${p.number} - ${p.name}`;
-           scrollDiv.appendChild(pDiv);
-         });
-      } else {
-         scrollDiv.innerHTML = '<div class="memorial-player">Aucun mort ce tour-ci...</div>';
+      const grid = document.getElementById('memorial-grid');
+      if (!grid.hasAttribute('data-rendered')) {
+        grid.setAttribute('data-rendered', 'true');
+        grid.innerHTML = '';
+        
+        // Find participants: those who survived, plus those who died this round
+        const survivors = state.players ? state.players.filter(p => p.alive) : [];
+        const deadThisRound = state.eliminatedDetails || [];
+        
+        const allParticipants = [];
+        survivors.forEach(p => allParticipants.push({ ...p, justDied: false }));
+        deadThisRound.forEach(p => allParticipants.push({ ...p, justDied: true }));
+        
+        // Sort by number
+        allParticipants.sort((a, b) => a.number - b.number);
+
+        const count = allParticipants.length;
+        if (count > 0) {
+            // Adjust Grid Columns dynamically to fit the 16:9 screen
+            const cols = Math.ceil(Math.sqrt(count * (16/9)));
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            
+            allParticipants.forEach((p, i) => {
+              const pDiv = document.createElement('div');
+              pDiv.className = 'player-tile';
+              pDiv.style.background = p.color;
+              pDiv.innerHTML = `<span class="number">${p.number}</span>`;
+              pDiv.style.animationDelay = `${(i % cols) * 0.05}s`;
+              
+              if (p.justDied) {
+                // Trigger death animation 2 seconds after the interface appears
+                setTimeout(() => {
+                  pDiv.classList.add('eliminated-anim');
+                }, 2000 + (Math.random() * 1500));
+              }
+              
+              grid.appendChild(pDiv);
+            });
+        } else {
+            grid.innerHTML = '<div style="color:white; font-size: 24px;">Aucun joueur ce tour-ci...</div>';
+        }
       }
+    } else {
+      const grid = document.getElementById('memorial-grid');
+      if (grid) grid.removeAttribute('data-rendered');
     }
 
     // Transition: Roulette
@@ -203,8 +261,10 @@
         // Delay the CSS transition slightly to allow DOM to render
         setTimeout(() => {
           // Calculate exact scroll to place the winner in the middle
-          // Each item is e.g. 80px high
-          reel.style.transform = `translateY(-${20 * 80}px)`;
+          // There are 19 elements before the target-winner element (index 20).
+          // And the window is exactly 3 items tall (1 item in center + 1 up + 1 down).
+          // So the top item should be index 19.
+          reel.style.transform = `translateY(-${19 * 80}px)`;
         }, 100);
       }
     } else {
