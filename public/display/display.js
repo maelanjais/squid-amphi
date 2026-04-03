@@ -169,10 +169,33 @@
           }
         }
         requestAnimationFrame(updateBank);
+
+        // Falling Money Animation
+        function spawnMoney() {
+          if(!bankEl.hasAttribute('data-animating')) return;
+          const rain = document.getElementById('money-rain-container');
+          if(!rain) return;
+          
+          const bill = document.createElement('div');
+          bill.className = 'falling-bill';
+          bill.textContent = '💵';
+          bill.style.left = (Math.random() * 100) + 'vw';
+          bill.style.animationDuration = (4 + Math.random() * 4) + 's';
+          rain.appendChild(bill);
+          
+          setTimeout(() => {
+            if(bill.parentNode) bill.parentNode.removeChild(bill);
+          }, 8000);
+          
+          setTimeout(spawnMoney, 250); // spawn every 250ms
+        }
+        spawnMoney();
       }
     } else {
       const bankEl = document.getElementById('prize-pool');
       if (bankEl) bankEl.removeAttribute('data-animating');
+      const rain = document.getElementById('money-rain-container');
+      if (rain) rain.innerHTML = '';
     }
 
     // Transition: Memorial Grid
@@ -204,13 +227,13 @@
               pDiv.className = 'player-tile';
               pDiv.style.background = p.color;
               pDiv.innerHTML = `<span class="number">${p.number}</span>`;
-              pDiv.style.animationDelay = `${(i % cols) * 0.05}s`;
+              pDiv.style.animationDelay = `${(i % cols) * 0.08}s`;
               
               if (p.justDied) {
-                // Trigger death animation 2 seconds after the interface appears
+                // Trigger death animation slowly after the interface appears
                 setTimeout(() => {
                   pDiv.classList.add('eliminated-anim');
-                }, 2000 + (Math.random() * 1500));
+                }, 2500 + (Math.random() * 3000));
               }
               
               grid.appendChild(pDiv);
