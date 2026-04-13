@@ -100,13 +100,21 @@
         hasValidTargets = true;
         const btn = document.createElement('button');
         btn.textContent = p.name;
-        btn.style.padding = '15px';
-        btn.style.fontSize = '1.2rem';
-        btn.style.borderRadius = '10px';
-        btn.style.background = '#1a1a2e';
-        btn.style.color = '#00d4aa';
-        btn.style.border = '2px solid #00d4aa';
-        btn.style.cursor = 'pointer';
+        btn.style.cssText = `
+          padding: 18px 20px;
+          font-size: 1.3rem;
+          font-weight: 700;
+          font-family: 'Outfit', sans-serif;
+          border-radius: 14px;
+          background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+          color: #00d4aa;
+          border: 2px solid rgba(0,212,170,0.4);
+          cursor: pointer;
+          text-align: center;
+          transition: all 0.2s ease;
+          -webkit-tap-highlight-color: transparent;
+          box-shadow: 0 2px 10px rgba(0,212,170,0.1);
+        `;
         
         btn.addEventListener('click', () => {
           socket.emit('player-bet', { targetId: p.id });
@@ -189,6 +197,30 @@
           vGame.textContent = state.currentGame.name;
       }
       document.getElementById('ctrl-status').textContent = 'Vous avez survécu ! Prochaine épreuve bientôt...';
+      if (positionIndicator) positionIndicator.style.display = 'none';
+      return;
+    }
+
+    // Game over — show final screen on phone
+    if (state.phase === 'gameover') {
+      showScreen('controller');
+      switchControls(null);
+      currentControls = null;
+      document.getElementById('ctrl-game-name').textContent = 'FIN DE PARTIE';
+      document.getElementById('ctrl-status').textContent = 'Bravo, vous avez survécu à toutes les épreuves !';
+      if (positionIndicator) positionIndicator.style.display = 'none';
+      return;
+    }
+
+    // RLGL: Show survival screen as soon as you cross the finish line
+    if (state.phase === 'playing' && state.gameState && state.gameState.crossed) {
+      showScreen('victory');
+      switchControls(null);
+      currentControls = null;
+      const vGame = document.getElementById('victory-game');
+      if (vGame) vGame.textContent = '1, 2, 3… Soleil !';
+      document.getElementById('ctrl-game-name').textContent = '';
+      document.getElementById('ctrl-status').textContent = 'Vous avez franchi la ligne d\'arrivée !';
       if (positionIndicator) positionIndicator.style.display = 'none';
       return;
     }

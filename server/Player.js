@@ -14,6 +14,7 @@ class Player {
     this.radius = 16;
     this.color = this.generateColor();
     this.alive = true;
+    this.roundDied = null;
     this.moving = false;
     this.direction = { x: 0, y: 1 }; // facing direction
     this.team = 0; // for team-based games

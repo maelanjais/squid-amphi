@@ -309,6 +309,7 @@ class SoundManager {
 
     switch (newPhase) {
       case 'lobby':
+      case 'betting':
       case 'explanation':
       case 'transition_bank':
       case 'transition_roulette':

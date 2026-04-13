@@ -426,12 +426,12 @@
     if (state.phase === 'betting') {
        const banner = document.getElementById('betting-status');
        if (banner) {
-          banner.textContent = `${state.totalBets || 0} / ${state.aliveCount || 0} votes`;
+          banner.textContent = `${state.totalBets || 0} / ${state.alivePlayers || 0} votes`;
        }
     }
 
     // Render players in all game phases (starting from countdown)
-    if (state.phase !== 'lobby') {
+    if (state.phase !== 'lobby' && state.phase !== 'betting') {
       renderer.render(state);
     }
   });

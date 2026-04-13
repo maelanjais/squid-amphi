@@ -628,35 +628,45 @@ class Renderer {
     ctx.fillText(roundLabel, 960, 130);
 
     const totalRounds = gs.bracketTree.length;
-    const isBig = totalRounds > 3; // e.g. 16+ players
-    const scale = isBig ? 1.2 : 1.5; 
+    
+    // Dynamic scale based on bracket size — ensures it always fits on screen
+    let scale;
+    if (totalRounds <= 2) scale = 1.4;
+    else if (totalRounds <= 3) scale = 1.2;
+    else if (totalRounds <= 4) scale = 0.9;
+    else scale = 0.7;
+
+    // Dynamic card width that shrinks with more rounds
+    const cardW = Math.min(280, Math.max(150, 1600 / (totalRounds * 2 + 1))) * scale;
+    // Horizontal spacing between round columns
+    const marginX = 40;
+    const usableWidth = 1920 - marginX * 2 - cardW; // space for arranging round columns
+    const roundSpacing = totalRounds > 1 ? usableWidth / (totalRounds - 1) : 0;
 
     // Helper to draw a match slot
-    const drawSlot = (m, x, y, cardW, isThisRound) => {
+    const drawSlot = (m, x, y, slotW, isThisRound) => {
         const isPlaying = isThisRound && !m.finished;
         const isFinishedThisRound = isThisRound && m.finished;
 
         // Bright background if active round
         ctx.fillStyle = isThisRound ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)';
         ctx.beginPath();
-        ctx.roundRect(x - cardW/2, y - 40 * scale, cardW, 80 * scale, 12);
+        ctx.roundRect(x - slotW/2, y - 30 * scale, slotW, 60 * scale, 10);
         ctx.fill();
 
         if (isPlaying) {
-           // Teal for currently playing
-           ctx.lineWidth = 8;
-           ctx.strokeStyle = 'rgba(0, 212, 170, 0.3)'; // Fake wide glow
+           ctx.lineWidth = 6;
+           ctx.strokeStyle = 'rgba(0, 212, 170, 0.3)';
            ctx.stroke();
            ctx.lineWidth = 3;
-           ctx.strokeStyle = this.teal; // Solid inner stroke
+           ctx.strokeStyle = this.teal;
            ctx.stroke();
         } else if (isFinishedThisRound) {
-           // Neon red for finished matches in this round (or Byes!)
-           ctx.lineWidth = 8;
-           ctx.strokeStyle = 'rgba(255, 0, 85, 0.3)'; // Fake wide glow
+           ctx.lineWidth = 6;
+           ctx.strokeStyle = 'rgba(255, 0, 85, 0.3)';
            ctx.stroke();
            ctx.lineWidth = 3;
-           ctx.strokeStyle = '#FF0055'; // Solid inner stroke
+           ctx.strokeStyle = '#FF0055';
            ctx.stroke();
         } else {
            ctx.strokeStyle = m.finished ? 'rgba(229, 46, 99, 0.3)' : 'rgba(255,255,255,0.15)';
@@ -670,20 +680,20 @@ class Renderer {
         const name1 = p1 ? p1.name : '???';
         const name2 = p2 ? p2.name : '???';
         
-        ctx.font = `bold ${Math.floor(22 * scale)}px Outfit`;
+        const fontSize = Math.max(14, Math.floor(18 * scale));
+        ctx.font = `bold ${fontSize}px Outfit`;
         
         // Show winner in gold if round is finished
         if (m.finished && m.winner && m.winner !== 'tie') {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'; // Plus clair que gris foncé
-            ctx.fillText(`${name1}   VS   ${name2}`, x, y + 8 * scale);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+            ctx.fillText(`${name1}  VS  ${name2}`, x, y + 6 * scale);
             
             ctx.fillStyle = this.gold;
             const wName = (m.winner === m.p1 && p1) ? p1.name : (p2 ? p2.name : '');
-            ctx.fillText(`👑 ${wName}`, x, y - 38 * scale);
+            ctx.fillText(`👑 ${wName}`, x, y - 28 * scale);
         } else {
-            // Bright white for active or future matches
             ctx.fillStyle = isPlaying ? '#FFFFFF' : 'rgba(255,255,255, 0.8)';
-            ctx.fillText(`${name1}   VS   ${name2}`, x, y + 6 * scale);
+            ctx.fillText(`${name1}  VS  ${name2}`, x, y + 5 * scale);
         }
     };
 
@@ -697,28 +707,30 @@ class Renderer {
        
        if (matches.length === 1) { // FINALE
           const x = 960;
-          const y = 900; 
-          drawSlot(matches[0], x, y, 400 * scale, isThisRound);
-          coords[r][0] = {x, y, isLeft: null};
+          const y = 850; 
+          drawSlot(matches[0], x, y, cardW * 1.3, isThisRound);
+          coords[r][0] = {x, y, isLeft: null, cardW: cardW * 1.3};
           
           ctx.fillStyle = this.pink;
-          ctx.font = 'bold 36px Outfit';
-          ctx.fillText('FINALE', 960, y - 80 * scale);
+          ctx.font = `bold ${Math.floor(28 * scale)}px Outfit`;
+          ctx.fillText('FINALE', 960, y - 60 * scale);
        } else {
           let half = matches.length / 2;
           for (let i = 0; i < matches.length; i++) {
              const isLeft = (i < half);
              const sideIdx = isLeft ? i : (i - half);
              
-             const offsetX = isLeft ? (150 + r * 280 * scale) : (1770 - r * 280 * scale);
+             const offsetX = isLeft 
+               ? (marginX + cardW/2 + r * roundSpacing) 
+               : (1920 - marginX - cardW/2 - r * roundSpacing);
              
-             const availableHeight = 840; 
-             const spacingY = availableHeight / half;
+             const availableHeight = 780; 
+             const spacingY = availableHeight / Math.max(1, half);
              const startY = 180 + spacingY / 2;
              const y = startY + sideIdx * spacingY;
              
-             drawSlot(matches[i], offsetX, y, 220 * scale, isThisRound);
-             coords[r][i] = { x: offsetX, y: y, isLeft, cardW: 220 * scale };
+             drawSlot(matches[i], offsetX, y, cardW, isThisRound);
+             coords[r][i] = { x: offsetX, y: y, isLeft, cardW: cardW };
           }
        }
     }

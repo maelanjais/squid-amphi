@@ -287,13 +287,9 @@ class GameManager {
     });
 
     // Extract how long eliminated players survived
-    let globalRoundCount = 0;
-    for (const round of this.eliminatedDetails) {
-        globalRoundCount++;
-        for (const dead of round.players) {
-            if (survivalMap.get(dead.id) === 0) {
-                survivalMap.set(dead.id, globalRoundCount);
-            }
+    for (const p of this.players.values()) {
+        if (!p.alive && p.roundDied !== undefined) {
+             survivalMap.set(p.id, p.roundDied);
         }
     }
 
@@ -370,6 +366,7 @@ class GameManager {
           const player = this.players.get(playerId);
           if (player) {
             player.eliminate();
+            player.roundDied = this.currentGameIndex;
             this._cachedAlivePlayersDirty = true; // Invalidate cache
             this.eliminatedThisRound.push(playerId);
             // Notify the eliminated player's controller
@@ -599,7 +596,13 @@ class GameManager {
       eliminatedDetails: this.eliminatedDetails,
       alivePlayers: alivePlayers.length,
       totalPlayers: this.players.size,
-      eliminatedThisRoundCount: this.eliminatedThisRound.length
+      eliminatedThisRoundCount: this.eliminatedThisRound.length,
+      totalBets: this.bets ? this.bets.size : 0,
+      bestBetResult: this.bestBetResult ? {
+          bettorName: this.bestBetResult.bettor.name,
+          targetName: this.bestBetResult.target.name,
+          type: this.bestBetResult.type
+      } : null
     };
 
     // Send to display at full 30fps for smooth visuals
