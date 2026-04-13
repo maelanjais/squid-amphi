@@ -61,13 +61,23 @@ class Renderer {
         this.renderTugOfWar(ctx, state, gameState);
       } else if (gameName.includes('Pont')) {
         this.renderGlassBridge(ctx, state, gameState);
-      } else if (gameName.includes('Ciseaux')) {
+      } else if (gameName.includes('Ciseaux') || gameName.includes('Final')) {
         this.renderRockPaperScissors(ctx, state, gameState);
       }
     }
 
     // Draw all players
-    this.drawPlayers(ctx, state.players);
+    // Skip during bracket tree view (full-screen bracket replaces everything)
+    const isBracketFullView = state.currentGame && state.currentGame.state && state.currentGame.state.state === 'bracket_full';
+    if (!isBracketFullView) {
+      // For RPS/Jeu Final, only draw alive players (dead are hidden behind opaque cards)
+      if (state.currentGame && (state.currentGame.name.includes('Final') || state.currentGame.name.includes('Ciseaux'))) {
+        const alivePlayers = state.players.filter(p => p.alive);
+        this.drawPlayers(ctx, alivePlayers);
+      } else {
+        this.drawPlayers(ctx, state.players);
+      }
+    }
 
     // Draw elimination effects
     this.drawElimEffects(ctx);
@@ -95,12 +105,9 @@ class Renderer {
   drawPlayers(ctx, players) {
     if (!players) return;
     const aliveCount = players.filter(p => p.alive).length;
-    // Base formula: inverse square root relationship for packing. 
-    // 100 players -> ~12px, 50 players -> ~18px, 10 players -> ~35px, 2 players -> >50px
-    const adaptiveR = Math.min(80, Math.max(16, 130 / Math.max(1, Math.sqrt(aliveCount))));
-    
-    // Check if we are in Final Game to skip drawing dead players and names
-    const isRPS = (players.length > 0 && players[0].x !== undefined) ? false : false; // Better approach below
+    // Adaptive radius: visible even at 50+ players
+    // 50 → 18px, 30 → 22px, 10 → 38px, 2 → 50px
+    const adaptiveR = Math.min(50, Math.max(18, 120 / Math.max(1, Math.sqrt(aliveCount))));
 
     // Dead players on bottom
     for (const p of players) {
@@ -164,14 +171,11 @@ class Renderer {
     ctx.textBaseline = 'middle';
     ctx.fillText(p.number, 0, 0);
 
-    // Name label above (only if not drawing RPS circles matching brackets)
-    // Actually we'll just check if their radius is huge (final game has few players, or we can just hide it if they are physically inside a bracket text area).
-    // Let's just always draw it, unless it's the final game where we handle names natively on the cards.
-    // If the game has cards, names are redundant. For now we will hide it if r > 40.
-    if (!dead && r < 40) {
-      ctx.fillStyle = 'rgba(255,255,255,0.8)';
-      ctx.font = '10px Outfit';
-      ctx.fillText(p.name, 0, -r - 8);
+    // Name label above — always show, scaled with radius
+    if (!dead) {
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.font = `${Math.max(9, r * 0.55)}px Outfit`;
+      ctx.fillText(p.name, 0, -r - 6);
     }
 
     // Direction indicator
@@ -268,11 +272,7 @@ class Renderer {
     ctx.font = 'bold 20px Outfit';
     ctx.textAlign = 'center';
     ctx.fillText('🏁 LIGNE D\'ARRIVÉE', 960, finishLine - 15);
-
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 32px Outfit';
-    ctx.textAlign = 'left';
-    ctx.fillText(`${gs.roundTimer}s`, 40, 50);
+    // Timer is shown via the HTML HUD, no canvas duplicate needed
   }
 
   renderTugOfWar(ctx, state, gs) {
@@ -317,10 +317,7 @@ class Renderer {
     ctx.fillStyle = '#4ecdc4';
     ctx.fillText('ÉQUIPE 2', 1440, 200);
 
-    // Timer
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 24px Outfit';
-    ctx.fillText(gs.timer > 0 ? `${gs.timer}s` : 'FIN !', 960, 200);
+    // Timer is shown via the HTML HUD, no canvas duplicate needed
 
     // Rope position bar
     const barW = 400;
@@ -447,103 +444,309 @@ class Renderer {
 
   // ---- ROCK PAPER SCISSORS ----
   renderRockPaperScissors(ctx, state, gs) {
+    if (gs.state === 'bracket_full') {
+      this.drawTournamentBracket(ctx, state, gs);
+      return;
+    }
+
     ctx.save();
     ctx.fillStyle = 'rgba(15, 15, 30, 0.9)';
     ctx.fillRect(0, 0, 1920, 1080);
     
     // Draw Round Info
+    // Draw Round Info
     ctx.fillStyle = this.pink;
-    ctx.font = 'bold 64px Outfit';
+    ctx.font = 'bold 42px Outfit';
     ctx.textAlign = 'center';
-    ctx.fillText(`MANCHE ${gs.roundNumber}`, 960, 180);
+    
+    let mainTitle = `MANCHE ${gs.roundNumber}`;
+    if (gs.state === 'resolution') {
+        const remainingToFinal = gs.totalRoundsEstimate - gs.roundNumber;
+        if (remainingToFinal === 0 && Array.from(state.players).filter(p=>p.alive).length <= 1) {
+             mainTitle = `VAINQUEUR DÉCLARÉ !`;
+        } else {
+             mainTitle = `RÉSULTATS DE LA MANCHE ${gs.roundNumber}`;
+        }
+    }
+    ctx.fillText(mainTitle, 960, 60);
 
-    // Draw Phase & Timer
-    ctx.font = 'bold 32px Outfit';
+    // Draw timer
+    ctx.fillStyle = this.white;
+    ctx.font = 'bold 64px Outfit';
+    ctx.fillText(`${gs.timer}s`, 960, 125);
+
+    // Draw Phase Text
+    ctx.font = 'bold 24px Outfit';
     let phaseText = '';
     if (gs.state === 'bracket_reveal') phaseText = 'Nouveaux affrontements assignés !';
     if (gs.state === 'countdown') phaseText = 'Choix des armes en cours...';
     if (gs.state === 'resolution') phaseText = 'Sanglante Résolution';
     
     ctx.fillStyle = this.teal;
-    ctx.fillText(phaseText, 960, 240);
-    // Removed old canvas text timer to avoid overlap with hud-center HTML timer.
+    ctx.fillText(phaseText, 960, 170);
 
-    // Draw Brackets
+    // Draw Combat Brackets
+    const numMatches = gs.matches.length;
+    const isFinale = (numMatches === 1);
+    const cols = Math.max(1, Math.ceil(numMatches / 5));
+
     gs.matches.forEach((m) => {
       let matchX = m.uiX || 960;
       let matchY = m.uiY || 350;
       
+      let cardW = (cols >= 3 ? 550 : 800);
+      let cardH = 120;
+      let nameFontSize = cols >= 3 ? 24 : 30;
+      let choiceFontSize = cols >= 3 ? 20 : 26;
+      let vsFontSize = cols >= 3 ? 28 : 36;
+      
+      if (isFinale) {
+         cardW = 1200;
+         cardH = 200;
+         nameFontSize = 48; // Huge names!
+         choiceFontSize = 36; // Huge choices
+         vsFontSize = 64; 
+      }
+
       const p1 = state.players.find(p => p.id === m.p1);
       const p2 = state.players.find(p => p.id === m.p2);
       
-      // Card BG (Adaptive sizing based on multiple columns)
-      const cols = Math.max(1, Math.ceil(gs.matches.length / 5));
-      const cardW = cols >= 3 ? 550 : 800; // shrink cards if many matches
+      const halfCard = cardW / 2;
       
+      // Card Background
       ctx.fillStyle = 'rgba(20, 20, 35, 0.95)';
       ctx.beginPath();
-      ctx.roundRect(matchX - (cardW/2), matchY, cardW, 120, 16);
+      ctx.roundRect(matchX - halfCard, matchY - cardH/2, cardW, cardH, 16);
       ctx.fill();
       ctx.lineWidth = 2;
       ctx.strokeStyle = 'rgba(255,255,255,0.1)';
       ctx.stroke();
 
-      // VS Text
-      ctx.fillStyle = 'rgba(255,255,255,0.2)';
-      ctx.font = 'bold ' + (cols >= 3 ? '30px' : '40px') + ' Outfit';
-      ctx.fillText('VS', matchX, matchY + 75);
+      // VS Text (always centered)
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.font = `bold ${vsFontSize}px Outfit`;
+      ctx.fillText('VS', matchX, matchY + (isFinale ? 15 : 10));
 
       if (p1 && p2) {
-        // P1
+        // P1 Name
         ctx.textAlign = 'right';
-        ctx.fillStyle = (m.loser === p1.id) ? 'rgba(255, 60, 60, 0.4)' : this.white;
-        ctx.font = 'bold 36px Outfit';
-        ctx.fillText(p1.name, matchX - 60, matchY + 50);
+        ctx.fillStyle = (m.loser === p1.id) ? 'rgba(255, 60, 60, 0.5)' : this.white;
+        ctx.font = `bold ${nameFontSize}px Outfit`;
+        ctx.fillText(p1.name, matchX - (isFinale ? 80 : 40), matchY + (isFinale ? 5 : 10));
         
-        // P2
+        // P2 Name
         ctx.textAlign = 'left';
-        ctx.fillStyle = (m.loser === p2.id) ? 'rgba(255, 60, 60, 0.4)' : this.white;
-        ctx.fillText(p2.name, matchX + 60, matchY + 50);
+        ctx.fillStyle = (m.loser === p2.id) ? 'rgba(255, 60, 60, 0.5)' : this.white;
+        ctx.fillText(p2.name, matchX + (isFinale ? 80 : 40), matchY + (isFinale ? 5 : 10));
         
-        // Choices
-        ctx.font = '40px Outfit';
+        // Status or Choices
+        ctx.font = `bold ${choiceFontSize}px Outfit`;
         if (gs.state === 'resolution') {
            const icons = { 'rock': 'PIERRE', 'paper': 'FEUILLE', 'scissors': 'CISEAUX' };
            ctx.fillStyle = this.teal;
 
            ctx.textAlign = 'right';
            if (m.choice1) {
-             ctx.fillText(icons[m.choice1], matchX - 60, matchY + 100);
+             ctx.fillText(icons[m.choice1], matchX - (isFinale ? 80 : 40), matchY + (isFinale ? 65 : 45));
            }
            
            ctx.textAlign = 'left';
            if (m.choice2) {
-             ctx.fillText(icons[m.choice2], matchX + 60, matchY + 100);
+             ctx.fillText(icons[m.choice2], matchX + (isFinale ? 80 : 40), matchY + (isFinale ? 65 : 45));
            }
-        } else if (gs.state === 'countdown') {
-           ctx.fillStyle = 'rgba(255,255,255,0.5)';
+
+           // Crown to the winner
+           ctx.textAlign = 'center';
+           ctx.font = `bold ${isFinale ? 50 : 30}px Outfit`;
+           if (m.winner === m.p1) {
+             ctx.fillText('👑', matchX - (isFinale ? 350 : 200), matchY);
+           } else if (m.winner === m.p2) {
+             ctx.fillText('👑', matchX + (isFinale ? 350 : 200), matchY);
+           }
+        } else {
+           // SHOW 'PRÊT' during countdown if choice made
+           ctx.fillStyle = this.teal;
+           ctx.font = `bold ${choiceFontSize}px Outfit`;
+           
            ctx.textAlign = 'right';
-           if (m.choice1) ctx.fillText('PRET', matchX - 60, matchY + 100);
+           if (m.choice1) ctx.fillText('PRÊT', matchX - (isFinale ? 80 : 40), matchY + (isFinale ? 65 : 45));
+           
            ctx.textAlign = 'left';
-           if (m.choice2) ctx.fillText('PRET', matchX + 60, matchY + 100);
+           if (m.choice2) ctx.fillText('PRÊT', matchX + (isFinale ? 80 : 40), matchY + (isFinale ? 65 : 45));
         }
       }
     });
 
-    // Draw Byes
-    if (gs.byes && gs.byes.length > 0) {
-       ctx.fillStyle = this.gray;
-       ctx.font = 'bold 24px Outfit';
-       ctx.textAlign = 'center';
-       const byeNames = gs.byes.map(id => {
-          const bp = state.players.find(p => p.id === id);
-          return bp ? bp.name : '';
-       }).join(', ');
-       ctx.fillText(`Joueurs qualifiés d'office (impair) : ${byeNames}`, 960, 1020);
-    }
-    
     ctx.restore();
   }
+  drawTournamentBracket(ctx, state, gs) {
+    if (!gs.bracketTree || gs.bracketTree.length === 0) return;
+    
+    ctx.save();
+    // Darker, more dramatic background for the bracket screen
+    ctx.fillStyle = 'rgba(10, 15, 30, 0.98)';
+    ctx.fillRect(0, 0, 1920, 1080);
+    
+    // Title
+    ctx.fillStyle = this.pink;
+    ctx.font = 'bold 64px Outfit';
+    ctx.textAlign = 'center';
+    
+    const remainingToFinal = gs.totalRoundsEstimate - gs.roundNumber;
+    let roundLabel = `MANCHE ${gs.roundNumber}`;
+    if (remainingToFinal === 0) roundLabel = "GRANDE FINALE";
+    else if (remainingToFinal === 1) roundLabel = "DEMI-FINALES";
+    else if (remainingToFinal === 2) roundLabel = "QUARTS DE FINALE";
+    else if (remainingToFinal === 3) roundLabel = "HUITIÈMES DE FINALE";
+
+    ctx.fillText(`TABLEAU FINAL`, 960, 80);
+    
+    ctx.fillStyle = this.teal;
+    ctx.font = 'bold 36px Outfit';
+    ctx.fillText(roundLabel, 960, 130);
+
+    const totalRounds = gs.bracketTree.length;
+    const isBig = totalRounds > 3; // e.g. 16+ players
+    const scale = isBig ? 0.95 : 1.2; 
+
+    // Helper to draw a match slot
+    const drawSlot = (m, x, y, cardW, isThisRound) => {
+        const isPlaying = isThisRound && !m.finished;
+        const isFinishedThisRound = isThisRound && m.finished;
+
+        // Bright background if active round
+        ctx.fillStyle = isThisRound ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)';
+        ctx.beginPath();
+        ctx.roundRect(x - cardW/2, y - 40 * scale, cardW, 80 * scale, 12);
+        ctx.fill();
+
+        if (isPlaying) {
+           // Teal for currently playing
+           ctx.strokeStyle = this.teal;
+           ctx.lineWidth = 5;
+           ctx.shadowColor = this.teal;
+           ctx.shadowBlur = 20;
+           ctx.stroke();
+           ctx.shadowBlur = 0;
+        } else if (isFinishedThisRound) {
+           // Neon red for finished matches in this round (or Byes!)
+           ctx.strokeStyle = '#FF0055'; 
+           ctx.lineWidth = 4;
+           ctx.shadowColor = '#FF0055';
+           ctx.shadowBlur = 15;
+           ctx.stroke();
+           ctx.shadowBlur = 0;
+        } else {
+           ctx.strokeStyle = m.finished ? 'rgba(229, 46, 99, 0.3)' : 'rgba(255,255,255,0.15)';
+           ctx.lineWidth = 2;
+           ctx.stroke();
+        }
+
+        ctx.textAlign = 'center';
+        const p1 = state.players.find(p => p.id === m.p1);
+        const p2 = state.players.find(p => p.id === m.p2);
+        const name1 = p1 ? p1.name : '???';
+        const name2 = p2 ? p2.name : '???';
+        
+        ctx.font = `bold ${Math.floor(22 * scale)}px Outfit`;
+        
+        // Show winner in gold if round is finished
+        if (m.finished && m.winner && m.winner !== 'tie') {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'; // Plus clair que gris foncé
+            ctx.fillText(`${name1}   VS   ${name2}`, x, y + 8 * scale);
+            
+            ctx.fillStyle = this.gold;
+            const wName = (m.winner === m.p1 && p1) ? p1.name : (p2 ? p2.name : '');
+            ctx.fillText(`👑 ${wName}`, x, y - 38 * scale);
+        } else {
+            // Bright white for active or future matches
+            ctx.fillStyle = isPlaying ? '#FFFFFF' : 'rgba(255,255,255, 0.8)';
+            ctx.fillText(`${name1}   VS   ${name2}`, x, y + 6 * scale);
+        }
+    };
+
+    // Store coord for connecting lines: coords[round][globalMatchIdx] = {x, y}
+    const coords = []; 
+
+    for (let r = 0; r < totalRounds; r++) {
+       const matches = gs.bracketTree[r];
+       const isThisRound = (r === gs.roundNumber - 1);
+       coords[r] = [];
+       
+       if (matches.length === 1) { // FINALE
+          const x = 960;
+          const y = 900; 
+          drawSlot(matches[0], x, y, 400 * scale, isThisRound);
+          coords[r][0] = {x, y, isLeft: null};
+          
+          ctx.fillStyle = this.pink;
+          ctx.font = 'bold 36px Outfit';
+          ctx.fillText('FINALE', 960, y - 80 * scale);
+       } else {
+          let half = matches.length / 2;
+          for (let i = 0; i < matches.length; i++) {
+             const isLeft = (i < half);
+             const sideIdx = isLeft ? i : (i - half);
+             
+             const offsetX = isLeft ? (150 + r * 280 * scale) : (1770 - r * 280 * scale);
+             
+             const availableHeight = 840; 
+             const spacingY = availableHeight / half;
+             const startY = 180 + spacingY / 2;
+             const y = startY + sideIdx * spacingY;
+             
+             drawSlot(matches[i], offsetX, y, 220 * scale, isThisRound);
+             coords[r][i] = { x: offsetX, y: y, isLeft, cardW: 220 * scale };
+          }
+       }
+    }
+
+    // Draw connecting lines
+    ctx.lineWidth = 3;
+    
+    for (let r = 0; r < totalRounds - 1; r++) {
+       // Highlight lines extending FROM finished rounds
+       const pastRound = (r < gs.roundNumber - 1); 
+       ctx.strokeStyle = pastRound ? 'rgba(255, 204, 0, 0.4)' : 'rgba(255, 255, 255, 0.15)'; // Gold tint if progressed
+
+       for (let i = 0; i < coords[r].length; i++) {
+           const current = coords[r][i];
+           const nextIdx = Math.floor(i / 2);
+           const next = coords[r+1][nextIdx];
+           
+           if (!current || !next) continue;
+           
+           ctx.beginPath();
+           if (current.isLeft !== null) {
+               const dir = current.isLeft ? 1 : -1;
+               const startX = current.x + (current.cardW/2 * dir);
+               
+               if (r + 1 === totalRounds - 1) {
+                  ctx.moveTo(startX, current.y);
+                  ctx.lineTo(startX + 50 * dir, current.y);
+                  ctx.lineTo(startX + 50 * dir, next.y - 120);
+                  ctx.lineTo(next.x, next.y - 120);
+                  ctx.lineTo(next.x, next.y - 40 * scale);
+               } else {
+                  const endX = next.x - (next.cardW/2 * dir);
+                  const midX = startX + (endX - startX) / 2;
+                  
+                  ctx.moveTo(startX, current.y);
+                  ctx.lineTo(midX, current.y);
+                  ctx.lineTo(midX, next.y);
+                  ctx.lineTo(endX, next.y);
+               }
+           }
+           ctx.stroke();
+       }
+    }
+
+    ctx.restore();
+  }
+
+  // Inject a fade in for the actual countdown rendering as well!
+
   // =================== EFFECTS ===================
 
   addElimEffect(x, y) {

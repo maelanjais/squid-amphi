@@ -17,6 +17,7 @@
     tap: document.getElementById('ctrl-tap'),
     'tap-and-move': document.getElementById('ctrl-tap-move'),
     choice: document.getElementById('ctrl-choice'),
+    rps: document.getElementById('ctrl-rps'),
     'swipe-and-move': document.getElementById('ctrl-swipe')
   };
 
@@ -85,15 +86,24 @@
     if (data.phase === 'lobby') showScreen('waiting');
     if (data.phase === 'explanation' || data.phase === 'countdown') {
       showScreen('controller');
+      currentControls = null; // Reset so controls will be re-applied
       if (data.currentGame) {
         document.getElementById('ctrl-game-name').textContent = data.currentGame.name;
       }
     }
-    if (data.phase === 'transition') {
-      document.getElementById('ctrl-status').textContent = 'Transition...';
+    // Transition phases — show feedback on phone
+    if (data.phase === 'transition_bank' || data.phase === 'transition_dead' || data.phase === 'transition_roulette') {
+      showScreen('controller');
+      switchControls(null);
+      currentControls = null;
+      document.getElementById('ctrl-game-name').textContent = '';
+      document.getElementById('ctrl-status').textContent = 'Vous avez survécu ! Prochaine épreuve bientôt...';
     }
     if (data.phase === 'gameover') {
-      document.getElementById('ctrl-status').textContent = 'Fin de la partie !';
+      showScreen('controller');
+      switchControls(null);
+      document.getElementById('ctrl-game-name').textContent = 'FIN DE PARTIE';
+      document.getElementById('ctrl-status').textContent = 'Bravo, vous avez survécu à toutes les épreuves !';
     }
   });
 
@@ -117,17 +127,29 @@
       updatePositionDot(state.playerX, state.playerY);
     }
 
+    // Transition phases — keep showing feedback
+    if (state.phase === 'transition_bank' || state.phase === 'transition_dead' || state.phase === 'transition_roulette') {
+      showScreen('controller');
+      switchControls(null);
+      document.getElementById('ctrl-status').textContent = 'Vous avez survécu ! Prochaine épreuve bientôt...';
+      if (positionIndicator) positionIndicator.style.display = 'none';
+      return;
+    }
+
     if (state.phase === 'explanation') {
+      showScreen('controller');
       document.getElementById('ctrl-game-name').textContent = state.currentGame || '';
       document.getElementById('ctrl-status').textContent =
         `Préparation... ${state.explanation || ''}s`;
       switchControls(null);
+      currentControls = null;
       // Show position map large
       if (positionIndicator) positionIndicator.classList.add('large');
       if (positionIndicator) positionIndicator.style.display = 'flex';
     }
 
     if (state.phase === 'countdown') {
+      showScreen('controller');
       document.getElementById('ctrl-status').textContent =
         state.countdown > 0 ? `Début dans ${state.countdown}...` : 'GO !';
       if (positionIndicator) positionIndicator.classList.add('large');
@@ -135,16 +157,45 @@
     }
 
     if (state.phase === 'playing' && state.gameState) {
+      showScreen('controller');
       const gs = state.gameState;
       const controls = gs.controls;
 
+      // Always switch controls — don't guard with currentControls cache
+      // This ensures controls always show up even on reconnect
       if (controls !== currentControls) {
         switchControls(controls);
         currentControls = controls;
       }
 
-      document.getElementById('ctrl-status').textContent =
-        state.countdown > 0 ? `Début dans ${state.countdown}...` : '';
+      // Status text
+      if (controls === 'none') {
+        // Game over for this game, or waiting (RPS bye, etc)
+        if (gs.gameOver) {
+          // TugOfWar over
+          if (gs.winningTeam && gs.team) {
+            if (gs.winningTeam === gs.team) {
+              document.getElementById('ctrl-status').textContent = 'VICTOIRE ! Votre équipe a gagné !';
+            } else {
+              document.getElementById('ctrl-status').textContent = 'DÉFAITE... Votre équipe a perdu.';
+            }
+          }
+        } else if (gs.isBye) {
+          document.getElementById('ctrl-status').textContent = 'Vous êtes qualifié d\'office ce tour ! Observez les duels...';
+        } else if (gs.state === 'bracket_reveal' || gs.state === 'bracket_full') {
+          document.getElementById('ctrl-status').textContent = 'Regardez le tableau complet sur l\'écran géant !';
+        } else if (gs.state === 'resolution') {
+          if (gs.matchResult === 'win') document.getElementById('ctrl-status').textContent = 'VICTOIRE ! Vous passez au tour suivant.';
+          else if (gs.matchResult === 'lose') document.getElementById('ctrl-status').textContent = 'DÉFAITE... Élimination imminente.';
+          else if (gs.matchResult === 'tie') document.getElementById('ctrl-status').textContent = 'ÉGALITÉ ! Le combat continue...';
+          else document.getElementById('ctrl-status').textContent = 'Résolution des combats en cours...';
+        } else {
+          document.getElementById('ctrl-status').textContent = 'En attente...';
+        }
+      } else {
+        document.getElementById('ctrl-status').textContent =
+          state.countdown > 0 ? `Début dans ${state.countdown}...` : '';
+      }
 
       // Hide position map during gameplay
       if (positionIndicator) positionIndicator.style.display = 'none';

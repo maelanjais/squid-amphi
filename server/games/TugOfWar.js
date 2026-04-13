@@ -11,7 +11,6 @@ class TugOfWar {
     this.ropePosition = 0; // -100 to 100, 0 = center
     this.team1Score = 0;
     this.team2Score = 0;
-    this.team2Score = 0;
     this.duration = 20; // seconds
     this.timer = this.duration;
     this.finished = false;
@@ -29,7 +28,11 @@ class TugOfWar {
     const half = Math.ceil(shuffled.length / 2);
     
     // We want to line them up logically along the rope.
-    const spacingX = 65;
+    // Adaptive spacing: shrink when more players per team
+    const teamSize = half;
+    const maxCols = Math.ceil(teamSize / 3);
+    const spacingX = Math.max(35, Math.min(65, 350 / maxCols));
+    const spacingY = Math.max(35, Math.min(65, 350 / maxCols));
     for (let i = 0; i < shuffled.length; i++) {
       const player = shuffled[i];
       const isTeam1 = (i < half);
@@ -39,7 +42,7 @@ class TugOfWar {
       const row = teamLocalIndex % 3;              // 0, 1, 2
       
       player.offsetX = isTeam1 ? (col * -spacingX + 150) : (col * spacingX - 150);
-      player.offsetY = (row - 1) * 65; // stagger vertically along the rope
+      player.offsetY = (row - 1) * spacingY; // stagger vertically along the rope
 
       if (isTeam1) {
         player.team = 1;
@@ -69,8 +72,10 @@ class TugOfWar {
 
     for (const player of players) {
       if (player.alive && player.input.tap) {
-        if (player.team === 1) team1Taps++;
-        if (player.team === 2) team2Taps++;
+        if (!this.winnerDetermined) {
+          if (player.team === 1) team1Taps++;
+          if (player.team === 2) team2Taps++;
+        }
         player.input.tap = false; // consume the tap
       }
     }
@@ -146,10 +151,12 @@ class TugOfWar {
 
   getControllerState(player) {
     return {
-      controls: 'tap',
+      controls: this.winnerDetermined ? 'none' : 'tap',
       team: player.team,
       ropePosition: this.ropePosition,
-      timer: Math.max(0, Math.ceil(this.timer))
+      timer: Math.max(0, Math.ceil(this.timer)),
+      winningTeam: this.winningTeam,
+      gameOver: this.winnerDetermined
     };
   }
 }

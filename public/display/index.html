@@ -167,9 +167,56 @@
     </div>
   </div>
 
+  <!-- ============================================== -->
+  <!-- 🛠️ DEBUG MENU (HIDDEN BY DEFAULT - PRESS 'D') -->
+  <!-- ============================================== -->
+  <div id="debug-menu" style="display:none; position:fixed; top:20px; left:20px; background:rgba(0,0,0,0.9); border:2px solid #E52E63; padding:20px; z-index:9999; color:white; border-radius:8px; font-family:'Outfit',sans-serif;">
+    <div style="font-size:24px; font-weight:bold; color:#E52E63; margin-bottom:15px;">🛠️ MENU DE DÉBOGAGE RAPIDE</div>
+    <div style="font-size:14px; margin-bottom:15px; color:#aaa;">(Appuyez sur 'D' pour masquer)</div>
+    
+    <label style="display:block; margin-bottom:5px;">Jeu à lancer :</label>
+    <select id="debug-game-select" style="width:100%; padding:8px; margin-bottom:15px; background:#1a1a2e; color:white; border:1px solid #5a5a7a;">
+      <option value="RedLightGreenLight">1, 2, 3... Soleil</option>
+      <option value="TugOfWar">Tir à la Corde</option>
+      <option value="GlassBridge">Pont de Verre</option>
+      <option value="RockPaperScissors">Jeu Final (Pierre-Feuille-Ciseaux)</option>
+    </select>
+    
+    <label style="display:block; margin-bottom:5px;">Nombre de bots (ajoutés instantanément) :</label>
+    <input type="number" id="debug-bot-count" value="15" min="0" max="99" style="width:100%; padding:8px; margin-bottom:20px; background:#1a1a2e; color:white; border:1px solid #5a5a7a;">
+    
+    <button id="debug-start-btn" style="width:100%; padding:10px; background:#E52E63; color:white; font-weight:bold; border:none; cursor:pointer;" onmouseover="this.style.background='#ff3366'" onmouseout="this.style.background='#E52E63'">
+      🚀 LANCER LE JEU
+    </button>
+  </div>
+  <!-- ============================================== -->
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="/display/sounds.js"></script>
   <script src="/display/renderer.js"></script>
   <script src="/display/display.js"></script>
+  
+  <script>
+    // Ecouteur de touche D globale
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'd') {
+        const menu = document.getElementById('debug-menu');
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+      }
+    });
+
+    // Bouton depuis le menu secret
+    document.getElementById('debug-start-btn').addEventListener('click', () => {
+      const game = document.getElementById('debug-game-select').value;
+      const bots = parseInt(document.getElementById('debug-bot-count').value);
+      
+      if (window.socket) {
+        window.socket.emit('admin-debug-start', { game: game, bots: bots });
+        document.getElementById('debug-menu').style.display = 'none'; // Auto-hide
+      } else {
+        alert("Attendez que l'écran soit connecté au serveur !");
+      }
+    });
+  </script>
 </body>
 </html>

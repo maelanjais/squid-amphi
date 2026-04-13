@@ -16,7 +16,7 @@ class BotPlayer extends Player {
     else if (currentGameName === 'Le Pont de Verre') this.actGlassBridge(gameState);
     else if (currentGameName === 'Le Duel Final') this.actFinalDuel(gameState, allPlayers);
     else if (currentGameName === 'Le Sablé Dalgona') this.actDalgona(gameState);
-    else if (currentGameName === 'Pierre, Feuille, Ciseaux') this.actRockPaperScissors(gameState);
+    else if (currentGameName === 'Jeu Final') this.actRockPaperScissors(gameState);
   }
 
   actRockPaperScissors(gs) {

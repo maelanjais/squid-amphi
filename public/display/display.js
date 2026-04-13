@@ -4,6 +4,7 @@
  */
 (function () {
   const socket = io();
+  window.socket = socket; // Expose globally for debug menu
   const canvas = document.getElementById('game-canvas');
   const renderer = new Renderer(canvas);
 
@@ -138,7 +139,7 @@
       // Game-specific HUD center
       const hc = document.getElementById('hud-center');
       if (state.currentGame && state.currentGame.state) {
-        if (state.currentGame.name === 'Pierre, Feuille, Ciseaux') {
+        if (state.currentGame.name === 'Jeu Final') {
           hc.style.display = 'none'; // Use pure native canvas timer for RPS without interference
         } else {
           hc.style.display = 'block';

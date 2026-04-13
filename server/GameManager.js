@@ -21,7 +21,7 @@ const GAME_NAMES = {
   RedLightGreenLight: '1, 2, 3… Soleil !',
   TugOfWar: 'Le Jeu de la Corde',
   GlassBridge: 'Le Pont de Verre',
-  RockPaperScissors: 'Pierre, Feuille, Ciseaux'
+  RockPaperScissors: 'Jeu Final'
 };
 
 const GAME_RULES = {
@@ -38,8 +38,8 @@ const GAME_RULES = {
     controls: "Choisissez Gauche ou Droite quand c'est votre tour."
   },
   RockPaperScissors: {
-    description: "Il n'en restera qu'un. Choisissez secrètement votre attaque. Le perdant du duel est éliminé.",
-    controls: "Sélectionnez Pierre, Feuille ou Ciseaux sur votre écran."
+    description: "Il n'en restera qu'un. Duels en Pierre-Feuille-Ciseaux. Le perdant de chaque duel est éliminé.",
+    controls: "Sélectionnez Pierre, Feuille ou Ciseaux sur votre écran avant la fin du décompte."
   }
 };
 
@@ -125,6 +125,26 @@ class GameManager {
         this.addBots(count);
       }
     });
+
+    // ==========================================
+    // 🛠️ DEBUG FEATURE (À ENLEVER POUR LA SOUTENANCE)
+    // ==========================================
+    socket.on('admin-debug-start', (data) => {
+      console.log(`[DEBUG] Démarrage forcé: ${data.game} avec ${data.bots} bots`);
+      if (this.phase !== PHASE.LOBBY) return;
+      
+      const botsNeeded = parseInt(data.bots) || 0;
+      if (botsNeeded > 0) {
+        this.addBots(botsNeeded);
+      }
+      
+      // Override queue with just the selected game
+      this.gameQueue = [data.game];
+      this.upcomingPool = []; // Prevent null length error
+      this.currentGameIndex = -1; // Next game resolves to 0
+      this.startNextGame();
+    });
+    // ==========================================
 
     socket.on('admin-reset', () => {
       this.botCounter = 0;
@@ -328,19 +348,11 @@ class GameManager {
       this.upcomingPool = []; // No random pool needed anymore
     }
 
-    let gameName = 'RockPaperScissors'; // Default fallback
+    let gameName = this.gameQueue[this.currentGameIndex];
 
-    if (this.currentGameIndex === 0) {
-      gameName = 'RedLightGreenLight';
-    } else {
-      gameName = this.nextGameName || 'RockPaperScissors';
+    if (!gameName) {
+      gameName = 'RockPaperScissors'; // Fallback
     }
-
-    // Always keep track of what we are playing
-    if (this.currentGameIndex >= this.gameQueue.length) {
-      this.gameQueue.push(gameName);
-    } 
-    if (this.currentGameIndex > 0) this.gameQueue[this.currentGameIndex] = gameName;
 
     if (gameName === 'RockPaperScissors') {
       this.upcomingPool = []; // Forcibly exhaust

@@ -74,9 +74,9 @@ class RedLightGreenLight {
         this.warning = false;
       }
     } else {
-      // Red light — check who is still moving
+      // Red light — check who is still moving (skip players who already crossed)
       for (const player of players) {
-        if (player.alive && player.moving) {
+        if (player.alive && player.moving && player.y > this.finishLine) {
           this.toEliminate.push(player.id);
         }
       }
