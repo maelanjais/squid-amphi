@@ -120,6 +120,7 @@ class GameManager {
           const player = this.players.get(socket.id);
           if (player && player.alive) {
               this.bets.set(player.id, data.targetId);
+              this.broadcastState(); // Immediate update on display
               this.checkBettingComplete();
           }
       }
@@ -252,7 +253,13 @@ class GameManager {
     }
     
     // Send players list securely down to controllers who need it
-    const aliveSummary = allPlayers.filter(p => p.alive).map(p => ({ id: p.id, name: p.name }));
+    const aliveSummary = allPlayers.filter(p => p.alive).map(p => ({ 
+      id: p.id, 
+      name: p.name, 
+      number: p.number, 
+      color: p.color,
+      isBot: p.isBot
+    }));
     this.io.emit('start-betting', aliveSummary);
     this.broadcastPhase();
     
@@ -317,11 +324,22 @@ class GameManager {
     }
 
     if (bestBettor && bestTarget) {
+        // Calculate the official final rank of the target
+        const allPlayersSorted = Array.from(this.players.values()).sort((a, b) => {
+            if (a.alive !== b.alive) return a.alive ? -1 : 1;
+            if (a.roundDied !== b.roundDied) return b.roundDied - a.roundDied;
+            return (b.score || 0) - (a.score || 0); // Tie-breaker
+        });
+        
+        const targetRank = allPlayersSorted.findIndex(p => p.id === bestTarget.id) + 1;
+
         this.bestBetResult = {
             bettor: bestBettor,
             target: bestTarget,
             type: bestType,
-            roundsSurvived: maxRoundsSurvived
+            roundsSurvived: maxRoundsSurvived,
+            targetRank: targetRank,
+            isWinnerBet: bestTarget.id === winnerId
         };
     }
   }

@@ -43,19 +43,20 @@
 
   <!-- Betting Screen -->
   <div id="betting-screen" class="ctrl-screen">
-    <div class="betting-container" style="padding: 20px; height: 100vh; display: flex; flex-direction: column;">
-      <div style="flex-shrink: 0; padding-bottom: 20px;">
-          <h2 style="color: #00d4aa; text-align: center; margin-bottom: 5px; font-size: 2rem; font-weight: 900;">FAITES VOS PARIS</h2>
-          <p style="text-align: center; color: #ddd; margin-bottom: 0px; font-size: 1.1rem;">Pariez sur le survivant ultime<br/>(autre que vous).</p>
+    <div class="betting-container" style="width: 100%; height: 100dvh; display: flex; flex-direction: column;">
+      <div class="betting-header">
+          <h2 style="color: var(--pink); margin-bottom: 4px; font-size: 1.8rem; font-weight: 900; letter-spacing: 2px;">FAITES VOS PARIS</h2>
+          <p style="color: var(--gray); font-size: 1.1rem; font-weight: 600;">Sur qui misez-vous ?</p>
       </div>
       
-      <div id="betting-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
-        <!-- JS will inject buttons here -->
+      <div id="betting-list" class="betting-grid" style="flex: 1; overflow-y: auto; padding: 0 20px 40px; align-content: start;">
+        <!-- JS will inject mosaic cards here -->
       </div>
-      <div id="betting-waiting" style="display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center;">
-         <div class="svg-icon svg-crown" style="opacity: 0.5; transform: scale(1.5); margin-bottom: 20px;"></div>
-         <p style="color: #00d4aa; font-weight: bold;">Pari enregistré !</p>
-         <p style="color: #aaa;">En attente des autres joueurs...</p>
+      
+      <div id="betting-waiting" style="display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center;">
+         <div class="svg-icon svg-crown" style="opacity: 0.5; transform: scale(2); margin-bottom: 30px;"></div>
+         <p style="color: var(--teal-glow); font-weight: 900; font-size: 1.5rem; margin-bottom: 8px;">PARI ENREGISTRÉ !</p>
+         <p style="color: var(--gray); font-size: 1.1rem;">Observez les épreuves...<br>Le verdict sera rendu à la fin.</p>
       </div>
     </div>
   </div>

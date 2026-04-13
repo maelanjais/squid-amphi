@@ -11,6 +11,7 @@
   // Screen elements
   const screens = {
     lobby: document.getElementById('lobby-screen'),
+    betting: document.getElementById('betting-screen'),
     explanation: document.getElementById('explanation-screen'),
     countdown: document.getElementById('countdown-screen'),
     game: document.getElementById('game-screen'),
@@ -408,17 +409,18 @@
 
       const betEl = document.getElementById('best-bet-result');
       if (betEl) {
-         if (state.bestBetResult) {
+          if (state.bestBetResult) {
             const res = state.bestBetResult;
-            if (res.type === 'exact') {
-               betEl.innerHTML = `Pronostic Parfait : <span style="color:#00d4aa">${res.bettorName}</span> a deviné la victoire de <span style="color:#ffd700">${res.targetName}</span> !`;
+            if (res.isWinnerBet) {
+               betEl.innerHTML = `🏆 Pronostic Parfait : <span style="color:#00d4aa">${res.bettorName}</span> a deviné la victoire de <span style="color:#ffd700">${res.targetName}</span> !`;
             } else {
-               betEl.innerHTML = `Meilleur Pronostic : Personne n'a deviné, mais <span style="color:#00d4aa">${res.bettorName}</span> était le plus proche grâce à son pari sur <span style="color:#ffd700">${res.targetName}</span> !`;
+               const rankSuffix = res.targetRank === 1 ? 'er' : 'ème';
+               betEl.innerHTML = `🎯 Meilleur Pronostic : Personne n'a deviné le gagnant, mais <span style="color:#00d4aa">${res.bettorName}</span> était le plus proche grâce à son pari sur <span style="color:#ffd700">${res.targetName}</span> (qui a fini <span style="color:#ffd700">${res.targetRank}${rankSuffix}</span>) !`;
             }
             betEl.style.display = 'block';
-         } else {
+          } else {
             betEl.style.display = 'none';
-         }
+          }
       }
     }
 
@@ -440,17 +442,9 @@
     Object.values(screens).forEach(s => { if(s) s.classList.remove('active'); });
     switch (phase) {
       case 'lobby':
+        screens.lobby.classList.add('active'); break;
       case 'betting':
-        screens.lobby.classList.add('active'); 
-        if (phase === 'betting') {
-            const b = document.getElementById('betting-banner');
-            if (b) b.style.display = 'block';
-            document.getElementById('btn-start').style.display = 'none';
-        } else {
-            const b = document.getElementById('betting-banner');
-            if (b) b.style.display = 'none';
-        }
-        break;
+        screens.betting.classList.add('active'); break;
       case 'explanation':
         screens.explanation.classList.add('active'); break;
       case 'countdown':

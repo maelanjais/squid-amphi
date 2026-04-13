@@ -98,31 +98,33 @@
     for (const p of alivePlayers) {
       if (p.id !== socket.id) {
         hasValidTargets = true;
-        const btn = document.createElement('button');
-        btn.textContent = p.name;
-        btn.style.cssText = `
-          padding: 18px 20px;
-          font-size: 1.3rem;
-          font-weight: 700;
-          font-family: 'Outfit', sans-serif;
-          border-radius: 14px;
-          background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-          color: #00d4aa;
-          border: 2px solid rgba(0,212,170,0.4);
-          cursor: pointer;
-          text-align: center;
-          transition: all 0.2s ease;
-          -webkit-tap-highlight-color: transparent;
-          box-shadow: 0 2px 10px rgba(0,212,170,0.1);
-        `;
         
-        btn.addEventListener('click', () => {
+        const card = document.createElement('div');
+        card.className = `player-card ${p.isBot ? 'is-bot' : ''}`;
+        
+        const accent = document.createElement('div');
+        accent.className = 'card-accent';
+        accent.style.background = p.color;
+        
+        const badge = document.createElement('div');
+        badge.className = 'card-badge';
+        badge.textContent = p.number;
+        
+        const name = document.createElement('div');
+        name.className = 'card-name';
+        name.textContent = p.name;
+        
+        card.appendChild(accent);
+        card.appendChild(badge);
+        card.appendChild(name);
+        
+        card.addEventListener('click', () => {
           socket.emit('player-bet', { targetId: p.id });
           container.innerHTML = ''; // Clear list
           document.getElementById('betting-waiting').style.display = 'flex'; // Show waiting indicator
         });
         
-        container.appendChild(btn);
+        container.appendChild(card);
       }
     }
     
