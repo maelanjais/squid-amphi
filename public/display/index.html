@@ -9,8 +9,27 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- Audio Unlock Overlay -->
+  <div id="audio-unlock">
+    <div class="unlock-content">
+      <div class="svg-icon svg-audio"></div>
+      <h2>Cliquez pour activer le son</h2>
+      <p>Nécessaire pour l'ambiance orchestrale</p>
+    </div>
+  </div>
+
   <!-- Lobby Screen -->
   <div id="lobby-screen" class="screen active">
+    <!-- Geometric abstract background (Squid stairs/labyrinth) -->
+    <div class="maze-bg">
+      <div class="maze-stair stair-1"></div>
+      <div class="maze-stair stair-2"></div>
+      <div class="maze-stair stair-3"></div>
+      <div class="maze-arch arch-1"></div>
+      <div class="maze-wall wall-1"></div>
+      <div class="maze-wall wall-2"></div>
+    </div>
+    
     <div class="lobby-container">
       <div class="lobby-main">
         <div class="logo-section">
@@ -43,7 +62,7 @@
         </div>
         <div class="bot-panel" id="bot-panel">
           <div class="bot-panel-header">
-            <span class="bot-icon">🤖</span>
+            <span class="svg-icon svg-bot"></span>
             <span>BOTS</span>
           </div>
           <div class="bot-panel-body">
@@ -59,13 +78,14 @@
 
   <!-- Explanation Screen -->
   <div id="explanation-screen" class="screen">
+    <div class="maze-bg-alt"><div class="maze-stair-alt stair-alt-1"></div><div class="maze-stair-alt stair-alt-2"></div></div>
     <div class="explanation-container">
       <h2 class="expl-title">PROCHAINE ÉPREUVE</h2>
       <h1 class="game-name-title" id="expl-game-name"></h1>
       <div class="expl-panel">
-        <h3>📜 RÈGLES</h3>
+        <h3 class="modern-header"><span class="svg-icon svg-rules"></span> RÈGLES</h3>
         <p class="game-desc" id="expl-game-desc"></p>
-        <h3 class="mt">🎮 CONTRÔLES</h3>
+        <h3 class="mt modern-header"><span class="svg-icon svg-gamepad"></span> CONTRÔLES</h3>
         <p class="game-controls" id="expl-game-controls"></p>
       </div>
       <div class="countdown-small" id="expl-timer">10</div>
@@ -74,9 +94,10 @@
 
   <!-- Countdown Screen -->
   <div id="countdown-screen" class="screen">
+    <div class="maze-bg-alt"><div class="maze-stair-alt stair-alt-1"></div><div class="maze-stair-alt stair-alt-2"></div></div>
     <div class="countdown-container">
       <p class="game-name" id="game-name"></p>
-      <div class="countdown-number" id="countdown-number">5</div>
+      <div class="countdown-number" id="countdown-number">3</div>
       <p class="game-players" id="game-players"></p>
     </div>
   </div>
@@ -98,6 +119,7 @@
 
   <!-- Transition: Piggy Bank / Briefcase -->
   <div id="transition-bank-screen" class="screen">
+    <div class="maze-bg-alt"><div class="maze-stair-alt stair-alt-1"></div><div class="maze-stair-alt stair-alt-2"></div></div>
     <div class="bank-container" id="bank-container">
       <h2>CAGNOTTE TOTALE</h2>
       <div class="prize-pool-display" id="prize-pool">0 ₩</div>
@@ -113,6 +135,7 @@
 
   <!-- Transition: Dead Memorial Grid -->
   <div id="transition-dead-screen" class="screen">
+    <div class="maze-bg-alt"><div class="maze-stair-alt stair-alt-1"></div><div class="maze-stair-alt stair-alt-2"></div></div>
     <div class="memorial-container">
       <div class="memorial-grid" id="memorial-grid">
         <!-- JS va injecter les tuiles joueurs ici -->
@@ -122,6 +145,7 @@
 
   <!-- Transition: Fall Guys Roulette -->
   <div id="transition-roulette-screen" class="screen">
+    <div class="maze-bg-alt"><div class="maze-stair-alt stair-alt-1"></div><div class="maze-stair-alt stair-alt-2"></div></div>
     <div class="roulette-container">
       <h2>PROCHAINE ÉPREUVE</h2>
       <div class="roulette-window">
@@ -134,8 +158,9 @@
 
   <!-- Game Over Screen -->
   <div id="gameover-screen" class="screen">
+    <div class="maze-bg-alt"><div class="maze-stair-alt stair-alt-1"></div><div class="maze-stair-alt stair-alt-2"></div></div>
     <div class="gameover-container">
-      <div class="crown">👑</div>
+      <div class="svg-icon svg-crown crown"></div>
       <h1 class="winner-title">VICTOIRE !</h1>
       <div class="winner-name" id="winner-name"></div>
       <div class="confetti-container" id="confetti"></div>
@@ -143,6 +168,7 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
+  <script src="/display/sounds.js"></script>
   <script src="/display/renderer.js"></script>
   <script src="/display/display.js"></script>
 </body>

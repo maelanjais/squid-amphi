@@ -114,7 +114,7 @@ class RedLightGreenLight {
       greenLight: this.greenLight,
       warning: this.warning,
       finishLine: this.finishLine,
-      roundTimer: Math.ceil(this.roundTimer),
+      roundTimer: Math.max(0, Math.ceil(this.roundTimer)),
       phaseTimer: Math.max(0, this.phaseTimer)
     };
   }
@@ -131,7 +131,7 @@ class RedLightGreenLight {
       controls: 'move',
       greenLight: this.greenLight,
       warning: this.warning,
-      roundTimer: Math.ceil(this.roundTimer),
+      roundTimer: Math.max(0, Math.ceil(this.roundTimer)),
       crossed: player.y <= this.finishLine,
       progress: progress
     };

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>🎮 Squid Amphi</title>
+  <title>Squid Amphi</title>
   <meta name="description" content="Squid Amphi — Manette de jeu">
   <link rel="stylesheet" href="/css/controller.css">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
@@ -83,13 +83,13 @@
           </div>
         </div>
         <div class="attack-zone" id="attack-zone">
-          <span class="attack-icon">⚔️</span>
+          <span class="attack-icon"></span>
           <span class="attack-text">ATTAQUE</span>
         </div>
       </div>
       <div class="hp-bar-container">
         <div class="hp-bar" id="hp-bar"></div>
-        <span class="hp-text" id="hp-text">❤️ 3/3</span>
+        <span class="hp-text" id="hp-text">PV: 3/3</span>
       </div>
     </div>
 
@@ -100,26 +100,27 @@
         <div class="choice-timer" id="choice-timer"></div>
         <div class="choice-buttons">
           <button class="btn-choice btn-left" id="btn-left">
-            ⬅️<br>GAUCHE
+            GAUCHE
           </button>
           <button class="btn-choice btn-right" id="btn-right">
-            ➡️<br>DROITE
+            DROITE
           </button>
         </div>
         <div class="choice-progress" id="choice-progress"></div>
       </div>
     </div>
 
-    <!-- Swipe Control (Final Duel) -->
-    <div id="ctrl-swipe" class="ctrl-area" style="display:none;">
-      <div class="swipe-zone" id="swipe-zone">
-        <div class="swipe-instruction">GLISSEZ pour pousser</div>
-        <div class="swipe-arrows">
-          <span>↑</span>
-          <span>←</span>
-          <span>→</span>
-          <span>↓</span>
+    <!-- RPS Control (Tournament) -->
+    <div id="ctrl-rps" class="ctrl-area" style="display:none;">
+      <div class="rps-container">
+        <div class="rps-info" id="rps-info">Duel : Préparez-vous</div>
+        <div class="rps-timer" id="rps-timer">5s</div>
+        <div class="rps-buttons">
+          <button class="btn-rps btn-rock" id="btn-rock" data-choice="rock">PIERRE</button>
+          <button class="btn-rps btn-paper" id="btn-paper" data-choice="paper">FEUILLE</button>
+          <button class="btn-rps btn-scissors" id="btn-scissors" data-choice="scissors">CISEAUX</button>
         </div>
+        <div class="rps-progress" id="rps-progress">SÉLECTION SECRÈTE</div>
       </div>
     </div>
   </div>
@@ -127,7 +128,7 @@
   <!-- Eliminated Screen -->
   <div id="eliminated-screen" class="ctrl-screen">
     <div class="elim-container">
-      <div class="elim-icon">💀</div>
+      <div class="elim-icon">☠️</div>
       <h2 class="elim-title">ÉLIMINÉ</h2>
       <p class="elim-game" id="elim-game"></p>
       <p class="elim-text">Vous avez été éliminé.<br>Regardez la suite sur le grand écran !</p>

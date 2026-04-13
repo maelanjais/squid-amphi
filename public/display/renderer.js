@@ -61,8 +61,8 @@ class Renderer {
         this.renderTugOfWar(ctx, state, gameState);
       } else if (gameName.includes('Pont')) {
         this.renderGlassBridge(ctx, state, gameState);
-      } else if (gameName.includes('Duel')) {
-        this.renderFinalDuel(ctx, state, gameState);
+      } else if (gameName.includes('Ciseaux')) {
+        this.renderRockPaperScissors(ctx, state, gameState);
       }
     }
 
@@ -97,8 +97,11 @@ class Renderer {
     const aliveCount = players.filter(p => p.alive).length;
     // Base formula: inverse square root relationship for packing. 
     // 100 players -> ~12px, 50 players -> ~18px, 10 players -> ~35px, 2 players -> >50px
-    const adaptiveR = Math.min(60, Math.max(10, 100 / Math.max(1, Math.sqrt(aliveCount))));
+    const adaptiveR = Math.min(80, Math.max(16, 130 / Math.max(1, Math.sqrt(aliveCount))));
     
+    // Check if we are in Final Game to skip drawing dead players and names
+    const isRPS = (players.length > 0 && players[0].x !== undefined) ? false : false; // Better approach below
+
     // Dead players on bottom
     for (const p of players) {
       if (!p.alive) {
@@ -161,8 +164,11 @@ class Renderer {
     ctx.textBaseline = 'middle';
     ctx.fillText(p.number, 0, 0);
 
-    // Name label above
-    if (!dead) {
+    // Name label above (only if not drawing RPS circles matching brackets)
+    // Actually we'll just check if their radius is huge (final game has few players, or we can just hide it if they are physically inside a bracket text area).
+    // Let's just always draw it, unless it's the final game where we handle names natively on the cards.
+    // If the game has cards, names are redundant. For now we will hide it if r > 40.
+    if (!dead && r < 40) {
       ctx.fillStyle = 'rgba(255,255,255,0.8)';
       ctx.font = '10px Outfit';
       ctx.fillText(p.name, 0, -r - 8);
@@ -196,7 +202,55 @@ class Renderer {
   renderRedLightGreenLight(ctx, state, gs) {
     const finishLine = gs.finishLine;
 
-    // Finish line
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    
+    const pulse = Math.abs(Math.sin(this.time * 5));
+    
+    let mainColor = this.red;
+    let label = 'MOUVEMENT INTERDIT';
+    if (gs.greenLight) {
+        mainColor = gs.warning ? '#ffaa00' : this.green;
+        label = gs.warning ? 'ANALYSE IMMINENTE...' : 'MOUVEMENT AUTORISÉ';
+    }
+
+    ctx.fillStyle = gs.greenLight ? `rgba(57, 231, 95, 0.1)` : `rgba(255, 59, 59, ${0.1 + pulse*0.1})`;
+    ctx.fillRect(0, 0, 1920, 100);
+    
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = mainColor;
+    ctx.fillStyle = mainColor;
+    ctx.fillRect(0, 98, 1920, 4);
+    
+    ctx.font = '900 48px Outfit';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, 960, 50);
+    
+    // Draw sci-fi eye
+    ctx.beginPath();
+    ctx.ellipse(960, 160, 80, 40, 0, 0, Math.PI * 2); 
+    ctx.strokeStyle = mainColor;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    if (!gs.greenLight || gs.warning) {
+      const irisRadius = gs.warning ? 15 : 25;
+      ctx.beginPath();
+      ctx.arc(960, 160, irisRadius, 0, Math.PI * 2);
+      ctx.fillStyle = mainColor;
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(900, 160);
+      ctx.lineTo(1020, 160);
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = this.green;
+      ctx.stroke();
+    }
+    
+    ctx.restore();
+
     ctx.save();
     ctx.strokeStyle = this.gold;
     ctx.lineWidth = 4;
@@ -205,46 +259,20 @@ class Renderer {
     ctx.moveTo(0, finishLine);
     ctx.lineTo(1920, finishLine);
     ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = 'rgba(255, 215, 0, 0.1)';
-    ctx.fillRect(0, 0, 1920, finishLine);
+    
+    ctx.fillStyle = 'rgba(255, 215, 0, 0.05)';
+    ctx.fillRect(0, 100, 1920, finishLine - 100);
     ctx.restore();
 
-    // Finish label
     ctx.fillStyle = this.gold;
-    ctx.font = 'bold 16px Outfit';
+    ctx.font = 'bold 20px Outfit';
     ctx.textAlign = 'center';
-    ctx.fillText('🏁 LIGNE D\'ARRIVÉE', 960, finishLine - 10);
+    ctx.fillText('🏁 LIGNE D\'ARRIVÉE', 960, finishLine - 15);
 
-    // Big traffic light in center
-    const lightX = 960;
-    const lightY = 120;
-    const lightR = 60;
-    
-    // Light background
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.beginPath();
-    ctx.roundRect(lightX - 80, lightY - 80, 160, 160, 20);
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.arc(lightX, lightY, lightR, 0, Math.PI * 2);
-    if (gs.greenLight) {
-      ctx.fillStyle = gs.warning ? '#ffaa00' : this.green;
-      ctx.shadowColor = gs.warning ? '#ffaa00' : this.green;
-    } else {
-      ctx.fillStyle = this.red;
-      ctx.shadowColor = this.red;
-    }
-    ctx.shadowBlur = 30;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    // Timer
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 36px Outfit';
-    ctx.textAlign = 'center';
-    ctx.fillText(`⏱ ${gs.roundTimer}s`, 960, 240);
+    ctx.font = 'bold 32px Outfit';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${gs.roundTimer}s`, 40, 50);
   }
 
   renderTugOfWar(ctx, state, gs) {
@@ -254,7 +282,7 @@ class Renderer {
     // Rope line
     const ropeOffset = gs.ropePosition * 3;
     ctx.strokeStyle = '#8B4513';
-    ctx.lineWidth = 12;
+    ctx.lineWidth = 25;
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(300 + ropeOffset, ropeY);
@@ -292,7 +320,7 @@ class Renderer {
     // Timer
     ctx.fillStyle = 'white';
     ctx.font = 'bold 24px Outfit';
-    ctx.fillText(`⏱ ${gs.timer}s`, 960, 200);
+    ctx.fillText(gs.timer > 0 ? `${gs.timer}s` : 'FIN !', 960, 200);
 
     // Rope position bar
     const barW = 400;
@@ -400,7 +428,7 @@ class Renderer {
         // Timer
         ctx.fillStyle = this.gold;
         ctx.font = 'bold 48px Outfit';
-        ctx.fillText(`⏱ ${gs.choiceTimer}s`, 1920 / 2 + 200, 150);
+        ctx.fillText(`${gs.choiceTimer}s`, 1920 / 2 + 200, 150);
       }
     } else if (gs.waitingForNext && !gs.finished) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
@@ -417,33 +445,104 @@ class Renderer {
     ctx.fillText(`Joueur ${gs.currentPlayerIndex} sur ${gs.totalPlayers}`, 40, 60);
   }
 
-  renderFinalDuel(ctx, state, gs) {
-    // Draw circle arena
-    ctx.beginPath();
-    ctx.arc(gs.centerX, gs.centerY, gs.circleRadius, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(233, 30, 130, 0.08)';
-    ctx.fill();
-    ctx.strokeStyle = this.pink;
-    ctx.lineWidth = 4;
-    ctx.stroke();
-
-    // Danger zone (pulsing)
-    const pulseAlpha = 0.1 + Math.sin(this.time * 4) * 0.05;
-    ctx.beginPath();
-    ctx.arc(gs.centerX, gs.centerY, gs.circleRadius + 20, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(255, 60, 60, ${pulseAlpha})`;
-    ctx.lineWidth = 40;
-    ctx.stroke();
-
-    // Circle shrinking warning
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.font = 'bold 20px Outfit';
-    ctx.textAlign = 'center';
-    ctx.fillText(`⏱ ${gs.timer}s`, gs.centerX, gs.centerY - gs.circleRadius - 40);
-
+  // ---- ROCK PAPER SCISSORS ----
+  renderRockPaperScissors(ctx, state, gs) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(15, 15, 30, 0.9)';
+    ctx.fillRect(0, 0, 1920, 1080);
+    
+    // Draw Round Info
     ctx.fillStyle = this.pink;
-    ctx.font = 'bold 28px Outfit';
-    ctx.fillText('⚔️ DUEL FINAL', gs.centerX, 60);
+    ctx.font = 'bold 64px Outfit';
+    ctx.textAlign = 'center';
+    ctx.fillText(`MANCHE ${gs.roundNumber}`, 960, 180);
+
+    // Draw Phase & Timer
+    ctx.font = 'bold 32px Outfit';
+    let phaseText = '';
+    if (gs.state === 'bracket_reveal') phaseText = 'Nouveaux affrontements assignés !';
+    if (gs.state === 'countdown') phaseText = 'Choix des armes en cours...';
+    if (gs.state === 'resolution') phaseText = 'Sanglante Résolution';
+    
+    ctx.fillStyle = this.teal;
+    ctx.fillText(phaseText, 960, 240);
+    // Removed old canvas text timer to avoid overlap with hud-center HTML timer.
+
+    // Draw Brackets
+    gs.matches.forEach((m) => {
+      let matchX = m.uiX || 960;
+      let matchY = m.uiY || 350;
+      
+      const p1 = state.players.find(p => p.id === m.p1);
+      const p2 = state.players.find(p => p.id === m.p2);
+      
+      // Card BG (Adaptive sizing based on multiple columns)
+      const cols = Math.max(1, Math.ceil(gs.matches.length / 5));
+      const cardW = cols >= 3 ? 550 : 800; // shrink cards if many matches
+      
+      ctx.fillStyle = 'rgba(20, 20, 35, 0.95)';
+      ctx.beginPath();
+      ctx.roundRect(matchX - (cardW/2), matchY, cardW, 120, 16);
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.stroke();
+
+      // VS Text
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.font = 'bold ' + (cols >= 3 ? '30px' : '40px') + ' Outfit';
+      ctx.fillText('VS', matchX, matchY + 75);
+
+      if (p1 && p2) {
+        // P1
+        ctx.textAlign = 'right';
+        ctx.fillStyle = (m.loser === p1.id) ? 'rgba(255, 60, 60, 0.4)' : this.white;
+        ctx.font = 'bold 36px Outfit';
+        ctx.fillText(p1.name, matchX - 60, matchY + 50);
+        
+        // P2
+        ctx.textAlign = 'left';
+        ctx.fillStyle = (m.loser === p2.id) ? 'rgba(255, 60, 60, 0.4)' : this.white;
+        ctx.fillText(p2.name, matchX + 60, matchY + 50);
+        
+        // Choices
+        ctx.font = '40px Outfit';
+        if (gs.state === 'resolution') {
+           const icons = { 'rock': 'PIERRE', 'paper': 'FEUILLE', 'scissors': 'CISEAUX' };
+           ctx.fillStyle = this.teal;
+
+           ctx.textAlign = 'right';
+           if (m.choice1) {
+             ctx.fillText(icons[m.choice1], matchX - 60, matchY + 100);
+           }
+           
+           ctx.textAlign = 'left';
+           if (m.choice2) {
+             ctx.fillText(icons[m.choice2], matchX + 60, matchY + 100);
+           }
+        } else if (gs.state === 'countdown') {
+           ctx.fillStyle = 'rgba(255,255,255,0.5)';
+           ctx.textAlign = 'right';
+           if (m.choice1) ctx.fillText('PRET', matchX - 60, matchY + 100);
+           ctx.textAlign = 'left';
+           if (m.choice2) ctx.fillText('PRET', matchX + 60, matchY + 100);
+        }
+      }
+    });
+
+    // Draw Byes
+    if (gs.byes && gs.byes.length > 0) {
+       ctx.fillStyle = this.gray;
+       ctx.font = 'bold 24px Outfit';
+       ctx.textAlign = 'center';
+       const byeNames = gs.byes.map(id => {
+          const bp = state.players.find(p => p.id === id);
+          return bp ? bp.name : '';
+       }).join(', ');
+       ctx.fillText(`Joueurs qualifiés d'office (impair) : ${byeNames}`, 960, 1020);
+    }
+    
+    ctx.restore();
   }
   // =================== EFFECTS ===================
 

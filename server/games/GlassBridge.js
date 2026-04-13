@@ -1,10 +1,12 @@
 /**
- * Pont de Verre (Glass Bridge) — Rewritten
+ * Pont de Verre (Glass Bridge) — Round-Robin
  * 
- * Players cross one at a time in a random order.
- * Each step, they choose left or right — one is safe, one breaks.
- * Everyone watches. Revealed panels stay visible for following players.
- * Number of steps is adapted to player count for statistical fairness.
+ * Players take turns one at a time in a shuffled order (Fisher-Yates).
+ * On their turn, they face ONE unrevealed panel and choose left or right.
+ * - Correct → they survive and go to the back of the queue.
+ * - Wrong → they are eliminated and the panel is revealed.
+ * Either way, the panel's safe side is now known.
+ * The game continues cycling through survivors until all panels are revealed.
  */
 class GlassBridge {
   constructor(arenaWidth, arenaHeight) {
@@ -12,25 +14,34 @@ class GlassBridge {
     this.arenaHeight = arenaHeight;
     this.steps = 5;
     this.panels = [];
-    this.turnOrder = [];
-    this.currentPlayerIndex = 0;
+    this.queue = []; // round-robin queue of player IDs
     this.currentPlayerId = null;
-    this.playerStep = 0; // current step of the active player (0 = choosing step 0)
+    this.currentStep = 0; // next unrevealed panel to tackle
     this.choosing = false;
     this.choiceTimer = 10;
-    this.revealedPanels = new Set(); // step indices where the safe side is known
-    this.eliminatedOnStep = new Map(); // step -> 'left'|'right' (wrong side)
+    this.revealedPanels = new Set();
+    this.eliminatedOnStep = new Map();
     this.finished = false;
-    this.playerResults = new Map(); // playerId -> 'waiting'|'playing'|'crossed'|'eliminated'
-    this.playerFinalStep = new Map(); // playerId -> step they reached
-    this.waitingForNext = 0; // delay between players
+    this.playerResults = new Map();
+    this.playerFinalStep = new Map();
+    this.waitingForNext = 0;
+    this.turnNumber = 0;
+  }
+
+  // Fisher-Yates shuffle
+  shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
   }
 
   setup(players) {
     const alive = players.filter(p => p.alive);
     const n = alive.length;
 
-    // Adapt steps to eliminate roughly 90% of players so it is highly challenging
+    // Adapt steps — enough to make it exciting
     this.steps = Math.max(6, Math.floor(n * 0.9));
 
     // Generate random safe panels
@@ -41,8 +52,8 @@ class GlassBridge {
       });
     }
 
-    // Randomize turn order
-    this.turnOrder = alive.map(p => p.id).sort(() => Math.random() - 0.5);
+    // Proper Fisher-Yates shuffle for turn order
+    this.queue = this.shuffle(alive.map(p => p.id));
 
     // Initialize all players
     for (const player of players) {
@@ -51,42 +62,39 @@ class GlassBridge {
       this.playerFinalStep.set(player.id, -1);
     }
 
-    // Visually position everyone off to the left
+    this.currentStep = 0;
     this.positionPlayers(players);
-
-    // Start first player
-    this.startNextPlayer();
+    this.startNextTurn();
   }
 
-  startNextPlayer() {
-    if (this.currentPlayerIndex >= this.turnOrder.length) {
+  startNextTurn() {
+    // Find the next unrevealed step
+    while (this.currentStep < this.steps && this.revealedPanels.has(this.currentStep)) {
+      this.currentStep++;
+    }
+
+    // All panels revealed → everyone remaining survives
+    if (this.currentStep >= this.steps) {
+      for (const id of this.queue) {
+        this.playerResults.set(id, 'crossed');
+        this.playerFinalStep.set(id, this.steps);
+      }
       this.finished = true;
       return;
     }
 
-    this.currentPlayerId = this.turnOrder[this.currentPlayerIndex];
-    this.playerStep = 0;
+    // No one left in the queue
+    if (this.queue.length === 0) {
+      this.finished = true;
+      return;
+    }
+
+    // Pick the front of the queue
+    this.currentPlayerId = this.queue[0];
     this.choosing = true;
     this.choiceTimer = 10;
     this.playerResults.set(this.currentPlayerId, 'playing');
-
-    // Skip revealed panels (already known safe)
-    this.skipRevealedPanels();
-  }
-
-  skipRevealedPanels() {
-    while (this.playerStep < this.steps && this.revealedPanels.has(this.playerStep)) {
-      this.playerStep++;
-    }
-    if (this.playerStep >= this.steps) {
-      // Player crossed safely (all panels were revealed!)
-      this.playerResults.set(this.currentPlayerId, 'crossed');
-      this.playerFinalStep.set(this.currentPlayerId, this.steps);
-      this.choosing = false;
-      this.waitingForNext = 1.5;
-    } else {
-      this.choiceTimer = 10;
-    }
+    this.turnNumber++;
   }
 
   start(players) {
@@ -96,12 +104,11 @@ class GlassBridge {
   update(dt, players) {
     const toEliminate = [];
 
-    // Delay between players
+    // Delay between turns
     if (this.waitingForNext > 0) {
       this.waitingForNext -= dt;
       if (this.waitingForNext <= 0) {
-        this.currentPlayerIndex++;
-        this.startNextPlayer();
+        this.startNextTurn();
       }
       this.positionPlayers(players);
       return { eliminated: toEliminate };
@@ -110,10 +117,9 @@ class GlassBridge {
     if (this.choosing && this.currentPlayerId) {
       this.choiceTimer -= dt;
 
-      // Find the active player
       const activePlayer = players.find(p => p.id === this.currentPlayerId);
       if (!activePlayer || !activePlayer.alive) {
-        // Player disconnected, skip
+        this.queue = this.queue.filter(id => id !== this.currentPlayerId);
         this.choosing = false;
         this.waitingForNext = 0.5;
         this.positionPlayers(players);
@@ -125,40 +131,59 @@ class GlassBridge {
         const choice = activePlayer.input.choice;
         activePlayer.input.choice = null;
 
-        const panel = this.panels[this.playerStep];
+        const panel = this.panels[this.currentStep];
 
         if (choice === panel.safe) {
-          // Safe!
-          this.revealedPanels.add(this.playerStep);
-          this.playerStep++;
+          // Safe! Reveal panel, player goes to back of queue
+          this.revealedPanels.add(this.currentStep);
+          this.playerResults.set(this.currentPlayerId, 'waiting');
+          this.playerFinalStep.set(this.currentPlayerId, this.currentStep);
 
-          // Skip any already-revealed panels ahead
-          this.skipRevealedPanels();
+          // Move player from front to back of the queue
+          this.queue.push(this.queue.shift());
+
+          this.choosing = false;
+          this.currentStep++;
+          this.waitingForNext = 1.5;
         } else {
           // Wrong! Eliminated
-          this.revealedPanels.add(this.playerStep);
-          this.eliminatedOnStep.set(this.playerStep, choice);
+          this.revealedPanels.add(this.currentStep);
+          this.eliminatedOnStep.set(this.currentStep, choice);
           this.playerResults.set(this.currentPlayerId, 'eliminated');
-          this.playerFinalStep.set(this.currentPlayerId, this.playerStep);
+          this.playerFinalStep.set(this.currentPlayerId, this.currentStep);
           toEliminate.push(this.currentPlayerId);
+
+          // Remove from queue
+          this.queue.shift();
+
           this.choosing = false;
-          this.waitingForNext = 2.0; // pause to show the fall
+          this.currentStep++;
+          this.waitingForNext = 2.0;
         }
       }
 
       // Timer expired = eliminated
       if (this.choiceTimer <= 0 && this.choosing) {
         this.playerResults.set(this.currentPlayerId, 'eliminated');
-        this.playerFinalStep.set(this.currentPlayerId, this.playerStep);
+        this.playerFinalStep.set(this.currentPlayerId, this.currentStep);
         toEliminate.push(this.currentPlayerId);
+        this.queue.shift();
         this.choosing = false;
         this.waitingForNext = 1.5;
       }
     }
 
-    // Check if all done
-    if (!this.choosing && this.waitingForNext <= 0 && this.currentPlayerIndex >= this.turnOrder.length) {
-      this.finished = true;
+    // Check if done
+    if (!this.choosing && this.waitingForNext <= 0) {
+      const allRevealed = this.currentStep >= this.steps || 
+        (this.revealedPanels.size >= this.steps);
+      if (allRevealed || this.queue.length === 0) {
+        for (const id of this.queue) {
+          this.playerResults.set(id, 'crossed');
+          this.playerFinalStep.set(id, this.steps);
+        }
+        this.finished = true;
+      }
     }
 
     this.positionPlayers(players);
@@ -175,27 +200,24 @@ class GlassBridge {
       const result = this.playerResults.get(player.id);
 
       if (player.id === this.currentPlayerId && this.choosing) {
-        // Active player on the bridge
-        const step = this.playerStep;
-        player.x = bridgeStartX + (step + 0.5) * stepWidth;
+        // Active player on the bridge at the current step
+        player.x = bridgeStartX + (this.currentStep + 0.5) * stepWidth;
         player.y = bridgeY;
       } else if (result === 'crossed') {
-        // Reached the end
-        player.x = this.arenaWidth * 0.92;
-        player.y = bridgeY + 80 + (Math.abs(this.hashId(player.id)) % 150);
+        player.x = this.arenaWidth * 0.92 + (((this.hashId(player.id+'x') % 1000) / 1000) - 0.5) * 100;
+        player.y = bridgeY + (((this.hashId(player.id+'y') % 1000) / 1000) - 0.5) * 600;
       } else if (result === 'waiting') {
-        // Waiting on the left
-        const idx = this.turnOrder.indexOf(player.id);
-        player.x = this.arenaWidth * 0.06;
-        player.y = 100 + (idx % 20) * 48;
+        const idx = this.queue.indexOf(player.id);
+        if (idx >= 0) {
+          player.x = this.arenaWidth * 0.08 + (((this.hashId(player.id+'x') % 1000) / 1000) - 0.5) * 150;
+          player.y = this.arenaHeight / 2 + (((this.hashId(player.id+'y') % 1000) / 1000) - 0.5) * 600;
+        }
       } else if (result === 'eliminated') {
-        // Fallen
         player.x = bridgeStartX + ((this.playerFinalStep.get(player.id) || 0) + 0.5) * stepWidth;
         player.y = this.arenaHeight * 0.85;
       } else if (result === 'playing' && !this.choosing) {
-        // Just crossed
-        player.x = this.arenaWidth * 0.92;
-        player.y = bridgeY + 80 + (Math.abs(this.hashId(player.id)) % 150);
+        player.x = this.arenaWidth * 0.92 + (((this.hashId(player.id+'x') % 1000) / 1000) - 0.5) * 100;
+        player.y = bridgeY + (((this.hashId(player.id+'y') % 1000) / 1000) - 0.5) * 600;
       }
     }
   }
@@ -222,14 +244,15 @@ class GlassBridge {
     return {
       totalSteps: this.steps,
       currentPlayerId: this.currentPlayerId,
-      currentPlayerIndex: this.currentPlayerIndex,
-      totalPlayers: this.turnOrder.length,
-      playerStep: this.playerStep,
+      turnNumber: this.turnNumber,
+      queueSize: this.queue.length,
+      totalPlayers: this.queue.length + Array.from(this.playerResults.values()).filter(v => v === 'eliminated' || v === 'crossed').length,
+      playerStep: this.currentStep,
       choosing: this.choosing,
       choiceTimer: Math.max(0, Math.ceil(this.choiceTimer)),
       revealedPanels: Array.from(this.revealedPanels),
       panels: this.panels.map((p, i) => this.revealedPanels.has(i) ? p : null),
-      turnOrder: this.turnOrder,
+      queue: this.queue,
       playerResults: results,
       playerFinalSteps: finalSteps,
       waitingForNext: this.waitingForNext > 0
@@ -239,20 +262,20 @@ class GlassBridge {
   getControllerState(player) {
     const isMyTurn = player.id === this.currentPlayerId && this.choosing;
     const result = this.playerResults.get(player.id) || 'waiting';
-    const myIndex = this.turnOrder.indexOf(player.id);
+    const myQueuePos = this.queue.indexOf(player.id);
 
     return {
       controls: isMyTurn ? 'choice' : 'none',
       isMyTurn: isMyTurn,
       result: result,
-      step: isMyTurn ? this.playerStep : (this.playerFinalStep.get(player.id) || 0),
+      step: isMyTurn ? this.currentStep : (this.playerFinalStep.get(player.id) || 0),
       totalSteps: this.steps,
       choosing: isMyTurn,
       timer: isMyTurn ? Math.max(0, Math.ceil(this.choiceTimer)) : 0,
       finished: result === 'crossed',
-      myOrder: myIndex + 1,
-      totalOrder: this.turnOrder.length,
-      currentPlayerIndex: this.currentPlayerIndex + 1
+      myQueuePosition: myQueuePos + 1,
+      queueSize: this.queue.length,
+      turnNumber: this.turnNumber
     };
   }
 }

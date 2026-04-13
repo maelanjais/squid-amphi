@@ -21,6 +21,26 @@
 
   let currentState = null;
   let previousAlivePlayers = new Set();
+  let lastPhase = null;
+  let rouletteAnimationFrame = null;
+  
+  // Game state tracking for SFX
+  let lastGreenLight = null;
+  let lastWarning = null;
+  let lastTimerValue = null;
+  let lastCountdownValue = null;
+
+  // Simple quintic out easing for the roulette (mimics cubic-bezier(0.1, 0, 0.1, 1))
+  function easeOut(t) {
+    return 1 - Math.pow(1 - t, 4);
+  }
+
+  // Init audio on first user interaction (required by browsers)
+  document.addEventListener('click', () => { 
+    window.soundManager.init(); 
+    document.getElementById('audio-unlock')?.remove();
+  }, { once: true });
+  document.addEventListener('keydown', () => { window.soundManager.init(); }, { once: true });
 
   // Register as display
   socket.emit('register-display');
@@ -67,6 +87,12 @@
   socket.on('phase', (data) => {
     showScreen(data.phase);
 
+    // Trigger audio for the new phase
+    if (data.phase !== lastPhase) {
+      lastPhase = data.phase;
+      // Pass the whole data object to handle game-specific music in 'playing' phase
+      window.soundManager.onPhaseChange(data.phase, data.currentGame);
+    }
     if (data.phase === 'countdown' && data.currentGame) {
       document.getElementById('game-name').textContent = data.currentGame.name || '???';
       document.getElementById('hud-game-name').textContent = data.currentGame.name || '???';
@@ -80,6 +106,7 @@
     updatePlayerList(list);
     document.getElementById('player-count-num').textContent = list.length;
     btnStart.style.display = list.length >= 1 ? 'block' : 'none';
+    window.soundManager.playSfxPlayerJoin();
   });
 
   // Main game state — 30fps
@@ -96,6 +123,7 @@
           const player = state.players.find(p => p.id === id);
           if (player) {
             renderer.addElimEffect(player.x, player.y);
+            window.soundManager.playSfxElimination();
           }
         }
       }
@@ -105,22 +133,46 @@
     // Update HUD
     if (state.phase === 'playing') {
       document.getElementById('hud-alive').textContent =
-        `👥 ${state.alivePlayers} survivants`;
+        `${state.alivePlayers} survivants`;
 
       // Game-specific HUD center
       const hc = document.getElementById('hud-center');
       if (state.currentGame && state.currentGame.state) {
+        if (state.currentGame.name === 'Pierre, Feuille, Ciseaux') {
+          hc.style.display = 'none'; // Use pure native canvas timer for RPS without interference
+        } else {
+          hc.style.display = 'block';
+        }
+
         const gs = state.currentGame.state;
         if (gs.greenLight !== undefined) {
           // Red Light Green Light
-          hc.innerHTML = gs.greenLight
-            ? (gs.warning ? '<span style="color:#ffaa00">⚠️</span>' : '<span style="color:#39e75f">🟢</span>')
-            : '<span style="color:#ff3b3b">🔴</span>';
-        } else if (gs.ropePosition !== undefined) {
-          // Tug of War
-          hc.textContent = `⏱ ${gs.timer}s`;
+          hc.innerHTML = ''; // Visuals are handled completely by the Canvas rendering
+            
+          // Audio Sync — Trigger SFX on change
+          if (gs.greenLight !== lastGreenLight) {
+              if (gs.greenLight) {
+                  window.soundManager.playDollSong(gs.phaseTimer);
+                  window.soundManager.playSfxGreenLight();
+              } else {
+                  window.soundManager.stopDollSong();
+                  window.soundManager.playSfxRedLight();
+              }
+              lastGreenLight = gs.greenLight;
+          }
+          if (gs.warning && !lastWarning) {
+              window.soundManager.playSfxWarning();
+          }
+          lastWarning = gs.warning;
         } else if (gs.timer !== undefined) {
-          hc.textContent = `⏱ ${gs.timer}s`;
+          // General timer games (Tug of War, Glass Bridge, etc)
+          hc.textContent = `${gs.timer}s`;
+          
+          // Sound on each second change
+          if (gs.timer !== lastTimerValue && gs.timer <= 10) {
+              window.soundManager.playTick(0.15);
+              lastTimerValue = gs.timer;
+          }
         } else {
           hc.textContent = '';
         }
@@ -139,7 +191,17 @@
 
     // Update countdown
     if (state.phase === 'countdown') {
-      document.getElementById('countdown-number').textContent = state.countdown;
+      const countdownEl = document.getElementById('countdown-number');
+      if (state.countdown !== lastCountdownValue) {
+          countdownEl.textContent = state.countdown;
+          
+          countdownEl.style.animation = 'none';
+          void countdownEl.offsetWidth;
+          countdownEl.style.animation = 'countdown-pulse 1s ease-out forwards';
+          
+          if (state.countdown > 0) window.soundManager.playTick(0.2);
+          lastCountdownValue = state.countdown;
+      }
       document.getElementById('game-players').textContent =
         `${state.alivePlayers} joueurs en lice`;
     }
@@ -178,16 +240,20 @@
           
           const bill = document.createElement('div');
           bill.className = 'falling-bill';
-          bill.textContent = '💵';
+          bill.textContent = Math.random() > 0.5 ? '💵' : '💰';
           bill.style.left = (Math.random() * 100) + 'vw';
-          bill.style.animationDuration = (4 + Math.random() * 4) + 's';
+          const duration = 2 + Math.random() * 2;
+          bill.style.animationDuration = duration + 's';
           rain.appendChild(bill);
           
+          // Sound effect for each item falling
+          window.soundManager.playTick(0.1); 
+
           setTimeout(() => {
             if(bill.parentNode) bill.parentNode.removeChild(bill);
-          }, 8000);
+          }, duration * 1000 + 100);
           
-          setTimeout(spawnMoney, 250); // spawn every 250ms
+          setTimeout(spawnMoney, 100 + Math.random() * 200);
         }
         spawnMoney();
       }
@@ -220,7 +286,9 @@
         if (count > 0) {
             // Adjust Grid Columns dynamically to fit the 16:9 screen
             const cols = Math.ceil(Math.sqrt(count * (16/9)));
+            const rows = Math.ceil(count / cols);
             grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
             
             allParticipants.forEach((p, i) => {
               const pDiv = document.createElement('div');
@@ -233,7 +301,10 @@
                 // Trigger death animation slowly after the interface appears
                 setTimeout(() => {
                   pDiv.classList.add('eliminated-anim');
-                }, 2500 + (Math.random() * 3000));
+                  // Deep boom when they turn grey
+                  window.soundManager.playTick(0.3); // High-pitched tick for tile
+                  window.soundManager.playNote(60, 'sine', window.soundManager.ctx.currentTime, 0.5, 0.4); // Deep boom
+                }, 1500 + (i * 120)); // staggered rhythm
               }
               
               grid.appendChild(pDiv);
@@ -254,26 +325,25 @@
         reel.setAttribute('data-animating', 'true');
         reel.innerHTML = '';
         
-        // Build the physical wheel (many items)
-        const items = [];
-        const pool = state.allGameNames || ['Jeu Inconnu'];
+        const fakeGames = ['Labyrinthe Mortel', 'Cache-cache Acide', 'Pluie de Flèches', 'Saut de la Foi', 'Les 7 Portes', 'Le Gouffre'];
+        const pool = (state.allGameNames || []).concat(fakeGames);
+        if (pool.length === 0) pool.push('Jeu Inconnu');
+        const totalFiller = 50; // More items for more "ticks"
         
-        // Add random filler
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < totalFiller; i++) {
           const item = document.createElement('div');
           item.className = 'roulette-item';
           item.textContent = pool[Math.floor(Math.random() * pool.length)];
           reel.appendChild(item);
         }
         
-        // Add the winning target near the end
         const winner = document.createElement('div');
         winner.className = 'roulette-item target-winner';
         winner.textContent = state.nextGameName || 'Duel Final';
         winner.style.color = '#ffaa00';
+        winner.style.fontWeight = '900';
         reel.appendChild(winner);
         
-        // Add a few more trailing elements
         for (let i = 0; i < 5; i++) {
           const item = document.createElement('div');
           item.className = 'roulette-item';
@@ -281,14 +351,36 @@
           reel.appendChild(item);
         }
 
-        // Delay the CSS transition slightly to allow DOM to render
-        setTimeout(() => {
-          // Calculate exact scroll to place the winner in the middle
-          // There are 19 elements before the target-winner element (index 20).
-          // And the window is exactly 3 items tall (1 item in center + 1 up + 1 down).
-          // So the top item should be index 19.
-          reel.style.transform = `translateY(-${19 * 80}px)`;
-        }, 100);
+        // JS-driven animation for sound sync
+        let start = null;
+        const duration = 6500; // Longer for more suspense
+        const targetScroll = totalFiller * 80 - 80;
+        let lastTickIndex = -1;
+
+        const animate = (timestamp) => {
+          if (!start) start = timestamp;
+          const progress = Math.min((timestamp - start) / duration, 1);
+          const easedProgress = easeOut(progress);
+          const currentY = easedProgress * targetScroll;
+          
+          reel.style.transform = `translateY(-${currentY}px)`;
+          
+          // Sound trigger on each item boundary
+          const currentTickIndex = Math.floor(currentY / 80);
+          if (currentTickIndex !== lastTickIndex) {
+            // Speed-dependent volume/pitch could be added here
+            window.soundManager.playTick(0.2 * (1 - progress * 0.8)); 
+            lastTickIndex = currentTickIndex;
+          }
+
+          if (progress < 1 && state.phase === 'transition_roulette') {
+            rouletteAnimationFrame = requestAnimationFrame(animate);
+          } else if (progress >= 1) {
+             // Final landing sound if not already played
+             // Final cleanup if needed
+          }
+        };
+        rouletteAnimationFrame = requestAnimationFrame(animate);
       }
     } else {
       // Reset roulette when not in phase
@@ -296,6 +388,10 @@
       if (reel) {
          reel.removeAttribute('data-animating');
          reel.style.transform = 'translateY(0)';
+         if (rouletteAnimationFrame) {
+           cancelAnimationFrame(rouletteAnimationFrame);
+           rouletteAnimationFrame = null;
+         }
       }
     }
 
@@ -310,8 +406,8 @@
       }
     }
 
-    // Render
-    if (state.phase === 'playing') {
+    // Render players in all game phases (starting from countdown)
+    if (state.phase !== 'lobby') {
       renderer.render(state);
     }
   });

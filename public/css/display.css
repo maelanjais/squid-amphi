@@ -8,15 +8,15 @@
 :root {
   --bg-dark: #1a1a2e;
   --bg-darker: #0f0f1e;
-  --pink: #e91e82;
-  --pink-glow: #ff2d95;
+  --pink: #ed1b76;
+  --pink-glow: #f44786;
   --pink-dark: #b01566;
-  --teal: #00d4aa;
-  --teal-glow: #00ffcc;
+  --teal: #037a76;
+  --teal-glow: #249f9c;
   --gold: #ffd700;
   --red: #ff3b3b;
   --green: #39e75f;
-  --white: #f0f0f0;
+  --white: #ffffff;
   --gray: #8892a4;
   --font: 'Outfit', sans-serif;
 }
@@ -88,6 +88,7 @@ body {
 .logo-section {
   text-align: center;
   z-index: 1;
+  margin-top: -80px;
 }
 
 .squid-shapes {
@@ -133,11 +134,12 @@ body {
 }
 
 .tagline {
-  font-size: 18px;
-  color: var(--gray);
+  font-size: 22px;
+  color: #1a1a2e;
   letter-spacing: 6px;
   margin-top: 8px;
-  font-weight: 300;
+  font-weight: 800;
+  text-shadow: 0 2px 10px rgba(255,255,255,0.8);
 }
 
 /* Join section */
@@ -161,15 +163,21 @@ body {
   height: 160px !important;
 }
 .join-instruction {
-  color: var(--gray);
-  font-size: 16px;
+  color: #1a1a2e;
+  font-size: 18px;
+  font-weight: bold;
 }
 .join-url-big {
-  font-size: 28px;
-  font-weight: 800;
+  font-size: 32px;
+  font-weight: 900;
   color: var(--teal-glow);
   letter-spacing: 2px;
   margin-top: 4px;
+  text-shadow: 0px 2px 4px rgba(0,0,0,0.8);
+  background: rgba(26,26,46,0.8);
+  padding: 5px 15px;
+  border-radius: 8px;
+  display: inline-block;
 }
 
 /* Players section (sidebar) */
@@ -196,10 +204,11 @@ body {
   line-height: 1;
 }
 .player-count-label {
-  font-size: 18px;
-  color: var(--gray);
+  font-size: 22px;
+  color: #1a1a2e;
   letter-spacing: 4px;
-  font-weight: 300;
+  font-weight: 800;
+  text-shadow: 0 0 5px rgba(255,255,255,0.8);
 }
 
 .player-list {
@@ -275,6 +284,7 @@ body {
   background: var(--pink-dark);
 }
 
+
 /* =============== COUNTDOWN =============== */
 .countdown-container {
   text-align: center;
@@ -292,11 +302,11 @@ body {
   font-weight: 900;
   color: var(--white);
   line-height: 1;
-  animation: countdown-pulse 1s ease-in-out infinite;
 }
 @keyframes countdown-pulse {
-  0%, 100% { transform: scale(1); }
+  0% { transform: scale(1.4); }
   50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
 .game-players {
   font-size: 22px;
@@ -448,21 +458,20 @@ body {
   height: 100%;
   background: black;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
   padding: 40px;
   box-sizing: border-box;
 }
 .memorial-grid {
+  flex: 1;
   width: 100%;
-  max-height: 100%;
   display: grid;
   gap: 12px;
-  align-content: center;
-  justify-content: center;
+  align-content: stretch;
+  justify-items: stretch;
 }
 .player-tile {
-  aspect-ratio: 1;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
@@ -597,9 +606,10 @@ body {
 }
 .expl-title {
   color: var(--teal);
-  font-size: 24px;
+  font-size: 32px;
   letter-spacing: 4px;
   margin-bottom: 20px;
+  text-shadow: 0 0 10px rgba(0,255,204,0.3);
 }
 .expl-panel {
   text-align: left;
@@ -610,16 +620,17 @@ body {
 }
 .expl-panel h3 {
   color: var(--pink);
-  font-size: 18px;
+  font-size: 28px;
   margin-bottom: 12px;
-  letter-spacing: 2px;
+  letter-spacing: 4px;
+  font-weight: 800;
 }
 .expl-panel .mt {
   margin-top: 24px;
 }
 .game-desc, .game-controls {
-  font-size: 22px;
-  line-height: 1.5;
+  font-size: 32px;
+  line-height: 1.6;
   color: var(--white);
   font-weight: 600;
 }
@@ -633,19 +644,20 @@ body {
 /* =============== UI CONTROLS =============== */
 .btn-reset {
   position: absolute;
-  top: 20px;
+  bottom: 20px;
   left: 20px;
-  background: transparent;
+  background: rgba(0, 0, 0, 0.5);
   color: var(--gray);
-  border: 2px solid var(--gray);
+  border: 2px solid rgba(255,255,255,0.2);
   padding: 10px 20px;
   border-radius: 8px;
   font-family: var(--font);
   font-weight: 800;
-  font-size: 14px;
+  font-size: 12px;
   cursor: pointer;
   z-index: 100;
   transition: all 0.2s;
+  letter-spacing: 1px;
 }
 .btn-reset:hover {
   background: var(--red);
@@ -722,4 +734,217 @@ body {
 }
 .btn-add-bots:active {
   transform: scale(0.97);
+}
+
+/* =============== AUDIO UNLOCK OVERLAY =============== */
+#audio-unlock {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 10, 12, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  color: white;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  animation: fade-in 0.5s ease-out;
+  font-family: var(--font);
+}
+.unlock-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.unlock-icon {
+  font-size: 80px;
+  animation: heartbeat 1.5s infinite;
+}
+.unlock-content h2 {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin: 0;
+}
+.unlock-content p {
+  font-size: 16px;
+  opacity: 0.6;
+  margin: 0;
+}
+
+@keyframes heartbeat {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* =============== RHYTHMIC MONEY RAIN =============== */
+#money-rain-container {
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+.falling-bill {
+  position: absolute;
+  top: -50px;
+  font-size: 2.5rem;
+  z-index: 50;
+  opacity: 0;
+  animation: fall-bill 3s linear forwards;
+  filter: drop-shadow(0 0 10px rgba(0,255,0,0.3));
+}
+
+@keyframes fall-bill {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+}
+
+/* =========================================
+   GEOMETRIC LABYRINTH / MODERN ICONS OVERHAUL
+   ========================================= */
+
+.modern-lobby {
+  background: #1a1a2e; /* dark base */
+}
+
+/* Base override for lobby container to show BG */
+.lobby-container {
+  background: transparent !important;
+  z-index: 2;
+}
+
+.maze-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #ffb7b2; /* Base pastel peach inspired by the images */
+  z-index: 0;
+  overflow: hidden;
+}
+.maze-stair {
+  position: absolute;
+  background-image: repeating-linear-gradient(
+    transparent, transparent 20px,
+    rgba(0,0,0,0.1) 20px, rgba(0,0,0,0.15) 30px
+  );
+  box-shadow: -15px 15px 40px rgba(0,0,0,0.15);
+  transform-style: preserve-3d;
+}
+.maze-stair.stair-1 {
+  width: 50vw; height: 100vh; background-color: #3bc7b6; /* Teal */
+  bottom: -40vh; left: 5vw; transform: skewX(-15deg);
+}
+.maze-stair.stair-2 {
+  width: 60vw; height: 70vh; background-color: #f7a3ba; /* Pink */
+  top: -10vh; right: -10vw; transform: skewY(10deg);
+  z-index: 2;
+}
+.maze-stair.stair-3 {
+  width: 30vw; height: 120vh; background-color: #f9d876; /* Yellow */
+  top: -20vh; right: 20vw; transform: rotate(15deg);
+  z-index: 1;
+}
+.maze-arch {
+  position: absolute;
+  border: 40px solid #de6b83;
+  border-radius: 50% 50% 0 0;
+  border-bottom: none;
+  box-shadow: -15px 15px 30px rgba(0,0,0,0.1);
+}
+.maze-arch.arch-1 {
+  width: 30vw; height: 25vh; right: 15vw; bottom: 15vh; z-index: 3;
+}
+.maze-wall {
+  position: absolute;
+  background: #3bc7b6;
+}
+.maze-wall.wall-1 {
+  width: 15vw; height: 100vh; left: 0; top: 0; z-index: 4;
+}
+.maze-wall.wall-2 {
+  width: 100vw; height: 15vh; bottom: 0; left: 0; background: #e0708d; z-index: 5;
+}
+
+/* SVG icons styling */
+.svg-icon {
+  display: inline-block;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.svg-audio { 
+  width: 80px; height: 80px; filter: invert(1); 
+  background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>'); 
+}
+.svg-bot { 
+  width: 24px; height: 24px; background-color: var(--pink); 
+  -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a2 2 0 0 1 2 2h4a2 2 0 0 1 2 2v1l1.5.5A1.5 1.5 0 0 1 23 9v4a2 2 0 0 1-2 2h-1v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3H3a2 2 0 0 1-2-2V9a1.5 1.5 0 0 1 1.5-1.5L4 7V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2zm-6 6v10h12V8H6zm3 2h2v4H9v-4zm4 0h2v4h-2v-4z"/></svg>') no-repeat center; 
+}
+.svg-crown { 
+  width: 100px; height: 100px; background-color: var(--gold); 
+  margin: 0 auto;
+  -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>') no-repeat center; 
+}
+.svg-briefcase { 
+  width: 160px; height: 160px; background-color: var(--gold); 
+  -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>') no-repeat center; 
+}
+.svg-rules { 
+  width: 24px; height: 24px; background-color: var(--pink); 
+  -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>') no-repeat center; 
+  display: inline-block; vertical-align: middle; 
+}
+.svg-gamepad { 
+  width: 24px; height: 24px; background-color: var(--pink); 
+  -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5V9h2V7h2v2h2v2zm4.5 1.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 5.5 18.5 5.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>') no-repeat center; 
+  display: inline-block; vertical-align: middle;
+}
+.modern-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ALT MAZE for inner screens */
+.maze-bg-alt {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--bg-dark);
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.25;
+}
+.maze-stair-alt {
+  position: absolute;
+  background-image: repeating-linear-gradient(
+    transparent, transparent 20px,
+    rgba(255,255,255,0.05) 20px, rgba(255,255,255,0.1) 40px
+  );
+  box-shadow: -15px 15px 40px rgba(0,0,0,0.5);
+  transform-style: preserve-3d;
+}
+.stair-alt-1 {
+  width: 50vw; height: 100vh; background-color: var(--teal); 
+  bottom: -40vh; left: -10vw; transform: skewX(-20deg);
+}
+.stair-alt-2 {
+  width: 60vw; height: 80vh; background-color: var(--pink-dark); 
+  top: -20vh; right: -5vw; transform: skewY(15deg);
+  z-index: 2;
+}
+
+/* Ensure containers are above the alt maze */
+.explanation-container, .countdown-container, .bank-container, .memorial-container, .roulette-container, .gameover-container {
+  z-index: 10;
+  position: relative;
 }

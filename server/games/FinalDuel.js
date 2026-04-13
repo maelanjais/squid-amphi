@@ -17,7 +17,7 @@ class FinalDuel {
     this.duration = 90;
     this.timer = this.duration;
     this.finished = false;
-    this.pushForce = 500; // stronger pushes
+    this.pushForce = 700; // very strong pushes
     this.friction = 5; // higher friction = less sliding, more control
   }
 
@@ -67,10 +67,12 @@ class FinalDuel {
             const dy = other.y - player.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
             
-            if (dist < 80) {
-              // Apply push force
-              other.vx += (sx / len) * this.pushForce;
-              other.vy += (sy / len) * this.pushForce;
+            if (dist < 120) {
+              // Apply push force — stronger when closer
+              const proximity = 1 - (dist / 120);
+              const force = this.pushForce * (0.5 + proximity * 0.5);
+              other.vx += (sx / len) * force;
+              other.vy += (sy / len) * force;
             }
           }
           // Small recoil for pusher
@@ -98,8 +100,8 @@ class FinalDuel {
       player.y += player.vy * dt;
     }
 
-    // Handle collisions between players — elastic bounce
-    const PLAYER_RADIUS = 18;
+    // Handle collisions between players — heavy elastic bounce
+    const PLAYER_RADIUS = 25;
     for (let i = 0; i < alive.length; i++) {
       for (let j = i + 1; j < alive.length; j++) {
         const p1 = alive[i];
@@ -116,24 +118,23 @@ class FinalDuel {
           const ny = dy / dist;
 
           // Separate players so they never overlap
-          p1.x -= nx * (overlap / 2 + 1);
-          p1.y -= ny * (overlap / 2 + 1);
-          p2.x += nx * (overlap / 2 + 1);
-          p2.y += ny * (overlap / 2 + 1);
+          p1.x -= nx * (overlap / 2 + 2);
+          p1.y -= ny * (overlap / 2 + 2);
+          p2.x += nx * (overlap / 2 + 2);
+          p2.y += ny * (overlap / 2 + 2);
 
           // Elastic velocity exchange along collision normal
           const relVx = p1.vx - p2.vx;
           const relVy = p1.vy - p2.vy;
           const relDot = relVx * nx + relVy * ny;
 
-          // Only resolve if they are moving toward each other
-          if (relDot > 0) {
-            const bounceFactor = 1.2; // slightly > 1 for punchy feel
-            p1.vx -= bounceFactor * relDot * nx;
-            p1.vy -= bounceFactor * relDot * ny;
-            p2.vx += bounceFactor * relDot * nx;
-            p2.vy += bounceFactor * relDot * ny;
-          }
+          // Always bounce when overlapping, with minimum impulse
+          const bounceFactor = 1.6;
+          const impulse = Math.max(relDot > 0 ? relDot : 0, 150); // minimum bump of 150
+          p1.vx -= bounceFactor * impulse * nx;
+          p1.vy -= bounceFactor * impulse * ny;
+          p2.vx += bounceFactor * impulse * nx;
+          p2.vy += bounceFactor * impulse * ny;
         }
       }
     }

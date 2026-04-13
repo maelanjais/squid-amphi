@@ -16,6 +16,21 @@ class BotPlayer extends Player {
     else if (currentGameName === 'Le Pont de Verre') this.actGlassBridge(gameState);
     else if (currentGameName === 'Le Duel Final') this.actFinalDuel(gameState, allPlayers);
     else if (currentGameName === 'Le Sablé Dalgona') this.actDalgona(gameState);
+    else if (currentGameName === 'Pierre, Feuille, Ciseaux') this.actRockPaperScissors(gameState);
+  }
+
+  actRockPaperScissors(gs) {
+    if (gs.state === 'countdown' && !this.choiceMade) {
+      // Simulate human reaction time before choosing
+      if (Math.random() < 0.03) {
+        const choices = ['rock', 'paper', 'scissors'];
+        this.input.choice = choices[Math.floor(Math.random() * choices.length)];
+        this.choiceMade = true;
+      }
+    }
+    if (gs.state !== 'countdown') {
+      this.choiceMade = false; // Reset for next round
+    }
   }
 
   actRLGL(gs) {
@@ -81,17 +96,19 @@ class BotPlayer extends Player {
       targetY = closest.y;
     }
 
-    const dx = targetX - this.x;
-    const dy = targetY - this.y;
+    const noiseX = (Math.random() - 0.5) * 150;
+    const noiseY = (Math.random() - 0.5) * 150;
+    const dx = (targetX + noiseX) - this.x;
+    const dy = (targetY + noiseY) - this.y;
     const len = Math.sqrt(dx * dx + dy * dy);
 
     this.moving = true;
-    if (len > 0.1) {
+    if (len > 5) {
       this.direction.x = dx / len;
       this.direction.y = dy / len;
     }
 
-    if (closest && minDist < 50 && Math.random() < 0.3) {
+    if (closest && minDist < 60 && Math.random() < 0.3) {
       this.input.swipeX = dx;
       this.input.swipeY = dy;
     }

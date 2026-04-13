@@ -11,11 +11,16 @@ class TugOfWar {
     this.ropePosition = 0; // -100 to 100, 0 = center
     this.team1Score = 0;
     this.team2Score = 0;
+    this.team2Score = 0;
     this.duration = 20; // seconds
     this.timer = this.duration;
     this.finished = false;
     this.decay = 2; // rope slowly returns to center
     this.winThreshold = 100;
+    this.endDelayTimer = 2; // wait 2 seconds before eliminating
+    this.winnerDetermined = false;
+    this.winningTeam = 0;
+    this.toEliminate = [];
   }
 
   setup(players) {
@@ -23,16 +28,27 @@ class TugOfWar {
     const shuffled = [...players].sort(() => Math.random() - 0.5);
     const half = Math.ceil(shuffled.length / 2);
     
+    // We want to line them up logically along the rope.
+    const spacingX = 65;
     for (let i = 0; i < shuffled.length; i++) {
       const player = shuffled[i];
-      if (i < half) {
+      const isTeam1 = (i < half);
+      const teamLocalIndex = isTeam1 ? i : (i - half);
+      
+      const col = Math.floor(teamLocalIndex / 3);  // 3 players per vertical slice
+      const row = teamLocalIndex % 3;              // 0, 1, 2
+      
+      player.offsetX = isTeam1 ? (col * -spacingX + 150) : (col * spacingX - 150);
+      player.offsetY = (row - 1) * 65; // stagger vertically along the rope
+
+      if (isTeam1) {
         player.team = 1;
-        player.x = this.arenaWidth * 0.25 + (Math.random() - 0.5) * 150;
-        player.y = this.arenaHeight / 2 + (Math.random() - 0.5) * 200;
+        player.x = this.arenaWidth * 0.25 + player.offsetX;
+        player.y = this.arenaHeight / 2 + player.offsetY;
       } else {
         player.team = 2;
-        player.x = this.arenaWidth * 0.75 + (Math.random() - 0.5) * 150;
-        player.y = this.arenaHeight / 2 + (Math.random() - 0.5) * 200;
+        player.x = this.arenaWidth * 0.75 + player.offsetX;
+        player.y = this.arenaHeight / 2 + player.offsetY;
       }
       player.moving = false;
       player.input.tap = false;
@@ -60,44 +76,56 @@ class TugOfWar {
     }
 
     // Move rope based on difference
-    const force = (team1Taps - team2Taps) * 3;
-    this.ropePosition += force;
+    if (!this.winnerDetermined) {
+      const force = (team1Taps - team2Taps) * 3;
+      this.ropePosition += force;
 
-    // Apply decay toward center
-    this.ropePosition -= Math.sign(this.ropePosition) * this.decay * dt;
-    this.ropePosition = Math.max(-this.winThreshold, Math.min(this.winThreshold, this.ropePosition));
+      // Apply decay toward center
+      this.ropePosition -= Math.sign(this.ropePosition) * this.decay * dt;
+      this.ropePosition = Math.max(-this.winThreshold, Math.min(this.winThreshold, this.ropePosition));
+    }
 
     // Update player positions based on rope
     for (const player of players) {
       if (player.alive) {
         const offset = this.ropePosition * 0.5;
         if (player.team === 1) {
-          player.x = this.arenaWidth * 0.25 + offset;
+          player.x = this.arenaWidth * 0.25 + offset + (player.offsetX || 0);
         } else {
-          player.x = this.arenaWidth * 0.75 + offset;
+          player.x = this.arenaWidth * 0.75 + offset + (player.offsetX || 0);
         }
       }
     }
 
     // Check win condition
     if (Math.abs(this.ropePosition) >= this.winThreshold || this.timer <= 0) {
-      this.finished = true;
-      // Determine losing team
-      let losingTeam;
-      if (this.ropePosition > 0) {
-        losingTeam = 2; // Team 1 pulled harder
-      } else if (this.ropePosition < 0) {
-        losingTeam = 1; // Team 2 pulled harder
-      } else {
-        // Tie — no one eliminated
-        return { eliminated: [] };
-      }
+      if (!this.winnerDetermined) {
+        this.winnerDetermined = true;
+        this.timer = 0; // Enforce zero if someone won early
 
-      for (const player of players) {
-        if (player.alive && player.team === losingTeam) {
-          toEliminate.push(player.id);
+        if (this.ropePosition > 0) {
+          this.winningTeam = 1;
+        } else if (this.ropePosition < 0) {
+          this.winningTeam = 2;
+        } else {
+          this.winningTeam = 0; // Tie
+        }
+        
+        let losingTeam = this.winningTeam === 1 ? 2 : (this.winningTeam === 2 ? 1 : 0);
+        
+        for (const player of players) {
+          if (player.alive && player.team === losingTeam) {
+            this.toEliminate.push(player.id);
+          }
         }
       }
+      
+      this.endDelayTimer -= dt;
+      if (this.endDelayTimer <= 0) {
+        this.finished = true;
+        return { eliminated: this.toEliminate };
+      }
+      return { eliminated: [] };
     }
 
     return { eliminated: toEliminate };
@@ -110,8 +138,9 @@ class TugOfWar {
   getState() {
     return {
       ropePosition: this.ropePosition,
-      timer: Math.ceil(this.timer),
-      winThreshold: this.winThreshold
+      timer: Math.max(0, Math.ceil(this.timer)),
+      winThreshold: this.winThreshold,
+      winningTeam: this.winningTeam
     };
   }
 
@@ -120,7 +149,7 @@ class TugOfWar {
       controls: 'tap',
       team: player.team,
       ropePosition: this.ropePosition,
-      timer: Math.ceil(this.timer)
+      timer: Math.max(0, Math.ceil(this.timer))
     };
   }
 }

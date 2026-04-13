@@ -310,48 +310,15 @@
     if (navigator.vibrate) navigator.vibrate(30);
   });
 
-  // ---- SWIPE (Final Duel) ----
-  const swipeZone = document.getElementById('swipe-zone');
-  if (swipeZone) {
-    let swipeStart = null;
-
-    swipeZone.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      const t = e.touches[0];
-      swipeStart = { x: t.clientX, y: t.clientY };
-      // Also movement via touch hold
-      socket.emit('player-input', { type: 'move', pressing: true, dirX: 0, dirY: 0 });
+  // ---- RPS (Tournament) ----
+  ['rock', 'paper', 'scissors'].forEach(choice => {
+    document.getElementById(`btn-${choice}`)?.addEventListener('click', (e) => {
+      document.querySelectorAll('.btn-rps').forEach(b => b.classList.remove('selected'));
+      e.target.classList.add('selected');
+      socket.emit('player-input', { type: 'choice', choice: choice });
+      if (navigator.vibrate) navigator.vibrate(30);
     });
-
-    swipeZone.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      const t = e.touches[0];
-      if (!swipeStart) return;
-
-      const dx = t.clientX - swipeStart.x;
-      const dy = t.clientY - swipeStart.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      // Movement direction
-      socket.emit('player-input', { type: 'move', pressing: true, dirX: dx, dirY: dy });
-
-      // Swipe detection
-      if (dist > 50) {
-        socket.emit('player-input', { type: 'swipe', swipeX: dx, swipeY: dy });
-        swipeStart = { x: t.clientX, y: t.clientY };
-        swipeZone.classList.add('swiping');
-        if (navigator.vibrate) navigator.vibrate(15);
-        setTimeout(() => swipeZone.classList.remove('swiping'), 150);
-      }
-    });
-
-    swipeZone.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      swipeStart = null;
-      socket.emit('player-input', { type: 'move', pressing: false });
-      swipeZone.classList.remove('swiping');
-    });
-  }
+  });
 
   // ============================
   //    UI HELPERS
@@ -374,6 +341,44 @@
   }
 
   function updateControllerUI(gs) {
+    // Tap controls (Tug Of War)
+    if (gs.controls === 'tap') {
+        let teamIndicator = tapZone.querySelector('.team-indicator');
+        if (!teamIndicator) {
+          teamIndicator = document.createElement('div');
+          teamIndicator.className = 'team-indicator';
+          teamIndicator.style.marginBottom = '20px';
+          teamIndicator.style.fontSize = '24px';
+          teamIndicator.style.fontWeight = 'bold';
+          tapZone.prepend(teamIndicator);
+        }
+        
+        let tapStatus = tapZone.querySelector('.tap-status');
+        if (!tapStatus) {
+          tapStatus = document.createElement('div');
+          tapStatus.className = 'tap-status';
+          tapStatus.style.marginTop = '20px';
+          tapStatus.style.fontSize = '24px';
+          tapStatus.style.fontWeight = 'bold';
+          tapZone.appendChild(tapStatus);
+        }
+        
+        teamIndicator.innerHTML = `VOUS ÊTES: ÉQUIPE ${gs.team}`;
+        teamIndicator.style.color = gs.team === 1 ? '#ff6b6b' : '#4ecdc4';
+
+        if (gs.winningTeam) {
+            if (gs.winningTeam === gs.team) {
+                tapStatus.innerHTML = '<span style="color:#39e75f">VICTOIRE !</span>';
+            } else if (gs.winningTeam !== 0) {
+                tapStatus.innerHTML = '<span style="color:#ff3b3b">DÉFAITE...</span>';
+            } else {
+                tapStatus.innerHTML = 'ÉGALITÉ';
+            }
+        } else {
+            tapStatus.innerHTML = `Tirez ! Temps: ${gs.timer > 0 ? gs.timer : 0}s`;
+        }
+    }
+
     // Move controls — show light indicator for Red Light Green Light
     if (gs.controls === 'move' && gs.greenLight !== undefined) {
       let indicator = moveZone.querySelector('.light-indicator');
@@ -392,7 +397,7 @@
       // Show crossed status or progress
       const inst = moveZone.querySelector('.move-instruction');
       if (gs.crossed) {
-        inst.innerHTML = '✅ Ligne d\'arrivée franchie !';
+        inst.innerHTML = 'Ligne d\'arrivée franchie !';
       } else if (gs.progress !== undefined) {
         inst.innerHTML = `Avancement : ${gs.progress}%<br>TOUCHER pour courir<br>GLISSER pour diriger`;
       } else {
@@ -407,7 +412,7 @@
       if (hpBar && gs.hp !== undefined) {
         hpBar.style.width = `${(gs.hp / gs.maxHP) * 100}%`;
         hpBar.style.background = gs.hp > 1 ? '#39e75f' : '#ff3b3b';
-        hpText.textContent = `❤️ ${gs.hp}/${gs.maxHP}`;
+        hpText.textContent = `PV: ${gs.hp}/${gs.maxHP}`;
       }
     }
 
@@ -421,7 +426,7 @@
       const rightBtn = document.getElementById('btn-right');
 
       if (gs.finished) {
-        document.getElementById('choice-info').textContent = '✅ Vous avez traversé !';
+        document.getElementById('choice-info').textContent = 'Vous avez traversé !';
         leftBtn.disabled = true;
         rightBtn.disabled = true;
       } else if (gs.choosing) {
@@ -432,6 +437,19 @@
         document.getElementById('choice-info').textContent = 'En attente de votre tour...';
         leftBtn.disabled = true;
         rightBtn.disabled = true;
+      }
+    }
+
+    // RPS controls
+    if (gs.controls === 'rps') {
+      document.getElementById('rps-timer').textContent = gs.timer + 's';
+      if (gs.hasChosen) {
+        document.getElementById('rps-info').textContent = 'Choix envoyé ! En attente de votre adversaire...';
+        // Let the button remain selected visually (class already toggled)
+      } else {
+        document.getElementById('rps-info').textContent = 'Duel : Choisissez votre arme !';
+        // Reset selections if the server didn't register one
+        document.querySelectorAll('.btn-rps').forEach(b => b.classList.remove('selected'));
       }
     }
   }

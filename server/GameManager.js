@@ -21,7 +21,7 @@ const GAME_NAMES = {
   RedLightGreenLight: '1, 2, 3… Soleil !',
   TugOfWar: 'Le Jeu de la Corde',
   GlassBridge: 'Le Pont de Verre',
-  FinalDuel: 'Le Duel Final'
+  RockPaperScissors: 'Pierre, Feuille, Ciseaux'
 };
 
 const GAME_RULES = {
@@ -37,9 +37,9 @@ const GAME_RULES = {
     description: "Un par un, traversez le pont. Choisissez la bonne dalle à chaque étape. Les dalles découvertes par les premiers sont visibles pour les suivants !",
     controls: "Choisissez Gauche ou Droite quand c'est votre tour."
   },
-  FinalDuel: {
-    description: "Il n'en restera qu'un. Poussez vos adversaires hors de l'arène.",
-    controls: "Glissez rapidement (swipe) pour frapper / repousser."
+  RockPaperScissors: {
+    description: "Il n'en restera qu'un. Choisissez secrètement votre attaque. Le perdant du duel est éliminé.",
+    controls: "Sélectionnez Pierre, Feuille ou Ciseaux sur votre écran."
   }
 };
 
@@ -77,7 +77,7 @@ class GameManager {
       RedLightGreenLight: require('./games/RedLightGreenLight'),
       TugOfWar: require('./games/TugOfWar'),
       GlassBridge: require('./games/GlassBridge'),
-      FinalDuel: require('./games/FinalDuel')
+      RockPaperScissors: require('./games/RockPaperScissors')
     };
 
     // Game loop at 30fps
@@ -196,14 +196,14 @@ class GameManager {
       this.explanationTimer -= dt;
       if (this.explanationTimer <= 0) {
         this.phase = PHASE.COUNTDOWN;
-        this.countdownTimer = 5;
+        this.countdownTimer = 3.0;
         this.broadcastPhase();
       }
     }
 
     if (this.phase === PHASE.COUNTDOWN) {
       this.countdownTimer -= dt;
-      if (this.countdownTimer <= 0) {
+      if (this.countdownTimer <= 0.99) {
         this.phase = PHASE.PLAYING;
         
         const alive = this.getAlivePlayers();
@@ -324,16 +324,16 @@ class GameManager {
     }
 
     if (!this.gameQueue) {
-      this.gameQueue = ['RedLightGreenLight'];
+      this.gameQueue = ['RedLightGreenLight', 'TugOfWar', 'GlassBridge', 'RockPaperScissors'];
       this.upcomingPool = []; // No random pool needed anymore
     }
 
-    let gameName = 'FinalDuel'; // Default fallback
+    let gameName = 'RockPaperScissors'; // Default fallback
 
     if (this.currentGameIndex === 0) {
       gameName = 'RedLightGreenLight';
     } else {
-      gameName = this.nextGameName || 'FinalDuel';
+      gameName = this.nextGameName || 'RockPaperScissors';
     }
 
     // Always keep track of what we are playing
@@ -342,7 +342,7 @@ class GameManager {
     } 
     if (this.currentGameIndex > 0) this.gameQueue[this.currentGameIndex] = gameName;
 
-    if (gameName === 'FinalDuel') {
+    if (gameName === 'RockPaperScissors') {
       this.upcomingPool = []; // Forcibly exhaust
     }
 
@@ -391,7 +391,7 @@ class GameManager {
 
     // 2. Pre-determine the NEXT game so the Roulette can spin to it
     const nextIndex = this.currentGameIndex + 1;
-    let fallbackGame = 'FinalDuel';
+    let fallbackGame = 'RockPaperScissors';
     if (nextIndex === 1) {
       if (alive.length % 2 === 0 && alive.length >= 4) {
         fallbackGame = 'TugOfWar';
@@ -399,10 +399,10 @@ class GameManager {
         fallbackGame = 'GlassBridge';
       }
     } else if (nextIndex === 2) {
-      if (this.gameQueue[1] === 'TugOfWar' && alive.length >= 3) {
+      if (this.gameQueue[1] === 'TugOfWar' && alive.length >= 7) {
         fallbackGame = 'GlassBridge';
       } else {
-        fallbackGame = 'FinalDuel';
+        fallbackGame = 'RockPaperScissors';
       }
     }
 
@@ -426,6 +426,7 @@ class GameManager {
   broadcastState() {
     const state = {
       phase: this.phase,
+      allGameNames: Object.values(GAME_NAMES),
       players: Array.from(this.players.values()).map(p => p.toJSON()),
       explanation: Math.ceil(this.explanationTimer),
       countdown: Math.max(0, Math.floor(this.countdownTimer)),
