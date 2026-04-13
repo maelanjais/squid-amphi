@@ -12,9 +12,12 @@ class SoundManager {
     this.currentPhase = null;
     this.initialized = false;
     
-    // Only Lobby music as requested
+    // Only Lobby music as requested + Glass Bridge music + RLGL + Rope
     this.assets = {
-      musicLobby: '/audio/lobby.mp3'
+      musicLobby: '/audio/lobby.mp3',
+      musicGlassBridge: '/audio/Way Back then  Squid Game OST.mp3',
+      musicFinalGame: '/audio/rlgl.mp3',
+      musicTugOfWar: '/audio/The Rope is Tied.mp3'
     };
   }
 
@@ -89,26 +92,123 @@ class SoundManager {
   }
 
   stopMusic(duration = 1) {
+    if (this.glassBridgeInterval) {
+        clearInterval(this.glassBridgeInterval);
+        this.glassBridgeInterval = null;
+    }
+    if (this.rlglInterval) {
+        clearInterval(this.rlglInterval);
+        this.rlglInterval = null;
+    }
+
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
     this.musicGain.gain.cancelScheduledValues(now);
     this.musicGain.gain.setValueAtTime(this.musicGain.gain.value, now);
     this.musicGain.gain.linearRampToValueAtTime(0, now + duration);
     
-    // Actually pause the element after the fade
-    if (duration > 0) {
+    // Capture the exact audio instance to pause it securely later
+    const audioToStop = this.currentMusic;
+    this.currentMusic = null; // Detach immediately
+
+    if (duration > 0 && audioToStop) {
         setTimeout(() => {
-            if (this.musicGain.gain.value < 0.05 && this.currentMusic) {
-                this.currentMusic.pause();
-                this.currentMusic.src = "";
-                this.currentMusic = null;
-            }
+            audioToStop.pause();
+            audioToStop.src = "";
         }, duration * 1000 + 100);
-    } else if (this.currentMusic) {
-        this.currentMusic.pause();
-        this.currentMusic.src = "";
-        this.currentMusic = null;
+    } else if (audioToStop) {
+        audioToStop.pause();
+        audioToStop.src = "";
     }
+  }
+
+  playGlassBridgeMusic() {
+    if (!this.initialized) return;
+    if (!this.ctx) return;
+    
+    this.stopMusic(1); // Stop current
+    
+    const audio = new Audio(this.assets.musicGlassBridge);
+    audio.crossOrigin = "anonymous";
+    audio.loop = true; // Natural loop at the very end of the file
+    
+    const source = this.ctx.createMediaElementSource(audio);
+    source.connect(this.musicGain);
+
+    audio.currentTime = 5; 
+    
+    audio.play().then(() => {
+        const now = this.ctx.currentTime;
+        this.musicGain.gain.cancelScheduledValues(now);
+        this.musicGain.gain.setValueAtTime(0, now);
+        this.musicGain.gain.linearRampToValueAtTime(0.15, now + 2); // 2s fade in, moderate volume -> 0.15
+    }).catch(e => console.warn("Way Back Then blocked:", e));
+
+    this.currentMusic = audio;
+  }
+
+  playFinalGameMusic() {
+    if (!this.initialized) return;
+    if (!this.ctx) return;
+    
+    this.stopMusic(1); 
+    
+    const audio = new Audio(this.assets.musicFinalGame);
+    audio.crossOrigin = "anonymous";
+    // Using manual loop logic because audio file has 10s of silence at the end
+    
+    const source = this.ctx.createMediaElementSource(audio);
+    source.connect(this.musicGain);
+
+    audio.currentTime = 0; 
+    
+    audio.play().then(() => {
+        const now = this.ctx.currentTime;
+        this.musicGain.gain.cancelScheduledValues(now);
+        this.musicGain.gain.setValueAtTime(0, now);
+        this.musicGain.gain.linearRampToValueAtTime(0.15, now + 2); // -> 0.15
+    }).catch(e => console.warn("RLGL Music blocked:", e));
+
+    this.currentMusic = audio;
+
+    if (this.rlglInterval) clearInterval(this.rlglInterval);
+
+    // Loop back at 64s (1:04)
+    this.rlglInterval = setInterval(() => {
+        if (!this.currentMusic || this.currentMusic !== audio) {
+            clearInterval(this.rlglInterval);
+            this.rlglInterval = null;
+            return;
+        }
+        if (audio.currentTime >= 64) {
+            audio.currentTime = 0; 
+        }
+    }, 100);
+  }
+
+  playTugOfWarMusic() {
+    if (!this.initialized) return;
+    if (!this.ctx) return;
+    
+    this.stopMusic(1); 
+    
+    const audio = new Audio(this.assets.musicTugOfWar);
+    audio.crossOrigin = "anonymous";
+    audio.loop = true;
+    
+    const source = this.ctx.createMediaElementSource(audio);
+    source.connect(this.musicGain);
+
+    audio.currentTime = 15; // Start at 15 seconds
+    
+    audio.play().then(() => {
+        const now = this.ctx.currentTime;
+        this.musicGain.gain.cancelScheduledValues(now);
+        this.musicGain.gain.setValueAtTime(0, now);
+        this.musicGain.gain.linearRampToValueAtTime(0.15, now + 2); // -> 0.15
+    }).catch(e => console.warn("Tug Of War Music blocked:", e));
+
+    this.currentMusic = audio;
   }
 
   // ====== GAME SFX ======
@@ -201,7 +301,7 @@ class SoundManager {
 
   // ====== PHASE HANDLER ======
 
-  onPhaseChange(newPhase) {
+  onPhaseChange(newPhase, currentGameObj = null) {
     if (newPhase === this.currentPhase) return;
     this.currentPhase = newPhase;
 
@@ -215,11 +315,26 @@ class SoundManager {
         this.playMusic(this.assets.musicLobby, true, 2); // Slow fade-in
         break;
       case 'countdown':
-        // Start fading-out music as 3-2-1 starts
-        this.stopMusic(2); 
+        if (currentGameObj && currentGameObj.name === 'Le Pont de Verre') {
+            this.playGlassBridgeMusic();
+        } else if (currentGameObj && currentGameObj.name === 'Jeu Final') {
+            this.playFinalGameMusic();
+        } else if (currentGameObj && currentGameObj.name === 'Le Jeu de la Corde') {
+            this.playTugOfWarMusic();
+        } else {
+            this.stopMusic(2); // Normal fade out
+        }
         break;
       case 'playing':
-        this.stopMusic(0.5); // Immediate cut if still playing
+        if (currentGameObj && (
+            currentGameObj.name === 'Le Pont de Verre' || 
+            currentGameObj.name === 'Jeu Final' || 
+            currentGameObj.name === 'Le Jeu de la Corde'
+        )) {
+            // Music already started via countdown, do not cut
+        } else {
+            this.stopMusic(0.5); // Immediate cut for games with no active music loop
+        }
         break;
       case 'gameover':
         this.stopMusic(0.1);

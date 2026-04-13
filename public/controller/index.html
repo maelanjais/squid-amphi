@@ -41,6 +41,23 @@
     </div>
   </div>
 
+  <!-- Betting Screen -->
+  <div id="betting-screen" class="ctrl-screen">
+    <div class="betting-container" style="padding: 20px; height: 100vh; display: flex; flex-direction: column;">
+      <h2 style="color: #00d4aa; text-align: center; margin-bottom: 5px;">FAITES VOS PARIS</h2>
+      <p style="text-align: center; color: #aaa; margin-bottom: 20px; font-size: 0.9rem;">Pariez sur le survivant ultime (autre que vous).</p>
+      
+      <div id="betting-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+        <!-- JS will inject buttons here -->
+      </div>
+      <div id="betting-waiting" style="display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center;">
+         <div class="svg-icon svg-crown" style="opacity: 0.5; transform: scale(1.5); margin-bottom: 20px;"></div>
+         <p style="color: #00d4aa; font-weight: bold;">Pari enregistré !</p>
+         <p style="color: #aaa;">En attente des autres joueurs...</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Controller Screen — Dynamic controls -->
   <div id="controller-screen" class="ctrl-screen">
     <div class="position-indicator" id="position-indicator">

@@ -41,6 +41,11 @@
           <h1 class="game-title">SQUID<br><span>AMPHI</span></h1>
           <p class="tagline">À LA FIN IL N'EN RESTERA QU'UN.</p>
         </div>
+
+        <div id="betting-banner" style="display: none; background: rgba(0,212,170,0.1); padding: 25px; border-radius: 16px; margin: 20px 0; border: 3px solid #00d4aa; text-align: center;">
+           <h2 style="color: #00d4aa; margin: 0; font-size: 2.2rem; text-transform: uppercase;">FAITES VOS PARIS !</h2>
+           <p style="color: white; margin: 10px 0 0 0; font-size: 1.3rem;">Sortez votre téléphone et misez sur le vainqueur du grand tournoi.<br><span id="betting-status" style="font-weight:bold; color: #ffd700; display: inline-block; margin-top: 10px; font-size: 1.8rem;">0 / 0 votes</span></p>
+        </div>
         <div class="join-section">
           <div class="qr-placeholder" id="qr-code">
             <p class="join-url" id="join-url">Chargement...</p>
@@ -163,6 +168,11 @@
       <div class="svg-icon svg-crown crown"></div>
       <h1 class="winner-title">VICTOIRE !</h1>
       <div class="winner-name" id="winner-name"></div>
+      
+      <div id="best-bet-result" style="display: none; background: rgba(0,212,170,0.1); padding: 25px; border-radius: 12px; margin-top: 40px; border: 2px solid #00d4aa; text-align: center; font-size: 1.6rem; color: white; width: 80%; margin-left: auto; margin-right: auto; position: relative; z-index: 10;">
+         <!-- Injected via display.js -->
+      </div>
+      
       <div class="confetti-container" id="confetti"></div>
     </div>
   </div>

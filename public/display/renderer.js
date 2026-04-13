@@ -518,8 +518,29 @@ class Renderer {
       ctx.beginPath();
       ctx.roundRect(matchX - halfCard, matchY - cardH/2, cardW, cardH, 16);
       ctx.fill();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      
+      let strokeStyle = 'rgba(255,255,255,0.1)';
+      let lineWidth = 2;
+
+      // Add colored borders based on the outcome during the resolution phase
+      if (gs.state === 'resolution' || m.finished) {
+         if (m.winner) {
+            // Someone won: Green/Teal border
+            strokeStyle = 'rgba(0, 212, 170, 0.9)';
+            lineWidth = 4;
+         } else if (m.choice1 && m.choice2 && m.choice1 === m.choice2) {
+            // Tie (Egalité): Orange border
+            strokeStyle = 'rgba(255, 170, 0, 0.9)';
+            lineWidth = 4;
+         } else {
+            // Both eliminated (AFK / time out): Red border
+            strokeStyle = 'rgba(255, 0, 85, 0.9)';
+            lineWidth = 4;
+         }
+      }
+
+      ctx.lineWidth = lineWidth;
+      ctx.strokeStyle = strokeStyle;
       ctx.stroke();
 
       // VS Text (always centered)
@@ -542,7 +563,7 @@ class Renderer {
         
         // Status or Choices
         ctx.font = `bold ${choiceFontSize}px Outfit`;
-        if (gs.state === 'resolution') {
+        if (gs.state === 'resolution' || m.finished) {
            const icons = { 'rock': 'PIERRE', 'paper': 'FEUILLE', 'scissors': 'CISEAUX' };
            ctx.fillStyle = this.teal;
 
@@ -608,7 +629,7 @@ class Renderer {
 
     const totalRounds = gs.bracketTree.length;
     const isBig = totalRounds > 3; // e.g. 16+ players
-    const scale = isBig ? 0.95 : 1.2; 
+    const scale = isBig ? 1.2 : 1.5; 
 
     // Helper to draw a match slot
     const drawSlot = (m, x, y, cardW, isThisRound) => {
@@ -623,20 +644,20 @@ class Renderer {
 
         if (isPlaying) {
            // Teal for currently playing
-           ctx.strokeStyle = this.teal;
-           ctx.lineWidth = 5;
-           ctx.shadowColor = this.teal;
-           ctx.shadowBlur = 20;
+           ctx.lineWidth = 8;
+           ctx.strokeStyle = 'rgba(0, 212, 170, 0.3)'; // Fake wide glow
            ctx.stroke();
-           ctx.shadowBlur = 0;
+           ctx.lineWidth = 3;
+           ctx.strokeStyle = this.teal; // Solid inner stroke
+           ctx.stroke();
         } else if (isFinishedThisRound) {
            // Neon red for finished matches in this round (or Byes!)
-           ctx.strokeStyle = '#FF0055'; 
-           ctx.lineWidth = 4;
-           ctx.shadowColor = '#FF0055';
-           ctx.shadowBlur = 15;
+           ctx.lineWidth = 8;
+           ctx.strokeStyle = 'rgba(255, 0, 85, 0.3)'; // Fake wide glow
            ctx.stroke();
-           ctx.shadowBlur = 0;
+           ctx.lineWidth = 3;
+           ctx.strokeStyle = '#FF0055'; // Solid inner stroke
+           ctx.stroke();
         } else {
            ctx.strokeStyle = m.finished ? 'rgba(229, 46, 99, 0.3)' : 'rgba(255,255,255,0.15)';
            ctx.lineWidth = 2;

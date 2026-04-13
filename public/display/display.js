@@ -405,6 +405,29 @@
       } else {
         document.getElementById('winner-name').textContent = 'Aucun survivant !';
       }
+
+      const betEl = document.getElementById('best-bet-result');
+      if (betEl) {
+         if (state.bestBetResult) {
+            const res = state.bestBetResult;
+            if (res.type === 'exact') {
+               betEl.innerHTML = `Pronostic Parfait : <span style="color:#00d4aa">${res.bettorName}</span> a deviné la victoire de <span style="color:#ffd700">${res.targetName}</span> !`;
+            } else {
+               betEl.innerHTML = `Meilleur Pronostic : Personne n'a deviné, mais <span style="color:#00d4aa">${res.bettorName}</span> était le plus proche grâce à son pari sur <span style="color:#ffd700">${res.targetName}</span> !`;
+            }
+            betEl.style.display = 'block';
+         } else {
+            betEl.style.display = 'none';
+         }
+      }
+    }
+
+    // Update Betting status
+    if (state.phase === 'betting') {
+       const banner = document.getElementById('betting-status');
+       if (banner) {
+          banner.textContent = `${state.totalBets || 0} / ${state.aliveCount || 0} votes`;
+       }
     }
 
     // Render players in all game phases (starting from countdown)
@@ -417,7 +440,17 @@
     Object.values(screens).forEach(s => { if(s) s.classList.remove('active'); });
     switch (phase) {
       case 'lobby':
-        screens.lobby.classList.add('active'); break;
+      case 'betting':
+        screens.lobby.classList.add('active'); 
+        if (phase === 'betting') {
+            const b = document.getElementById('betting-banner');
+            if (b) b.style.display = 'block';
+            document.getElementById('btn-start').style.display = 'none';
+        } else {
+            const b = document.getElementById('betting-banner');
+            if (b) b.style.display = 'none';
+        }
+        break;
       case 'explanation':
         screens.explanation.classList.add('active'); break;
       case 'countdown':

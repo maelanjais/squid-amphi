@@ -7,6 +7,7 @@ const BotPlayer = require('./BotPlayer');
 // Game phases
 const PHASE = {
   LOBBY: 'lobby',
+  BETTING: 'betting',
   EXPLANATION: 'explanation',
   COUNTDOWN: 'countdown',
   PLAYING: 'playing',
@@ -60,7 +61,14 @@ class GameManager {
     this.prizePool = 0;
     this.prizePoolOld = 0;
     this.eliminatedDetails = [];
+    this.bets = new Map(); // socket.id -> targetId
+    this.bestBetResult = null; // { bettor: Player, target: Player, success: "exact"|"closest", roundsSurvived: N }
     this.nextGameName = null;
+
+    // Performance: frame counter for throttling
+    this.frameCount = 0;
+    this._cachedAlivePlayers = null;
+    this._cachedAlivePlayersDirty = true;
 
     // Wait 500ms before starting loop
     setTimeout(() => this.gameLoop(), 500);
@@ -107,8 +115,21 @@ class GameManager {
       }
     });
 
+    socket.on('player-bet', (data) => {
+      if (this.phase === PHASE.BETTING) {
+          const player = this.players.get(socket.id);
+          if (player && player.alive) {
+              this.bets.set(player.id, data.targetId);
+              this.checkBettingComplete();
+          }
+      }
+    });
+
     socket.on('admin-start', () => {
-      if (this.phase === PHASE.LOBBY && this.players.size >= 1) {
+      // Allow betting phase if there are at least 2 players
+      if (this.phase === PHASE.LOBBY && this.players.size > 1) {
+        this.startBettingPhase();
+      } else if (this.phase === PHASE.LOBBY && this.players.size === 1) {
         this.startNextGame();
       }
     });
@@ -142,7 +163,12 @@ class GameManager {
       this.gameQueue = [data.game];
       this.upcomingPool = []; // Prevent null length error
       this.currentGameIndex = -1; // Next game resolves to 0
-      this.startNextGame();
+      
+      if (this.players.size > 1) {
+          this.startBettingPhase();
+      } else {
+          this.startNextGame();
+      }
     });
     // ==========================================
 
@@ -204,6 +230,106 @@ class GameManager {
     this.broadcastPlayerList();
   }
 
+  // --- BETTING SYSTEM ---
+  
+  startBettingPhase() {
+    this.phase = PHASE.BETTING;
+    this.bets.clear();
+    this.bestBetResult = null;
+    
+    // Simulate bots betting instantly
+    const allPlayers = Array.from(this.players.values());
+    for (const p of allPlayers) {
+        if (p.isBot && p.alive) {
+            const others = allPlayers.filter(o => o.id !== p.id && o.alive);
+            if (others.length > 0) {
+                const target = others[Math.floor(Math.random() * others.length)];
+                this.bets.set(p.id, target.id);
+            } else {
+                this.bets.set(p.id, p.id); // Default to self if something is wrong
+            }
+        }
+    }
+    
+    // Send players list securely down to controllers who need it
+    const aliveSummary = allPlayers.filter(p => p.alive).map(p => ({ id: p.id, name: p.name }));
+    this.io.emit('start-betting', aliveSummary);
+    this.broadcastPhase();
+    
+    this.checkBettingComplete();
+  }
+
+  checkBettingComplete() {
+    if (this.phase !== PHASE.BETTING) return;
+    const aliveCount = this.getAlivePlayers().length;
+    if (this.bets.size >= aliveCount) {
+        // Start game with a slight delay so visual feedback can be seen by the last human voter
+        setTimeout(() => {
+           if (this.phase === PHASE.BETTING) this.startNextGame();
+        }, 1500);
+    }
+  }
+
+  calculateBestBets() {
+    const alive = this.getAlivePlayers();
+    let winnerId = alive.length === 1 ? alive[0].id : null;
+    
+    let bestBettor = null;
+    let bestTarget = null;
+    let bestType = "";
+    let maxRoundsSurvived = -1;
+
+    // Track round survival counts across games
+    // A player who survived to the end is considered infinite rounds survived
+    const survivalMap = new Map();
+    Array.from(this.players.values()).forEach(p => {
+        survivalMap.set(p.id, p.alive ? 999999 : 0); 
+    });
+
+    // Extract how long eliminated players survived
+    let globalRoundCount = 0;
+    for (const round of this.eliminatedDetails) {
+        globalRoundCount++;
+        for (const dead of round.players) {
+            if (survivalMap.get(dead.id) === 0) {
+                survivalMap.set(dead.id, globalRoundCount);
+            }
+        }
+    }
+
+    // Now analyze the bets map to find who had the best guess
+    for (const [bettorId, targetId] of this.bets.entries()) {
+        const bettor = this.players.get(bettorId);
+        const target = this.players.get(targetId);
+        if (!bettor || !target) continue;
+
+        const survivedRounds = survivalMap.get(targetId);
+        
+        if (targetId === winnerId) {
+            // Priority: Someone bet on the actual definitive winner
+            bestBettor = bettor;
+            bestTarget = target;
+            bestType = "exact";
+            maxRoundsSurvived = 999999;
+            break; 
+        } else if (survivedRounds > maxRoundsSurvived && bestType !== "exact") {
+            bestBettor = bettor;
+            bestTarget = target;
+            bestType = "closest";
+            maxRoundsSurvived = survivedRounds;
+        }
+    }
+
+    if (bestBettor && bestTarget) {
+        this.bestBetResult = {
+            bettor: bestBettor,
+            target: bestTarget,
+            type: bestType,
+            roundsSurvived: maxRoundsSurvived
+        };
+    }
+  }
+
   /**
    * Main game loop — called 30 times per second
    */
@@ -211,6 +337,8 @@ class GameManager {
     const now = Date.now();
     const dt = (now - this.lastUpdate) / 1000;
     this.lastUpdate = now;
+    this.frameCount++;
+    this._cachedAlivePlayersDirty = true; // Invalidate cache each frame
 
     if (this.phase === PHASE.EXPLANATION) {
       this.explanationTimer -= dt;
@@ -242,6 +370,7 @@ class GameManager {
           const player = this.players.get(playerId);
           if (player) {
             player.eliminate();
+            this._cachedAlivePlayersDirty = true; // Invalidate cache
             this.eliminatedThisRound.push(playerId);
             // Notify the eliminated player's controller
             this.io.to(playerId).emit('eliminated', {
@@ -255,7 +384,7 @@ class GameManager {
       let prematureEnd = false;
       const gameName = this.gameQueue[this.currentGameIndex];
 
-      if (gameName !== 'FinalDuel') {
+      if (gameName !== 'RockPaperScissors') {
         // Only end prematurely if everyone died
         if (aliveCount <= 0) {
           prematureEnd = true;
@@ -306,8 +435,8 @@ class GameManager {
       }
     }
 
-    // Run bot AI during gameplay
-    if (this.phase === PHASE.PLAYING && this.currentGame) {
+    // Run bot AI during gameplay — throttled to ~5fps (every 6th frame)
+    if (this.phase === PHASE.PLAYING && this.currentGame && this.frameCount % 6 === 0) {
       const gameName = GAME_NAMES[this.gameQueue[this.currentGameIndex]];
       const gameState = this.currentGame.getState();
       const allPlayers = Array.from(this.players.values());
@@ -327,7 +456,7 @@ class GameManager {
       }
     }
 
-    this.broadcastState();
+    this.broadcastState(this.frameCount);
   }
 
   startNextGame() {
@@ -337,8 +466,12 @@ class GameManager {
     const alive = this.getAlivePlayers();
 
     // Check game over
+    // If 1 or 0 players are left, it's Game Over.
     if (alive.length <= 1) {
+      this.calculateBestBets();
       this.phase = PHASE.GAME_OVER;
+      this.currentGame = null;
+      this.nextGameName = null;
       this.broadcastPhase();
       return;
     }
@@ -432,10 +565,20 @@ class GameManager {
   }
 
   getAlivePlayers() {
-    return Array.from(this.players.values()).filter(p => p.alive);
+    if (this._cachedAlivePlayersDirty || !this._cachedAlivePlayers) {
+      this._cachedAlivePlayers = Array.from(this.players.values()).filter(p => p.alive);
+      this._cachedAlivePlayersDirty = false;
+    }
+    return this._cachedAlivePlayers;
   }
 
-  broadcastState() {
+  invalidateAliveCache() {
+    this._cachedAlivePlayersDirty = true;
+  }
+
+  broadcastState(frameCount) {
+    const alivePlayers = this.getAlivePlayers();
+
     const state = {
       phase: this.phase,
       allGameNames: Object.values(GAME_NAMES),
@@ -447,37 +590,43 @@ class GameManager {
         name: GAME_NAMES[this.gameQueue[this.currentGameIndex]],
         rules: GAME_RULES[this.gameQueue[this.currentGameIndex]],
         index: this.currentGameIndex,
-        total: 4, // Final Duel is always game 4 max
+        total: 4,
         state: this.currentGame ? this.currentGame.getState() : null
       } : null,
       nextGameName: this.nextGameName ? GAME_NAMES[this.nextGameName] : null,
-      allGameNames: Object.values(GAME_NAMES),
       prizePool: this.prizePool,
       prizePoolOld: this.prizePoolOld,
       eliminatedDetails: this.eliminatedDetails,
-      alivePlayers: this.getAlivePlayers().length,
+      alivePlayers: alivePlayers.length,
       totalPlayers: this.players.size,
       eliminatedThisRoundCount: this.eliminatedThisRound.length
     };
 
-    // Send to display
+    // Send to display at full 30fps for smooth visuals
     this.io.to('displays').emit('game-state', state);
 
-    // Send minimal state to each controller
-    for (const [socketId, player] of this.players) {
-      const controllerState = {
-        phase: this.phase,
-        alive: player.alive,
-        number: player.number,
-        currentGame: state.currentGame ? state.currentGame.name : null,
-        currentGameRules: state.currentGame ? state.currentGame.rules : null,
-        countdown: state.countdown,
-        explanation: state.explanation,
-        playerX: Math.round(player.x / this.arenaWidth * 100) / 100,
-        playerY: Math.round(player.y / this.arenaHeight * 100) / 100,
-        gameState: this.currentGame ? this.currentGame.getControllerState(player) : null
-      };
-      this.io.to(socketId).emit('controller-state', controllerState);
+    // Send controller states at ~10fps (every 3rd frame) to reduce network load
+    // Exception: always send during phase transitions and countdowns
+    const isImportantFrame = (this.phase !== PHASE.PLAYING) || (frameCount % 3 === 0);
+    if (isImportantFrame) {
+      const gameName = state.currentGame ? state.currentGame.name : null;
+      const gameRules = state.currentGame ? state.currentGame.rules : null;
+      for (const [socketId, player] of this.players) {
+        if (player.isBot) continue; // Skip bots — they have no socket
+        const controllerState = {
+          phase: this.phase,
+          alive: player.alive,
+          number: player.number,
+          currentGame: gameName,
+          currentGameRules: gameRules,
+          countdown: state.countdown,
+          explanation: state.explanation,
+          playerX: Math.round(player.x / this.arenaWidth * 100) / 100,
+          playerY: Math.round(player.y / this.arenaHeight * 100) / 100,
+          gameState: this.currentGame ? this.currentGame.getControllerState(player) : null
+        };
+        this.io.to(socketId).emit('controller-state', controllerState);
+      }
     }
   }
 

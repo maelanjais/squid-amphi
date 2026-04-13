@@ -9,6 +9,7 @@
   const screens = {
     join: document.getElementById('join-screen'),
     waiting: document.getElementById('waiting-screen'),
+    betting: document.getElementById('betting-screen'),
     controller: document.getElementById('controller-screen'),
     eliminated: document.getElementById('eliminated-screen'),
     victory: document.getElementById('victory-screen')
@@ -81,10 +82,59 @@
     alert(data.message);
   });
 
+  // ---- BETTING PHASE ----
+  socket.on('start-betting', (alivePlayers) => {
+    if (!playerInfo) return;
+    
+    // Switch to betting screen
+    showScreen('betting');
+    document.getElementById('betting-waiting').style.display = 'none';
+    
+    // Build list
+    const container = document.getElementById('betting-list');
+    container.innerHTML = '';
+    
+    let hasValidTargets = false;
+    for (const p of alivePlayers) {
+      if (p.id !== socket.id) {
+        hasValidTargets = true;
+        const btn = document.createElement('button');
+        btn.textContent = p.name;
+        btn.style.padding = '15px';
+        btn.style.fontSize = '1.2rem';
+        btn.style.borderRadius = '10px';
+        btn.style.background = '#1a1a2e';
+        btn.style.color = '#00d4aa';
+        btn.style.border = '2px solid #00d4aa';
+        btn.style.cursor = 'pointer';
+        
+        btn.addEventListener('click', () => {
+          socket.emit('player-bet', { targetId: p.id });
+          container.innerHTML = ''; // Clear list
+          document.getElementById('betting-waiting').style.display = 'flex'; // Show waiting indicator
+        });
+        
+        container.appendChild(btn);
+      }
+    }
+    
+    if (!hasValidTargets) {
+        // Fallback if they are alone
+        socket.emit('player-bet', { targetId: socket.id });
+        document.getElementById('betting-waiting').style.display = 'flex';
+    }
+  });
+
   // ---- PHASE CHANGES ----
   socket.on('phase', (data) => {
     if (!playerInfo) return;
-    if (data.phase === 'lobby') showScreen('waiting');
+    // Lobby handles normally, except we override if we are in betting
+    if (data.phase === 'lobby') {
+        const betScreen = document.getElementById('betting-screen');
+        if (betScreen && !betScreen.classList.contains('active')) {
+            showScreen('waiting');
+        }
+    }
     if (data.phase === 'explanation' || data.phase === 'countdown') {
       showScreen('controller');
       currentControls = null; // Reset so controls will be re-applied
