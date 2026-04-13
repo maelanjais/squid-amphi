@@ -10,7 +10,8 @@
     join: document.getElementById('join-screen'),
     waiting: document.getElementById('waiting-screen'),
     controller: document.getElementById('controller-screen'),
-    eliminated: document.getElementById('eliminated-screen')
+    eliminated: document.getElementById('eliminated-screen'),
+    victory: document.getElementById('victory-screen')
   };
   const ctrlAreas = {
     move: document.getElementById('ctrl-move'),
@@ -93,9 +94,11 @@
     }
     // Transition phases — show feedback on phone
     if (data.phase === 'transition_bank' || data.phase === 'transition_dead' || data.phase === 'transition_roulette') {
-      showScreen('controller');
+      showScreen('victory');
       switchControls(null);
       currentControls = null;
+      const vGame = document.getElementById('victory-game');
+      if (vGame) vGame.textContent = 'Épreuve terminée';
       document.getElementById('ctrl-game-name').textContent = '';
       document.getElementById('ctrl-status').textContent = 'Vous avez survécu ! Prochaine épreuve bientôt...';
     }
@@ -129,8 +132,12 @@
 
     // Transition phases — keep showing feedback
     if (state.phase === 'transition_bank' || state.phase === 'transition_dead' || state.phase === 'transition_roulette') {
-      showScreen('controller');
+      showScreen('victory');
       switchControls(null);
+      const vGame = document.getElementById('victory-game');
+      if (vGame && state.currentGame && state.currentGame.name) {
+          vGame.textContent = state.currentGame.name;
+      }
       document.getElementById('ctrl-status').textContent = 'Vous avez survécu ! Prochaine épreuve bientôt...';
       if (positionIndicator) positionIndicator.style.display = 'none';
       return;

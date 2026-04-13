@@ -306,7 +306,9 @@ class RockPaperScissors {
     let match = this.activeMatches.find(m => m.p1 === player.id || m.p2 === player.id);
     let isBye = this.byesCurrentRound.includes(player.id);
     let hasChosen = match ? (match.p1 === player.id ? match.choice1 !== null : match.choice2 !== null) : false;
-    let showControls = (match && !match.finished && this.state === 'countdown' && !hasChosen);
+    
+    // Keep controls visible during countdown and resolution so mobile UI stays consistent
+    let showControls = (match && !match.finished && (this.state === 'countdown' || this.state === 'resolution'));
 
     let matchResult = null;
     if (match && this.state === 'resolution') {
