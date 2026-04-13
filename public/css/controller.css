@@ -577,63 +577,63 @@ body {
 
 .betting-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
   max-width: 100%;
 }
 
 .player-card {
-  aspect-ratio: 1 / 1;
-  background: var(--bg-light);
+  min-height: 100px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 10px;
+  padding: 10px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   text-align: center;
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  transition: transform 0.2s, border-color 0.2s;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
 .player-card:active {
-  transform: scale(0.96);
+  transform: scale(0.94);
   border-color: var(--pink);
-  background: rgba(237, 27, 118, 0.05);
+  box-shadow: 0 0 20px rgba(237, 27, 118, 0.4);
+  background: rgba(237, 27, 118, 0.1);
 }
 
 .card-badge {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
-  font-size: 14px;
-  margin-bottom: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 13px;
+  margin-bottom: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--white);
 }
 
 .player-card.is-bot .card-badge {
   border-color: var(--teal);
-  color: var(--teal-glow);
+  color: #00ffea;
 }
 
 .card-name {
   font-weight: 700;
-  font-size: 15px;
-  line-height: 1.2;
-  color: var(--white);
+  font-size: 13px;
+  line-height: 1.1;
+  color: rgba(255, 255, 255, 0.9);
   word-break: break-word;
-  flex: 1;
-  display: flex;
-  align-items: center;
+  padding-top: 4px;
 }
 
 .card-accent {
