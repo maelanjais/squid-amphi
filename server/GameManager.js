@@ -550,26 +550,15 @@ class GameManager {
     }).filter(d => d !== null);
 
     // 2. Pre-determine the NEXT game so the Roulette can spin to it
+    // Use the actual game queue to ensure consistency with startNextGame()
     const nextIndex = this.currentGameIndex + 1;
-    let fallbackGame = 'RockPaperScissors';
-    if (nextIndex === 1) {
-      if (alive.length % 2 === 0 && alive.length >= 4) {
-        fallbackGame = 'TugOfWar';
-      } else {
-        fallbackGame = 'GlassBridge';
-      }
-    } else if (nextIndex === 2) {
-      if (this.gameQueue[1] === 'TugOfWar' && alive.length >= 7) {
-        fallbackGame = 'GlassBridge';
-      } else {
-        fallbackGame = 'RockPaperScissors';
-      }
-    }
 
     if (alive.length <= 1) {
       this.nextGameName = null;
+    } else if (this.gameQueue && nextIndex < this.gameQueue.length) {
+      this.nextGameName = this.gameQueue[nextIndex];
     } else {
-      this.nextGameName = fallbackGame;
+      this.nextGameName = 'RockPaperScissors'; // Fallback
     }
 
     // 3. Initiate the animations trilogy
@@ -619,7 +608,9 @@ class GameManager {
       bestBetResult: this.bestBetResult ? {
           bettorName: this.bestBetResult.bettor.name,
           targetName: this.bestBetResult.target.name,
-          type: this.bestBetResult.type
+          type: this.bestBetResult.type,
+          targetRank: this.bestBetResult.targetRank,
+          isWinnerBet: this.bestBetResult.isWinnerBet
       } : null
     };
 

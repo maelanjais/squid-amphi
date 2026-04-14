@@ -720,9 +720,18 @@ class Renderer {
              const isLeft = (i < half);
              const sideIdx = isLeft ? i : (i - half);
              
-             const offsetX = isLeft 
+             let offsetX = isLeft 
                ? (marginX + cardW/2 + r * roundSpacing) 
                : (1920 - marginX - cardW/2 - r * roundSpacing);
+             
+             // Clamp: prevent left and right sides from overlapping in the center
+             const centerGap = 80; // minimum gap between left and right columns
+             if (isLeft && offsetX > 960 - cardW/2 - centerGap/2) {
+               offsetX = 960 - cardW/2 - centerGap/2;
+             }
+             if (!isLeft && offsetX < 960 + cardW/2 + centerGap/2) {
+               offsetX = 960 + cardW/2 + centerGap/2;
+             }
              
              const availableHeight = 780; 
              const spacingY = availableHeight / Math.max(1, half);
