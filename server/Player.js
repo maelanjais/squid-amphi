@@ -13,6 +13,7 @@ class Player {
     this.speed = 200; // pixels per second
     this.radius = 16;
     this.color = this.generateColor();
+    this.shape = this.generateShape();
     this.alive = true;
     this.roundDied = null;
     this.moving = false;
@@ -27,6 +28,11 @@ class Player {
     Player.colorIndex = (Player.colorIndex || 0) + 1;
     const hue = (Player.colorIndex * 137.5) % 360;
     return `hsl(${Math.floor(hue)}, 80%, 60%)`;
+  }
+
+  generateShape() {
+    const shapes = ['circle', 'triangle', 'square'];
+    return shapes[(Player.colorIndex || 1) % 3];
   }
 
   /**
@@ -109,6 +115,7 @@ class Player {
       moving: this.moving,
       direction: this.direction,
       color: this.color,
+      shape: this.shape,
       team: this.team,
       score: this.score
     };

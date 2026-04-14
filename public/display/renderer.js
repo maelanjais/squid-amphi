@@ -123,9 +123,28 @@ class Renderer {
     }
   }
 
+  defineShapePath(ctx, shape, r) {
+    ctx.beginPath();
+    if (shape === 'square') {
+      // 0.9 reduction to make the square feel equal in visual weight to the circle
+      const s = r * 0.9;
+      ctx.rect(-s, -s, s * 2, s * 2);
+    } else if (shape === 'triangle') {
+      // Triangle aligned to center
+      const s = r * 1.1;
+      ctx.moveTo(0, -s);
+      ctx.lineTo(s * 0.866, s * 0.5);
+      ctx.lineTo(-s * 0.866, s * 0.5);
+      ctx.closePath();
+    } else {
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+    }
+  }
+
   drawPlayer(ctx, p, dead, r) {
     const x = p.x;
     const y = p.y;
+    const shape = p.shape || 'circle';
 
     ctx.save();
     ctx.translate(x, y);
@@ -134,9 +153,8 @@ class Renderer {
       ctx.globalAlpha = 0.15;
     }
 
-    // Body (circle)
-    ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    // Body
+    this.defineShapePath(ctx, shape, r);
     ctx.fillStyle = p.color;
     ctx.fill();
 
@@ -147,8 +165,7 @@ class Renderer {
       ctx.stroke();
 
       if (p.locating) {
-         ctx.beginPath();
-         ctx.arc(0, 0, r + 15 + Math.sin(this.time * 15) * 5, 0, Math.PI * 2);
+         this.defineShapePath(ctx, shape, r + 15 + Math.sin(this.time * 15) * 5);
          ctx.strokeStyle = '#ffd700';
          ctx.lineWidth = 4;
          ctx.stroke();
@@ -156,8 +173,7 @@ class Renderer {
 
       // Moving indicator
       if (p.moving) {
-        ctx.beginPath();
-        ctx.arc(0, 0, r + 4, 0, Math.PI * 2);
+        this.defineShapePath(ctx, shape, r + 4);
         ctx.strokeStyle = 'rgba(255,255,255,0.15)';
         ctx.lineWidth = 2;
         ctx.stroke();
