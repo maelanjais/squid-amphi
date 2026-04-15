@@ -635,7 +635,9 @@ class GameManager {
           explanation: state.explanation,
           playerX: Math.round(player.x / this.arenaWidth * 100) / 100,
           playerY: Math.round(player.y / this.arenaHeight * 100) / 100,
-          gameState: this.currentGame ? this.currentGame.getControllerState(player) : null
+          gameState: this.currentGame ? this.currentGame.getControllerState(player) : null,
+          isWinner: this.phase === 'gameover' && player.alive,
+          playerName: player.name
         };
         this.io.to(socketId).emit('controller-state', controllerState);
       }

@@ -12,7 +12,8 @@
     betting: document.getElementById('betting-screen'),
     controller: document.getElementById('controller-screen'),
     eliminated: document.getElementById('eliminated-screen'),
-    victory: document.getElementById('victory-screen')
+    victory: document.getElementById('victory-screen'),
+    winner: document.getElementById('winner-screen')
   };
   const ctrlAreas = {
     move: document.getElementById('ctrl-move'),
@@ -163,10 +164,8 @@
       document.getElementById('ctrl-status').textContent = 'Vous avez survécu ! Prochaine épreuve bientôt...';
     }
     if (data.phase === 'gameover') {
-      showScreen('controller');
+      // Handled by controller-state which knows if we're the winner
       switchControls(null);
-      document.getElementById('ctrl-game-name').textContent = 'FIN DE PARTIE';
-      document.getElementById('ctrl-status').textContent = 'Bravo, vous avez survécu à toutes les épreuves !';
     }
   });
 
@@ -205,12 +204,22 @@
 
     // Game over — show final screen on phone
     if (state.phase === 'gameover') {
-      showScreen('controller');
       switchControls(null);
       currentControls = null;
-      document.getElementById('ctrl-game-name').textContent = 'FIN DE PARTIE';
-      document.getElementById('ctrl-status').textContent = 'Bravo, vous avez survécu à toutes les épreuves !';
       if (positionIndicator) positionIndicator.style.display = 'none';
+      
+      if (state.isWinner) {
+        // CHAMPION! Show the golden winner screen
+        showScreen('winner');
+        const winnerNameEl = document.getElementById('winner-name');
+        if (winnerNameEl) winnerNameEl.textContent = state.playerName || playerInfo.name;
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200, 100, 300]);
+      } else {
+        // Not the winner — generic end screen
+        showScreen('controller');
+        document.getElementById('ctrl-game-name').textContent = 'FIN DE PARTIE';
+        document.getElementById('ctrl-status').textContent = 'La partie est terminée. Regardez le grand écran !';
+      }
       return;
     }
 

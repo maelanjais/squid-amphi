@@ -566,6 +566,91 @@ body {
   font-size: 15px;
   line-height: 1.6;
 }
+
+/* =============== WINNER CHAMPION SCREEN =============== */
+#winner-screen {
+  background: radial-gradient(ellipse at 50% 30%, #2d1f00 0%, #0a0a12 70%);
+  overflow: hidden;
+}
+.winner-bg-effects {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+}
+.winner-sparkle {
+  position: absolute; width: 6px; height: 6px; border-radius: 50%;
+  background: #ffd700; opacity: 0;
+  animation: sparkleFloat 3s ease-in-out infinite;
+}
+.winner-sparkle.s1 { top: 12%; left: 15%; animation-delay: 0s; }
+.winner-sparkle.s2 { top: 25%; left: 80%; animation-delay: 0.5s; }
+.winner-sparkle.s3 { top: 55%; left: 10%; animation-delay: 1s; }
+.winner-sparkle.s4 { top: 70%; left: 75%; animation-delay: 1.5s; }
+.winner-sparkle.s5 { top: 40%; left: 50%; animation-delay: 2s; }
+.winner-sparkle.s6 { top: 85%; left: 35%; animation-delay: 2.5s; }
+@keyframes sparkleFloat {
+  0%, 100% { opacity: 0; transform: scale(0) translateY(0); }
+  30% { opacity: 1; transform: scale(1.5) translateY(-10px); }
+  70% { opacity: 0.8; transform: scale(1) translateY(-25px); }
+}
+.winner-container {
+  text-align: center; padding: 30px 20px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; position: relative; z-index: 2;
+  animation: winnerFadeIn 1s ease-out;
+}
+@keyframes winnerFadeIn {
+  from { opacity: 0; transform: scale(0.8) translateY(30px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.winner-crown {
+  font-size: 50px;
+  animation: crownBounce 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
+}
+@keyframes crownBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.winner-trophy {
+  font-size: 90px; margin: 10px 0;
+  animation: trophyPulse 2.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.5));
+}
+@keyframes trophyPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.5)); }
+  50% { transform: scale(1.08); filter: drop-shadow(0 0 50px rgba(255, 215, 0, 0.8)); }
+}
+.winner-title {
+  font-size: 48px; font-weight: 900; letter-spacing: 8px; margin: 10px 0 5px;
+  background: linear-gradient(135deg, #ffd700 0%, #ffaa00 30%, #fff5cc 50%, #ffd700 70%, #ff8c00 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: goldShine 3s linear infinite;
+}
+@keyframes goldShine {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+.winner-name {
+  font-size: 28px; font-weight: 800; color: #fff;
+  margin: 5px 0 15px; letter-spacing: 2px;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 2px 4px rgba(0,0,0,0.5);
+}
+.winner-divider {
+  width: 120px; height: 3px; margin: 0 auto 15px;
+  background: linear-gradient(90deg, transparent, #ffd700, transparent);
+}
+.winner-subtitle {
+  font-size: 16px; font-weight: 700; color: #ffd700;
+  text-transform: uppercase; letter-spacing: 4px; margin-bottom: 15px;
+}
+.winner-text {
+  font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.7;
+}
+.winner-text strong {
+  color: #ffd700;
+}
+
 /* ---- Betting Phase MOSAIC ---- */
 .betting-header {
   flex-shrink: 0;
