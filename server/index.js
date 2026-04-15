@@ -1,7 +1,3 @@
-/**
- * Squid Amphi — Server Entry Point
- * Express + Socket.IO
- */
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -10,7 +6,7 @@ const QRCode = require('qrcode');
 const GameManager = require('./GameManager');
 
 const app = express();
-app.set('trust proxy', 1); // Indispensable pour avoir le bon protocole (https) derrière le proxy de Render/Railway
+app.set('trust proxy', 1); // proxy (Render)
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: '*' },
@@ -20,10 +16,10 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// Serve static files
+// fichiers statiques
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-// Routes
+// routes
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'display', 'index.html'));
 });
@@ -32,7 +28,7 @@ app.get('/play', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'controller', 'index.html'));
 });
 
-// QR Code API — generates QR code as data URL
+// génération QR code
 app.get('/api/qr', async (req, res) => {
   const url = req.query.url || `${req.protocol}://${req.get('host')}/play`;
   try {
@@ -47,23 +43,23 @@ app.get('/api/qr', async (req, res) => {
   }
 });
 
-// Initialize game manager
+// config jeu
 const gameManager = new GameManager(io);
 
-// Socket.IO connections
+// websockets
 io.on('connection', (socket) => {
   console.log(`🔗 New connection: ${socket.id}`);
   gameManager.handleConnection(socket);
 });
 
-// Start server
+// démarrage serveur
 server.listen(PORT, () => {
   console.log('');
   console.log('╔══════════════════════════════════════════╗');
   console.log('║          🦑 SQUID AMPHI 🦑                ║');
   console.log('║                                          ║');
-  console.log(`║  📺 Display:    http://localhost:${PORT}/     ║`);
-  console.log(`║  🎮 Controller: http://localhost:${PORT}/play ║`);
+  console.log(`║Display:    http://localhost:${PORT}/     ║`);
+  console.log(`║Controller: http://localhost:${PORT}/play ║`);
   console.log('║                                          ║');
   console.log('╚══════════════════════════════════════════╝');
   console.log('');

@@ -1,22 +1,13 @@
-/**
- * Pont de Verre (Glass Bridge) — Round-Robin
- * 
- * Players take turns one at a time in a shuffled order (Fisher-Yates).
- * On their turn, they face ONE unrevealed panel and choose left or right.
- * - Correct → they survive and go to the back of the queue.
- * - Wrong → they are eliminated and the panel is revealed.
- * Either way, the panel's safe side is now known.
- * The game continues cycling through survivors until all panels are revealed.
- */
+
 class GlassBridge {
   constructor(arenaWidth, arenaHeight) {
     this.arenaWidth = arenaWidth;
     this.arenaHeight = arenaHeight;
     this.steps = 5;
     this.panels = [];
-    this.queue = []; // round-robin queue of player IDs
+    this.queue = [];
     this.currentPlayerId = null;
-    this.currentStep = 0; // next unrevealed panel to tackle
+    this.currentStep = 0;
     this.choosing = false;
     this.choiceTimer = 10;
     this.revealedPanels = new Set();
@@ -28,7 +19,7 @@ class GlassBridge {
     this.turnNumber = 0;
   }
 
-  // Fisher-Yates shuffle
+  // mélange
   shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -41,10 +32,10 @@ class GlassBridge {
     const alive = players.filter(p => p.alive);
     const n = alive.length;
 
-    // Adapt steps — enough to make it exciting
+    // ajuster étapes
     this.steps = Math.max(6, Math.floor(n * 0.9));
 
-    // Generate random safe panels
+    // générer dalles sûres
     this.panels = [];
     for (let i = 0; i < this.steps; i++) {
       this.panels.push({
@@ -52,10 +43,10 @@ class GlassBridge {
       });
     }
 
-    // Proper Fisher-Yates shuffle for turn order
+    // ordre passage aléatoire
     this.queue = this.shuffle(alive.map(p => p.id));
 
-    // Initialize all players
+    // initialiser joueurs
     for (const player of players) {
       player.moving = false;
       this.playerResults.set(player.id, 'waiting');
@@ -68,12 +59,12 @@ class GlassBridge {
   }
 
   startNextTurn() {
-    // Find the next unrevealed step
+    // prochaine étape non révélée
     while (this.currentStep < this.steps && this.revealedPanels.has(this.currentStep)) {
       this.currentStep++;
     }
 
-    // All panels revealed → everyone remaining survives
+    // toutes dalles révélées = survie
     if (this.currentStep >= this.steps) {
       for (const id of this.queue) {
         this.playerResults.set(id, 'crossed');
@@ -83,13 +74,13 @@ class GlassBridge {
       return;
     }
 
-    // No one left in the queue
+    // file vide
     if (this.queue.length === 0) {
       this.finished = true;
       return;
     }
 
-    // Pick the front of the queue
+    // premier de la file
     this.currentPlayerId = this.queue[0];
     this.choosing = true;
     this.choiceTimer = 10;
@@ -98,13 +89,13 @@ class GlassBridge {
   }
 
   start(players) {
-    // Already set up
+    // déjà préparé
   }
 
   update(dt, players) {
     const toEliminate = [];
 
-    // Delay between turns
+    // délai tours
     if (this.waitingForNext > 0) {
       this.waitingForNext -= dt;
       if (this.waitingForNext <= 0) {
@@ -126,7 +117,7 @@ class GlassBridge {
         return { eliminated: toEliminate };
       }
 
-      // Check for choice input
+      // recup choix
       if (activePlayer.input.choice) {
         const choice = activePlayer.input.choice;
         activePlayer.input.choice = null;
@@ -134,26 +125,26 @@ class GlassBridge {
         const panel = this.panels[this.currentStep];
 
         if (choice === panel.safe) {
-          // Safe! Reveal panel, player goes to back of queue
+          // bon choix
           this.revealedPanels.add(this.currentStep);
           this.playerResults.set(this.currentPlayerId, 'waiting');
           this.playerFinalStep.set(this.currentPlayerId, this.currentStep);
 
-          // Move player from front to back of the queue
+          // remettre en fin de file
           this.queue.push(this.queue.shift());
 
           this.choosing = false;
           this.currentStep++;
           this.waitingForNext = 1.5;
         } else {
-          // Wrong! Eliminated
+          // mauvais choix = mort
           this.revealedPanels.add(this.currentStep);
           this.eliminatedOnStep.set(this.currentStep, choice);
           this.playerResults.set(this.currentPlayerId, 'eliminated');
           this.playerFinalStep.set(this.currentPlayerId, this.currentStep);
           toEliminate.push(this.currentPlayerId);
 
-          // Remove from queue
+          // retirer file
           this.queue.shift();
 
           this.choosing = false;
@@ -162,7 +153,7 @@ class GlassBridge {
         }
       }
 
-      // Timer expired = eliminated
+      
       if (this.choiceTimer <= 0 && this.choosing) {
         this.playerResults.set(this.currentPlayerId, 'eliminated');
         this.playerFinalStep.set(this.currentPlayerId, this.currentStep);
@@ -173,7 +164,7 @@ class GlassBridge {
       }
     }
 
-    // Check if done
+    
     if (!this.choosing && this.waitingForNext <= 0) {
       const allRevealed = this.currentStep >= this.steps || 
         (this.revealedPanels.size >= this.steps);
@@ -200,7 +191,7 @@ class GlassBridge {
       const result = this.playerResults.get(player.id);
 
       if (player.id === this.currentPlayerId && this.choosing) {
-        // Active player on the bridge at the current step
+        // joueur actif sur le pont
         player.x = bridgeStartX + (this.currentStep + 0.5) * stepWidth;
         player.y = bridgeY;
       } else if (result === 'crossed') {

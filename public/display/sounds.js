@@ -1,7 +1,3 @@
-/**
- * SoundManager — Squid Amphi Audio Engine (V6 - Pro Audio)
- * Features automated fades, 3-2-1 countdown sync, and a clean SFX-only gaming experience.
- */
 class SoundManager {
   constructor() {
     this.ctx = null;
@@ -12,7 +8,7 @@ class SoundManager {
     this.currentPhase = null;
     this.initialized = false;
     
-    // Only Lobby music as requested + Glass Bridge music + RLGL + Rope
+    
     this.assets = {
       musicLobby: '/audio/lobby.mp3',
       musicGlassBridge: '/audio/Way Back then  Squid Game OST.mp3',
@@ -30,7 +26,7 @@ class SoundManager {
       this.masterGain.gain.value = 1.0;
       this.masterGain.connect(this.ctx.destination);
 
-      // Music Gain node for fades
+      
       this.musicGain = this.ctx.createGain();
       this.musicGain.gain.value = 0; 
       this.musicGain.connect(this.masterGain);
@@ -46,7 +42,7 @@ class SoundManager {
         this.ctx.resume();
       }
 
-      // Start lobby music if we're in lobby or countdown just started
+      
       if (['lobby', 'explanation', 'countdown'].includes(this.currentPhase) || !this.currentPhase) {
           this.playMusic(this.assets.musicLobby);
       }
@@ -55,19 +51,18 @@ class SoundManager {
     }
   }
 
-  // ====== MUSIC SYSTEM (With Fades) ======
   
   playMusic(url, loop = true, fadeSeconds = 1) {
     if (!this.initialized) return;
     if (!this.ctx) return;
     
-    // If music already playing, just ensure it's faded in
+    
     if (this.currentMusic && this.currentMusic.src.includes(url)) {
         this.fadeIn(fadeSeconds);
         return;
     }
 
-    this.stopMusic(0); // Stop current immediately before starting new
+    this.stopMusic(0);
 
     const audio = new Audio(url);
     audio.loop = loop;
@@ -107,9 +102,9 @@ class SoundManager {
     this.musicGain.gain.setValueAtTime(this.musicGain.gain.value, now);
     this.musicGain.gain.linearRampToValueAtTime(0, now + duration);
     
-    // Capture the exact audio instance to pause it securely later
+    
     const audioToStop = this.currentMusic;
-    this.currentMusic = null; // Detach immediately
+    this.currentMusic = null; 
 
     if (duration > 0 && audioToStop) {
         setTimeout(() => {
@@ -126,11 +121,11 @@ class SoundManager {
     if (!this.initialized) return;
     if (!this.ctx) return;
     
-    this.stopMusic(1); // Stop current
+    this.stopMusic(1); 
     
     const audio = new Audio(this.assets.musicGlassBridge);
     audio.crossOrigin = "anonymous";
-    audio.loop = true; // Natural loop at the very end of the file
+    audio.loop = true;
     
     const source = this.ctx.createMediaElementSource(audio);
     source.connect(this.musicGain);
@@ -141,7 +136,7 @@ class SoundManager {
         const now = this.ctx.currentTime;
         this.musicGain.gain.cancelScheduledValues(now);
         this.musicGain.gain.setValueAtTime(0, now);
-        this.musicGain.gain.linearRampToValueAtTime(0.15, now + 2); // 2s fade in, moderate volume -> 0.15
+        this.musicGain.gain.linearRampToValueAtTime(0.15, now + 2);
     }).catch(e => console.warn("Way Back Then blocked:", e));
 
     this.currentMusic = audio;
@@ -155,7 +150,7 @@ class SoundManager {
     
     const audio = new Audio(this.assets.musicFinalGame);
     audio.crossOrigin = "anonymous";
-    // Using manual loop logic because audio file has 10s of silence at the end
+    
     
     const source = this.ctx.createMediaElementSource(audio);
     source.connect(this.musicGain);
@@ -173,7 +168,7 @@ class SoundManager {
 
     if (this.rlglInterval) clearInterval(this.rlglInterval);
 
-    // Loop back at 64s (1:04)
+    
     this.rlglInterval = setInterval(() => {
         if (!this.currentMusic || this.currentMusic !== audio) {
             clearInterval(this.rlglInterval);
@@ -199,7 +194,7 @@ class SoundManager {
     const source = this.ctx.createMediaElementSource(audio);
     source.connect(this.musicGain);
 
-    audio.currentTime = 15; // Start at 15 seconds
+    audio.currentTime = 15; 
     
     audio.play().then(() => {
         const now = this.ctx.currentTime;
@@ -211,12 +206,11 @@ class SoundManager {
     this.currentMusic = audio;
   }
 
-  // ====== GAME SFX ======
 
   playSfxVictory() {
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
-    // Triumphant fanfare
+    
     const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
     notes.forEach((freq, i) => {
         this.playNote(freq, 'sine', now + i * 0.15, 0.4, 0.2);
@@ -240,7 +234,7 @@ class SoundManager {
 
   playSfxElimination() {
     if (!this.ctx) return;
-    this.playNote(50, 'sine', this.ctx.currentTime, 0.8, 0.4); // Deep impact boom
+    this.playNote(50, 'sine', this.ctx.currentTime, 0.8, 0.4); 
   }
 
   playTick(volume = 0.15) {
@@ -274,11 +268,11 @@ class SoundManager {
     }
     
     const audio = new Audio('/audio/elim.mp3');
-    // Using elim.mp3 as requested, automatically adapting its playback rate
+    
     audio.addEventListener('loadedmetadata', () => {
         const originalDuration = audio.duration || 4.5;
         const rate = originalDuration / targetSeconds;
-        // Allows pitch shifting for creepy effect (if supported by browser properties)
+        
         audio.preservesPitch = false; 
         audio.playbackRate = Math.max(0.2, Math.min(rate, 5.0)); 
         
@@ -299,7 +293,6 @@ class SoundManager {
       }
   }
 
-  // ====== PHASE HANDLER ======
 
   onPhaseChange(newPhase, currentGameObj = null) {
     if (newPhase === this.currentPhase) return;
@@ -313,7 +306,7 @@ class SoundManager {
       case 'explanation':
       case 'transition_bank':
       case 'transition_roulette':
-        this.playMusic(this.assets.musicLobby, true, 2); // Slow fade-in
+        this.playMusic(this.assets.musicLobby, true, 2); 
         break;
       case 'countdown':
         if (currentGameObj && currentGameObj.name === 'Le Pont de Verre') {
@@ -323,7 +316,7 @@ class SoundManager {
         } else if (currentGameObj && currentGameObj.name === 'Le Jeu de la Corde') {
             this.playTugOfWarMusic();
         } else {
-            this.stopMusic(2); // Normal fade out
+            this.stopMusic(2); 
         }
         break;
       case 'playing':
@@ -332,15 +325,15 @@ class SoundManager {
             currentGameObj.name === 'Jeu Final' || 
             currentGameObj.name === 'Le Jeu de la Corde'
         )) {
-            // Music already started via countdown, do not cut
+            
         } else {
-            this.stopMusic(0.5); // Immediate cut for games with no active music loop
+            this.stopMusic(0.5);
         }
         break;
       case 'gameover':
         this.stopMusic(0.1);
         this.playSfxVictory();
-        // Resume lobby music after victory fanfare
+        
         setTimeout(() => {
             if (this.currentPhase === 'gameover') this.playMusic(this.assets.musicLobby, true, 3);
         }, 1200);

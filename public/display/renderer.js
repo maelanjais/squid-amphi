@@ -1,7 +1,3 @@
-/**
- * Canvas 2D Renderer for Squid Amphi Display
- * Handles rendering players, arenas, and game-specific visuals
- */
 class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
@@ -9,7 +5,7 @@ class Renderer {
     this.resize();
     window.addEventListener('resize', () => this.resize());
 
-    // Colors
+    
     this.bgColor = '#0f0f1e';
     this.gridColor = 'rgba(233, 30, 130, 0.05)';
     this.pink = '#e91e82';
@@ -18,7 +14,7 @@ class Renderer {
     this.green = '#39e75f';
     this.gold = '#ffd700';
 
-    // Animation
+    
     this.time = 0;
     this.eliminationEffects = [];
   }
@@ -30,9 +26,6 @@ class Renderer {
     this.scaleY = this.canvas.height / 1080;
   }
 
-  /**
-   * Main render function — called each frame
-   */
   render(state) {
     if (!state) return;
     this.time += 1 / 30;
@@ -40,17 +33,17 @@ class Renderer {
     const ctx = this.ctx;
     ctx.save();
 
-    // Clear
+    
     ctx.fillStyle = this.bgColor;
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Scale to arena
+    
     ctx.scale(this.scaleX, this.scaleY);
 
-    // Draw grid
+    
     this.drawGrid(ctx);
 
-    // Render based on current game
+    
     if (state.currentGame && state.currentGame.state) {
       const gameName = state.currentGame.name;
       const gameState = state.currentGame.state;
@@ -66,11 +59,11 @@ class Renderer {
       }
     }
 
-    // Draw all players
-    // Skip during bracket tree view (full-screen bracket replaces everything)
+    
+    
     const isBracketFullView = state.currentGame && state.currentGame.state && state.currentGame.state.state === 'bracket_full';
     if (!isBracketFullView) {
-      // For RPS/Jeu Final, only draw alive players (dead are hidden behind opaque cards)
+      
       if (state.currentGame && (state.currentGame.name.includes('Final') || state.currentGame.name.includes('Ciseaux'))) {
         const alivePlayers = state.players.filter(p => p.alive);
         this.drawPlayers(ctx, alivePlayers);
@@ -79,7 +72,7 @@ class Renderer {
       }
     }
 
-    // Draw elimination effects
+    
     this.drawElimEffects(ctx);
 
     ctx.restore();
@@ -105,17 +98,17 @@ class Renderer {
   drawPlayers(ctx, players) {
     if (!players) return;
     const aliveCount = players.filter(p => p.alive).length;
-    // Adaptive radius: visible even at 50+ players
+    
     // 50 → 18px, 30 → 22px, 10 → 38px, 2 → 50px
     const adaptiveR = Math.min(50, Math.max(18, 120 / Math.max(1, Math.sqrt(aliveCount))));
 
-    // Dead players on bottom
+    
     for (const p of players) {
       if (!p.alive) {
         this.drawPlayer(ctx, p, true, adaptiveR);
       }
     }
-    // Then alive players on top
+    
     for (const p of players) {
       if (p.alive) {
         this.drawPlayer(ctx, p, false, adaptiveR);
@@ -126,11 +119,11 @@ class Renderer {
   defineShapePath(ctx, shape, r) {
     ctx.beginPath();
     if (shape === 'square') {
-      // 0.9 reduction to make the square feel equal in visual weight to the circle
+      // réduction 0.9 pour équilibrer visuellement
       const s = r * 0.9;
       ctx.rect(-s, -s, s * 2, s * 2);
     } else if (shape === 'triangle') {
-      // Triangle aligned to center
+      
       const s = r * 1.1;
       ctx.moveTo(0, -s);
       ctx.lineTo(s * 0.866, s * 0.5);
@@ -153,12 +146,12 @@ class Renderer {
       ctx.globalAlpha = 0.15;
     }
 
-    // Body
+    
     this.defineShapePath(ctx, shape, r);
     ctx.fillStyle = p.color;
     ctx.fill();
 
-    // Outline glow
+    
     if (!dead) {
       ctx.strokeStyle = 'rgba(255,255,255,0.3)';
       ctx.lineWidth = 2;
@@ -171,7 +164,7 @@ class Renderer {
          ctx.stroke();
       }
 
-      // Moving indicator
+      
       if (p.moving) {
         this.defineShapePath(ctx, shape, r + 4);
         ctx.strokeStyle = 'rgba(255,255,255,0.15)';
@@ -180,21 +173,21 @@ class Renderer {
       }
     }
 
-    // Player number
+    
     ctx.fillStyle = dead ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.7)';
     ctx.font = `bold ${Math.max(9, r * 0.7)}px Outfit`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(p.number, 0, 0);
 
-    // Name label above — always show, scaled with radius
+    
     if (!dead) {
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
       ctx.font = `${Math.max(9, r * 0.55)}px Outfit`;
       ctx.fillText(p.name, 0, -r - 6);
     }
 
-    // Direction indicator
+    
     if (!dead && p.moving) {
       ctx.beginPath();
       const dx = p.direction.x * (r + 6);
@@ -217,7 +210,6 @@ class Renderer {
     ctx.restore();
   }
 
-  // =================== GAME-SPECIFIC RENDERERS ===================
 
   renderRedLightGreenLight(ctx, state, gs) {
     const finishLine = gs.finishLine;
@@ -247,7 +239,7 @@ class Renderer {
     ctx.textBaseline = 'middle';
     ctx.fillText(label, 960, 50);
     
-    // Draw sci-fi eye
+    
     ctx.beginPath();
     ctx.ellipse(960, 160, 80, 40, 0, 0, Math.PI * 2); 
     ctx.strokeStyle = mainColor;
@@ -288,14 +280,14 @@ class Renderer {
     ctx.font = 'bold 20px Outfit';
     ctx.textAlign = 'center';
     ctx.fillText('🏁 LIGNE D\'ARRIVÉE', 960, finishLine - 15);
-    // Timer is shown via the HTML HUD, no canvas duplicate needed
+    // timer via HUD HTML
   }
 
   renderTugOfWar(ctx, state, gs) {
     const centerY = 540;
     const ropeY = centerY;
 
-    // Rope line
+    
     const ropeOffset = gs.ropePosition * 3;
     ctx.strokeStyle = '#8B4513';
     ctx.lineWidth = 25;
@@ -305,7 +297,7 @@ class Renderer {
     ctx.lineTo(1620 + ropeOffset, ropeY);
     ctx.stroke();
 
-    // Center mark
+    
     ctx.strokeStyle = this.red;
     ctx.lineWidth = 4;
     ctx.setLineDash([10, 5]);
@@ -315,7 +307,7 @@ class Renderer {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Flag on rope
+    
     const flagX = 960 + ropeOffset;
     ctx.fillStyle = this.gold;
     ctx.beginPath();
@@ -325,7 +317,7 @@ class Renderer {
     ctx.closePath();
     ctx.fill();
 
-    // Team labels
+    
     ctx.font = 'bold 30px Outfit';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ff6b6b';
@@ -333,9 +325,9 @@ class Renderer {
     ctx.fillStyle = '#4ecdc4';
     ctx.fillText('ÉQUIPE 2', 1440, 200);
 
-    // Timer is shown via the HTML HUD, no canvas duplicate needed
+    // timer via HUD HTML
 
-    // Rope position bar
+    
     const barW = 400;
     const barH = 16;
     const barX = 960 - barW / 2;
@@ -355,24 +347,24 @@ class Renderer {
     const panelW = Math.min(stepWidth * 0.8, 120);
     const panelH = 100;
 
-    // Abyss background
+    
     ctx.fillStyle = 'rgba(20, 0, 40, 0.6)';
     ctx.fillRect(0, 0, 1920, 1080);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.fillRect(bridgeStartX - 100, bridgeY - panelH - 60,
                   bridgeEndX - bridgeStartX + 200, panelH * 2 + 120);
 
-    // Draw panels
+    
     for (let i = 0; i < gs.totalSteps; i++) {
       const x = bridgeStartX + (i + 0.5) * stepWidth;
-      const panel = gs.panels[i]; // null if unrevealed, otherwise { safe: 'left'|'right' }
+      const panel = gs.panels[i];
 
-      // Left panel (top visually)
+      
       ctx.fillStyle = panel ? (panel.safe === 'left' ? 'rgba(0, 212, 170, 0.6)' : 'rgba(255, 60, 60, 0.1)') :
                               'rgba(150, 200, 255, 0.2)';
       ctx.strokeStyle = panel && panel.safe !== 'left' ? 'rgba(255, 60, 60, 0.4)' : 'rgba(150, 200, 255, 0.5)';
       ctx.lineWidth = 3;
-      // Draw left slightly higher
+      
       ctx.fillRect(x - panelW / 2, bridgeY - panelH - 10, panelW, panelH);
       if (!panel || panel.safe === 'left') {
         ctx.strokeRect(x - panelW / 2, bridgeY - panelH - 10, panelW, panelH);
@@ -386,7 +378,7 @@ class Renderer {
         ctx.stroke();
       }
 
-      // Right panel (bottom visually)
+      
       ctx.fillStyle = panel ? (panel.safe === 'right' ? 'rgba(0, 212, 170, 0.6)' : 'rgba(255, 60, 60, 0.1)') :
                               'rgba(150, 200, 255, 0.2)';
       ctx.strokeStyle = panel && panel.safe !== 'right' ? 'rgba(255, 60, 60, 0.4)' : 'rgba(150, 200, 255, 0.5)';
@@ -403,26 +395,26 @@ class Renderer {
         ctx.stroke();
       }
 
-      // Step number
+      
       ctx.fillStyle = 'rgba(255,255,255,0.6)';
       ctx.font = 'bold 20px Outfit';
       ctx.textAlign = 'center';
       ctx.fillText(`${i + 1}`, x, bridgeY + 6);
     }
 
-    // Platforms
+    
     ctx.fillStyle = '#333';
     ctx.fillRect(bridgeStartX - stepWidth, bridgeY - 150, stepWidth, 300);
     ctx.fillRect(bridgeStartX + gs.totalSteps * stepWidth, bridgeY - 150, stepWidth, 300);
 
-    // Labels
+    
     ctx.font = 'bold 24px Outfit';
     ctx.fillStyle = 'rgba(255,255,255,0.8)';
     ctx.textAlign = 'center';
     ctx.fillText('DÉPART', bridgeStartX - stepWidth / 2, bridgeY + 190);
     ctx.fillText('ARRIVÉE', bridgeStartX + (gs.totalSteps + 0.5) * stepWidth, bridgeY + 190);
 
-    // Active Player HUD
+    
     if (gs.currentPlayerId && gs.choosing) {
       const p = state.players.find(pl => pl.id === gs.currentPlayerId);
       if (p) {
@@ -438,7 +430,7 @@ class Renderer {
         ctx.fillStyle = this.pink;
         ctx.fillText(`Choix de la dalle ${gs.playerStep + 1} !`, 1920 / 2, 175);
 
-        // Timer
+        
         ctx.fillStyle = this.gold;
         ctx.font = 'bold 48px Outfit';
         ctx.fillText(`${gs.choiceTimer}s`, 1920 / 2 + 200, 150);
@@ -451,14 +443,13 @@ class Renderer {
       ctx.fillText('Joueur suivant...', 1920 / 2, 130);
     }
 
-    // Progress
+    
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.font = '20px Outfit';
     ctx.textAlign = 'left';
     ctx.fillText(`Joueur ${gs.currentPlayerIndex} sur ${gs.totalPlayers}`, 40, 60);
   }
 
-  // ---- ROCK PAPER SCISSORS ----
   renderRockPaperScissors(ctx, state, gs) {
     if (gs.state === 'bracket_full') {
       this.drawTournamentBracket(ctx, state, gs);
@@ -469,8 +460,8 @@ class Renderer {
     ctx.fillStyle = 'rgba(15, 15, 30, 0.9)';
     ctx.fillRect(0, 0, 1920, 1080);
     
-    // Draw Round Info
-    // Draw Round Info
+    
+    
     ctx.fillStyle = this.pink;
     ctx.font = 'bold 42px Outfit';
     ctx.textAlign = 'center';
@@ -486,12 +477,12 @@ class Renderer {
     }
     ctx.fillText(mainTitle, 960, 60);
 
-    // Draw timer
+    
     ctx.fillStyle = this.white;
     ctx.font = 'bold 64px Outfit';
     ctx.fillText(`${gs.timer}s`, 960, 125);
 
-    // Draw Phase Text
+    
     ctx.font = 'bold 24px Outfit';
     let phaseText = '';
     if (gs.state === 'bracket_reveal') phaseText = 'Nouveaux affrontements assignés !';
@@ -501,7 +492,7 @@ class Renderer {
     ctx.fillStyle = this.teal;
     ctx.fillText(phaseText, 960, 170);
 
-    // Draw Combat Brackets
+    
     const numMatches = gs.matches.length;
     const isFinale = (numMatches === 1);
     const cols = Math.max(1, Math.ceil(numMatches / 5));
@@ -519,8 +510,8 @@ class Renderer {
       if (isFinale) {
          cardW = 1200;
          cardH = 200;
-         nameFontSize = 48; // Huge names!
-         choiceFontSize = 36; // Huge choices
+         nameFontSize = 48; 
+         choiceFontSize = 36; 
          vsFontSize = 64; 
       }
 
@@ -529,7 +520,7 @@ class Renderer {
       
       const halfCard = cardW / 2;
       
-      // Card Background
+      
       ctx.fillStyle = 'rgba(20, 20, 35, 0.95)';
       ctx.beginPath();
       ctx.roundRect(matchX - halfCard, matchY - cardH/2, cardW, cardH, 16);
@@ -538,18 +529,18 @@ class Renderer {
       let strokeStyle = 'rgba(255,255,255,0.1)';
       let lineWidth = 2;
 
-      // Add colored borders based on the outcome during the resolution phase
+      // bordures colorées selon résultat
       if (gs.state === 'resolution' || m.finished) {
          if (m.winner) {
-            // Someone won: Green/Teal border
+            
             strokeStyle = 'rgba(0, 212, 170, 0.9)';
             lineWidth = 4;
          } else if (m.choice1 && m.choice2 && m.choice1 === m.choice2) {
-            // Tie (Egalité): Orange border
+            
             strokeStyle = 'rgba(255, 170, 0, 0.9)';
             lineWidth = 4;
          } else {
-            // Both eliminated (AFK / time out): Red border
+            
             strokeStyle = 'rgba(255, 0, 85, 0.9)';
             lineWidth = 4;
          }
@@ -577,7 +568,7 @@ class Renderer {
         ctx.fillStyle = (m.loser === p2.id) ? 'rgba(255, 60, 60, 0.5)' : this.white;
         ctx.fillText(p2.name, matchX + (isFinale ? 80 : 40), matchY + (isFinale ? 5 : 10));
         
-        // Status or Choices
+        
         ctx.font = `bold ${choiceFontSize}px Outfit`;
         if (gs.state === 'resolution' || m.finished) {
            const icons = { 'rock': 'PIERRE', 'paper': 'FEUILLE', 'scissors': 'CISEAUX' };
@@ -593,7 +584,7 @@ class Renderer {
              ctx.fillText(icons[m.choice2], matchX + (isFinale ? 80 : 40), matchY + (isFinale ? 65 : 45));
            }
 
-           // Crown to the winner
+           // couronne gagnant
            ctx.textAlign = 'center';
            ctx.font = `bold ${isFinale ? 50 : 30}px Outfit`;
            if (m.winner === m.p1) {
@@ -621,11 +612,11 @@ class Renderer {
     if (!gs.bracketTree || gs.bracketTree.length === 0) return;
     
     ctx.save();
-    // Darker, more dramatic background for the bracket screen
+    
     ctx.fillStyle = 'rgba(10, 15, 30, 0.98)';
     ctx.fillRect(0, 0, 1920, 1080);
     
-    // Title
+    
     ctx.fillStyle = this.pink;
     ctx.font = 'bold 64px Outfit';
     ctx.textAlign = 'center';
@@ -645,26 +636,26 @@ class Renderer {
 
     const totalRounds = gs.bracketTree.length;
     
-    // Dynamic scale based on bracket size — ensures it always fits on screen
+    
     let scale;
     if (totalRounds <= 2) scale = 1.4;
     else if (totalRounds <= 3) scale = 1.2;
     else if (totalRounds <= 4) scale = 0.9;
     else scale = 0.7;
 
-    // Dynamic card width that shrinks with more rounds
+    
     const cardW = Math.min(280, Math.max(150, 1600 / (totalRounds * 2 + 1))) * scale;
-    // Horizontal spacing between round columns
+    
     const marginX = 40;
-    const usableWidth = 1920 - marginX * 2 - cardW; // space for arranging round columns
+    const usableWidth = 1920 - marginX * 2 - cardW;
     const roundSpacing = totalRounds > 1 ? usableWidth / (totalRounds - 1) : 0;
 
-    // Helper to draw a match slot
+    
     const drawSlot = (m, x, y, slotW, isThisRound) => {
         const isPlaying = isThisRound && !m.finished;
         const isFinishedThisRound = isThisRound && m.finished;
 
-        // Bright background if active round
+        
         ctx.fillStyle = isThisRound ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)';
         ctx.beginPath();
         ctx.roundRect(x - slotW/2, y - 30 * scale, slotW, 60 * scale, 10);
@@ -699,7 +690,7 @@ class Renderer {
         const fontSize = Math.max(14, Math.floor(18 * scale));
         ctx.font = `bold ${fontSize}px Outfit`;
         
-        // Show winner in gold if round is finished
+        
         if (m.finished && m.winner && m.winner !== 'tie') {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
             ctx.fillText(`${name1}  VS  ${name2}`, x, y + 6 * scale);
@@ -713,7 +704,7 @@ class Renderer {
         }
     };
 
-    // Store coord for connecting lines: coords[round][globalMatchIdx] = {x, y}
+    
     const coords = []; 
 
     for (let r = 0; r < totalRounds; r++) {
@@ -740,8 +731,8 @@ class Renderer {
                ? (marginX + cardW/2 + r * roundSpacing) 
                : (1920 - marginX - cardW/2 - r * roundSpacing);
              
-             // Clamp: prevent left and right sides from overlapping in the center
-             const centerGap = 80; // minimum gap between left and right columns
+             
+             const centerGap = 80;
              if (isLeft && offsetX > 960 - cardW/2 - centerGap/2) {
                offsetX = 960 - cardW/2 - centerGap/2;
              }
@@ -760,13 +751,13 @@ class Renderer {
        }
     }
 
-    // Draw connecting lines
+    
     ctx.lineWidth = 3;
     
     for (let r = 0; r < totalRounds - 1; r++) {
-       // Highlight lines extending FROM finished rounds
+       
        const pastRound = (r < gs.roundNumber - 1); 
-       ctx.strokeStyle = pastRound ? 'rgba(255, 204, 0, 0.4)' : 'rgba(255, 255, 255, 0.15)'; // Gold tint if progressed
+       ctx.strokeStyle = pastRound ? 'rgba(255, 204, 0, 0.4)' : 'rgba(255, 255, 255, 0.15)'; 
 
        for (let i = 0; i < coords[r].length; i++) {
            const current = coords[r][i];
@@ -803,9 +794,8 @@ class Renderer {
     ctx.restore();
   }
 
-  // Inject a fade in for the actual countdown rendering as well!
+  
 
-  // =================== EFFECTS ===================
 
   addElimEffect(x, y) {
     this.eliminationEffects.push({

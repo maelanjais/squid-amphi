@@ -1,25 +1,22 @@
-/**
- * Player entity for Squid Amphi
- */
 class Player {
   constructor(id, name) {
     this.id = id;
     this.name = name || `Joueur ${id.substring(0, 4)}`;
-    this.number = 0; // Assigned on join (1-50)
+    this.number = 0; // attribué à la connexion
     this.x = 0;
     this.y = 0;
     this.vx = 0;
     this.vy = 0;
-    this.speed = 200; // pixels per second
+    this.speed = 200; // px/s
     this.radius = 16;
     this.color = this.generateColor();
     this.shape = this.generateShape();
     this.alive = true;
     this.roundDied = null;
     this.moving = false;
-    this.direction = { x: 0, y: 1 }; // facing direction
-    this.team = 0; // for team-based games
-    this.input = {}; // latest input from controller
+    this.direction = { x: 0, y: 1 }; // direction
+    this.team = 0; // jeux équipe
+    this.input = {}; // dernier input
     this.score = 0;
     this.lastInputTime = Date.now();
   }
@@ -35,11 +32,6 @@ class Player {
     return shapes[(Player.colorIndex || 1) % 3];
   }
 
-  /**
-   * Update player position based on current input
-   * @param {number} dt - delta time in seconds
-   * @param {object} bounds - { width, height } of the play area
-   */
   update(dt, bounds) {
     if (!this.alive) return;
 
@@ -54,16 +46,13 @@ class Player {
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 
-    // Clamp to bounds
+    // limites zone
     if (bounds) {
       this.x = Math.max(this.radius, Math.min(bounds.width - this.radius, this.x));
       this.y = Math.max(this.radius, Math.min(bounds.height - this.radius, this.y));
     }
   }
 
-  /**
-   * Process input from the controller
-   */
   processInput(data) {
     this.lastInputTime = Date.now();
     this.input = data;
@@ -78,13 +67,13 @@ class Player {
         }
       }
     } else if (data.type === 'tap') {
-      // Used by tug-of-war and night fight
+      // corde
       this.input.tap = true;
     } else if (data.type === 'choice') {
-      // Used by glass bridge
+      // pont de verre
       this.input.choice = data.choice; // 'left' or 'right'
     } else if (data.type === 'swipe') {
-      // Used by final duel
+      // duel final
       this.input.swipeX = data.swipeX;
       this.input.swipeY = data.swipeY;
     }
@@ -101,9 +90,6 @@ class Player {
     this.alive = true;
   }
 
-  /**
-   * Serialize for network transmission
-   */
   toJSON() {
     return {
       id: this.id,

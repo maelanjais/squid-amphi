@@ -55,41 +55,31 @@ body {
   pointer-events: all;
 }
 
-/* =============== JOIN =============== */
+
 .join-container {
   text-align: center;
   padding: 40px 24px;
 }
 
-.mini-shapes {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 20px;
+.premium-logo-mini {
+  width: 140px;
+  margin: 0 auto 10px;
 }
-.s-circle, .s-triangle, .s-square {
-  display: inline-block;
-  width: 28px;
-  height: 28px;
-  border: 2px solid var(--pink);
+.logo-svg {
+  filter: drop-shadow(0 0 10px rgba(233, 30, 130, 0.4));
 }
-.s-circle { border-radius: 50%; }
-.s-triangle {
-  width: 0; height: 0;
-  border: none;
-  border-left: 14px solid transparent;
-  border-right: 14px solid transparent;
-  border-bottom: 24px solid var(--pink);
-}
-.s-square { border-radius: 3px; }
 
 .ctrl-title {
-  font-size: 42px;
+  font-size: 38px;
   font-weight: 900;
-  letter-spacing: 8px;
-  line-height: 1.1;
+  letter-spacing: 6px;
+  line-height: 1;
   color: var(--pink);
-  margin-bottom: 40px;
+  margin-bottom: 30px;
+  text-shadow: 0 0 15px rgba(233, 30, 130, 0.3);
+}
+.ctrl-title span {
+  color: var(--teal);
 }
 
 .join-form {
@@ -138,7 +128,7 @@ body {
   background: var(--pink-dark);
 }
 
-/* =============== WAITING =============== */
+
 .waiting-container {
   text-align: center;
 }
@@ -188,7 +178,7 @@ body {
   50% { opacity: 1; transform: scale(1.2); }
 }
 
-/* =============== CONTROLLER =============== */
+
 #controller-screen {
   flex-direction: column;
 }
@@ -218,7 +208,7 @@ body {
   font-weight: 600;
 }
 
-/* ---- Position Indicator (mini-map) ---- */
+
 .position-indicator {
   position: fixed;
   top: 50px;
@@ -296,7 +286,7 @@ body {
   padding-top: 50px;
 }
 
-/* ---- Move Zone (1,2,3 Soleil + Group Game) ---- */
+
 .move-zone {
   width: 100%;
   height: 100%;
@@ -368,7 +358,7 @@ body {
   transition: none;
 }
 
-/* ---- Tap Zone ---- */
+
 .tap-zone {
   width: 100%;
   height: 100%;
@@ -395,7 +385,7 @@ body {
   letter-spacing: 4px;
 }
 
-/* ---- Tap + Move (Night Fight) ---- */
+
 .tap-move-container {
   display: flex;
   width: 100%;
@@ -458,7 +448,7 @@ body {
   white-space: nowrap;
 }
 
-/* ---- Choice (Glass Bridge) ---- */
+
 .choice-container {
   width: 100%;
   height: 100%;
@@ -514,7 +504,7 @@ body {
   color: var(--gray);
 }
 
-/* ---- RPS (Tournament) ---- */
+
 .rps-container {
   width: 100%; height: 100%; display: flex; flex-direction: column;
   align-items: center; justify-content: center; padding: 60px 20px 20px; gap: 20px;
@@ -535,7 +525,7 @@ body {
 }
 .rps-progress { font-size: 16px; color: var(--gray); text-align: center; }
 
-/* =============== ELIMINATED =============== */
+
 .elim-container {
   text-align: center;
   padding: 40px;
@@ -567,7 +557,7 @@ body {
   line-height: 1.6;
 }
 
-/* =============== WINNER CHAMPION SCREEN =============== */
+
 #winner-screen {
   background: radial-gradient(ellipse at 50% 30%, #2d1f00 0%, #0a0a12 70%);
   overflow: hidden;
@@ -651,7 +641,7 @@ body {
   color: #ffd700;
 }
 
-/* ---- Betting Phase MOSAIC ---- */
+
 .betting-header {
   flex-shrink: 0;
   padding: max(20px, env(safe-area-inset-top)) 20px 20px;

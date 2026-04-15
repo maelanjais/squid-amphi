@@ -11,15 +11,23 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Join Screen -->
+  <!-- Connexion -->
   <div id="join-screen" class="ctrl-screen active">
     <div class="join-container">
-      <div class="mini-shapes">
-        <span class="s-circle"></span>
-        <span class="s-triangle"></span>
-        <span class="s-square"></span>
+      <div class="premium-logo-mini">
+        <svg class="logo-svg" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="pink-glow-mini" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+          <circle cx="200" cy="120" r="35" fill="none" stroke="var(--teal)" stroke-width="4" />
+          <path d="M 115 110 L 140 150 L 90 150 Z" fill="none" stroke="var(--pink)" stroke-width="4" style="filter:url(#pink-glow-mini)" />
+          <rect x="260" y="110" width="40" height="40" rx="4" fill="none" stroke="var(--pink)" stroke-width="4" style="filter:url(#pink-glow-mini)" />
+        </svg>
       </div>
-      <h1 class="ctrl-title">SQUID<br>AMPHI</h1>
+      <h1 class="ctrl-title">SQUID<br><span>AMPHI</span></h1>
       <div class="join-form">
         <input type="text" id="player-name" placeholder="Votre pseudo" maxlength="12" autocomplete="off">
         <button id="btn-join" class="btn-join">REJOINDRE</button>
@@ -27,7 +35,7 @@
     </div>
   </div>
 
-  <!-- Waiting Screen -->
+  <!-- Attente -->
   <div id="waiting-screen" class="ctrl-screen">
     <div class="waiting-container">
       <div class="player-badge" id="player-badge">
@@ -41,7 +49,7 @@
     </div>
   </div>
 
-  <!-- Betting Screen -->
+  <!-- Paris -->
   <div id="betting-screen" class="ctrl-screen">
     <div class="betting-container" style="width: 100%; height: 100dvh; display: flex; flex-direction: column;">
       <div class="betting-header" style="padding-bottom: 30px;">
@@ -50,7 +58,7 @@
       </div>
       
       <div id="betting-list" class="betting-grid" style="flex: 1; overflow-y: auto; padding: 0 20px 40px; align-content: start;">
-        <!-- JS will inject mosaic cards here -->
+        
       </div>
       
       <div id="betting-waiting" style="display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center;">
@@ -61,7 +69,7 @@
     </div>
   </div>
 
-  <!-- Controller Screen — Dynamic controls -->
+  <!-- Manette -->
   <div id="controller-screen" class="ctrl-screen">
     <div class="position-indicator" id="position-indicator">
       <div class="position-map" id="position-map">
@@ -74,7 +82,7 @@
       <span class="ctrl-status" id="ctrl-status"></span>
     </div>
 
-    <!-- Move Control (joystick + touch zone) -->
+    <!-- Joystick -->
     <div id="ctrl-move" class="ctrl-area" style="display:none;">
       <div class="move-zone" id="move-zone">
         <div class="move-instruction">TOUCHER pour courir<br>GLISSER pour diriger</div>
@@ -86,7 +94,7 @@
       </div>
     </div>
 
-    <!-- Tap Control -->
+    <!-- Tap -->
     <div id="ctrl-tap" class="ctrl-area" style="display:none;">
       <div class="tap-zone" id="tap-zone">
         <div class="tap-counter" id="tap-counter">0</div>
@@ -94,7 +102,7 @@
       </div>
     </div>
 
-    <!-- Tap + Move Control (Night Fight) -->
+    <!-- Joystick -->
     <div id="ctrl-tap-move" class="ctrl-area" style="display:none;">
       <div class="tap-move-container">
         <div class="mini-joystick-area" id="mini-joystick-area">
@@ -113,7 +121,7 @@
       </div>
     </div>
 
-    <!-- Choice Control (Glass Bridge) -->
+    <!-- Choix -->
     <div id="ctrl-choice" class="ctrl-area" style="display:none;">
       <div class="choice-container">
         <div class="choice-info" id="choice-info">Choisissez un côté !</div>
@@ -130,7 +138,7 @@
       </div>
     </div>
 
-    <!-- RPS Control (Tournament) -->
+    <!-- Pierre-feuille-ciseaux -->
     <div id="ctrl-rps" class="ctrl-area" style="display:none;">
       <div class="rps-container">
         <div class="rps-info" id="rps-info">Duel : Préparez-vous</div>
@@ -145,7 +153,7 @@
     </div>
   </div>
 
-  <!-- Eliminated Screen -->
+  <!-- Éliminé -->
   <div id="eliminated-screen" class="ctrl-screen">
     <div class="elim-container">
       <div class="elim-icon">☠️</div>
@@ -155,7 +163,7 @@
     </div>
   </div>
 
-  <!-- Victory / Qualified Screen -->
+  <!-- Qualifié -->
   <div id="victory-screen" class="ctrl-screen">
     <div class="elim-container">
       <div class="elim-icon" style="animation: none;">🎉</div>
@@ -165,7 +173,7 @@
     </div>
   </div>
 
-  <!-- WINNER Screen (Final Champion) -->
+  <!-- Gagnant -->
   <div id="winner-screen" class="ctrl-screen">
     <div class="winner-bg-effects">
       <div class="winner-sparkle s1"></div>

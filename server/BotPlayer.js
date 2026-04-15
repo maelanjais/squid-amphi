@@ -21,7 +21,7 @@ class BotPlayer extends Player {
 
   actRockPaperScissors(gs) {
     if (gs.state === 'countdown' && !this.choiceMade) {
-      // Simulate human reaction time before choosing
+      // délai humain
       if (Math.random() < 0.03) {
         const choices = ['rock', 'paper', 'scissors'];
         this.input.choice = choices[Math.floor(Math.random() * choices.length)];
@@ -29,7 +29,7 @@ class BotPlayer extends Player {
       }
     }
     if (gs.state !== 'countdown') {
-      this.choiceMade = false; // Reset for next round
+      this.choiceMade = false; // reset tour suivant
     }
   }
 
@@ -62,18 +62,18 @@ class BotPlayer extends Player {
   }
 
   actGlassBridge(gs) {
-    // Only act when it's my turn
+    // agir si c'est mon tour
     if (gs.currentPlayerId !== this.id || !gs.choosing) return;
 
-    // Use revealed panels if available
+    // utiliser dalles révélées
     const currentStep = gs.playerStep;
     const panel = gs.panels[currentStep];
 
     if (panel) {
-      // Panel is revealed — choose the safe side
+      // dalle révélée
       this.input.choice = panel.safe;
     } else {
-      // Unknown panel — wait a bit then guess
+      // dalle inconnue
       if (gs.choiceTimer < 6 || Math.random() < 0.08) {
         this.input.choice = Math.random() > 0.5 ? 'left' : 'right';
       }

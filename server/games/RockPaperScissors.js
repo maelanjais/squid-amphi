@@ -1,24 +1,19 @@
-/**
- * Jeu Final — Pierre, Feuille, Ciseaux (Tournament)
- *
- * Full bracket tournament. Shows static tree between rounds.
- * State flow: bracket_full → countdown → resolution → bracket_full → ... → finished
- */
+
 class RockPaperScissors {
   constructor(arenaWidth, arenaHeight) {
     this.arenaWidth = arenaWidth;
     this.arenaHeight = arenaHeight;
-    this.state = 'bracket_full'; // bracket_full, countdown, resolution
+    this.state = 'bracket_full';
     this.timer = 12;
 
-    this.bracketTree = []; // [ [Match1, Match2...], [Match1...] ]
-    this.activeMatches = []; // Pointer to matches evaluated this round
+    this.bracketTree = [];
+    this.activeMatches = [];
     this.eliminatedThisRound = [];
     this.roundNumber = 1;
     this.finished = false;
     this.totalRoundsEstimate = 1;
 
-    // Track players qualifying automatically (Byes)
+    
     this.byesCurrentRound = []; 
   }
 
@@ -26,12 +21,12 @@ class RockPaperScissors {
     const aliveIds = players.filter(p => p.alive).map(p => p.id);
     for (const p of players) p.moving = false;
 
-    // Nearest power of 2
+    
     let power = 1;
     while (power < aliveIds.length) power *= 2;
     this.totalRoundsEstimate = Math.max(1, Math.log2(power));
     
-    // Create empty rounds
+    
     for (let r = 0; r < this.totalRoundsEstimate; r++) {
       let matchesInRound = power / Math.pow(2, r + 1);
       let roundMatches = [];
@@ -46,11 +41,11 @@ class RockPaperScissors {
       this.bracketTree.push(roundMatches);
     }
 
-    // Seed round 1 symmetrically
+    
     let shuffled = [...aliveIds].sort(() => Math.random() - 0.5);
     let round1 = this.bracketTree[0];
 
-    // Distribute players across matches evenly to maximize spacing
+    
     let slotIdx = 0;
     while (shuffled.length > 0) {
        if (!round1[slotIdx].p1) round1[slotIdx].p1 = shuffled.pop();
@@ -58,7 +53,7 @@ class RockPaperScissors {
        slotIdx = (slotIdx + 1) % round1.length;
     }
 
-    // Resolve byes immediately
+    
     this.byesCurrentRound = [];
     for (let i = 0; i < round1.length; i++) {
        let m = round1[i];
@@ -66,7 +61,7 @@ class RockPaperScissors {
           m.winner = m.p1;
           m.finished = true;
           this.byesCurrentRound.push(m.p1);
-          // Advance to round 2 immediately so the visual displays them ahead
+          // avancer au tour 2
           if (this.bracketTree[1]) {
              let nextMatchIdx = Math.floor(i / 2);
              if (i % 2 === 0) this.bracketTree[1][nextMatchIdx].p1 = m.winner;
@@ -77,9 +72,9 @@ class RockPaperScissors {
 
     this.activeMatches = round1.filter(m => !m.finished && m.p1 && m.p2);
     this.state = 'bracket_full';
-    this.timer = 12; // 12 seconds to show the bracket initially
+    this.timer = 12;
     
-    // Immediate end if 1 or 0 players
+    
     if (aliveIds.length <= 1) {
        this.finished = true;
        this.timer = 0;
@@ -87,14 +82,14 @@ class RockPaperScissors {
   }
 
   start(players) {
-    // Already setup
+    
   }
 
   update(dt, players) {
     let toEliminate = [];
     this.timer -= dt;
 
-    // Capture choices during countdown
+    
     if (this.state === 'countdown') {
       for (const p of players) {
         if (p.input.choice) {
@@ -107,14 +102,14 @@ class RockPaperScissors {
         }
       }
 
-      // Fast-forward if all active matches have chosen
+      
       let allChosen = this.activeMatches.every(m => m.choice1 && m.choice2);
       if (allChosen && this.timer > 1) {
         this.timer = 1;
       }
     }
 
-    // Assign on-screen positions for active combat UI
+    
     if (this.state === 'countdown' || this.state === 'resolution') {
       const numMatches = this.activeMatches.length;
       const isFinale = (numMatches === 1);
@@ -125,16 +120,16 @@ class RockPaperScissors {
         let row = i % 5;
 
         let matchX = 960;
-        let matchY = 320 + row * 160; // Start lower and add more space between cards
+        let matchY = 320 + row * 160;
         let cardW = (cols >= 3 ? 550 : 800);
         let circleOffset = cardW / 2 - 60;
-        let circleYOffset = 0; // Set to 0 to perfectly align with matchY
+        let circleYOffset = 0;
 
         if (isFinale) {
-           matchY = 550; // Center screen lower
-           cardW = 1200; // Much wider
-           circleOffset = cardW / 2 - 100; // Push players further out
-           circleYOffset = 0; // Set to 0 to perfectly align with matchY
+           matchY = 550; 
+           cardW = 1200; 
+           circleOffset = cardW / 2 - 100; 
+           circleYOffset = 0;
         } else {
            if (cols === 2) {
              matchX = (col === 0) ? 500 : 1420;
@@ -152,17 +147,16 @@ class RockPaperScissors {
         if (p2) { p2.x = matchX + circleOffset; p2.y = matchY + circleYOffset; }
       }
 
-      // Keep byepass players at bottom visually
+      
       for (let [i, byeId] of this.byesCurrentRound.entries()) {
         let b = players.find(p => p.id === byeId);
         if (b) { b.x = 960 + (i * 100); b.y = 950; }
       }
     }
 
-    // === STATE MACHINE ===
     if (this.state === 'bracket_full' && this.timer <= 0) {
       if (this.activeMatches.length === 0) {
-        // Skip current round if no active matches (only byes)
+        
         this.advanceRound();
       } else {
         this.state = 'countdown';
@@ -180,11 +174,11 @@ class RockPaperScissors {
 
       let ties = this.activeMatches.filter(m => m.winner === 'tie');
       if (ties.length > 0) {
-        // Redo tied matches
+        
         for (let m of ties) {
           m.choice1 = null;
           m.choice2 = null;
-          m.winner = null; // Important to reset so it doesn't stay 'tie'
+          m.winner = null;
         }
         this.state = 'countdown';
         this.timer = 10;
@@ -227,7 +221,7 @@ class RockPaperScissors {
         m.finished = true;
       }
       
-      // Advance winner to the actual slot in the bracket!
+      // avancer le gagnant dans le bracket
       if (m.finished && m.winner !== 'tie' && this.roundNumber < this.totalRoundsEstimate) {
          let currentGlobalIndex = this.bracketTree[this.roundNumber - 1].indexOf(m);
          let nextMatchIdx = Math.floor(currentGlobalIndex / 2);
@@ -249,17 +243,15 @@ class RockPaperScissors {
        return;
     }
     
-    // Evaluate if there are any immediate byes in the new round 
-    // (e.g. someone from previous round won, but their new opponent slot is empty because someone got eliminated) 
-    // Wait, in a balanced binary tree, if someone reaches here and has NO opponent, it means their opponent side had NO one surviving? 
-    // If they have no opponent, they advance.
+    // vérif byes dans le nouveau tour 
+    
+    
     let currentRoundSlots = this.bracketTree[this.roundNumber - 1];
     
     for (let i = 0; i < currentRoundSlots.length; i++) {
         let m = currentRoundSlots[i];
-        // If a match is incomplete (one person but no opponent)
-        // Note: it might just be waiting for a tied match to finish, but since we wait for ALL matches in the round to finish, 
-        // anyone missing here permanently has no opponent.
+        
+        // attente fin de tous les matchs du tour 
         if (m.p1 && !m.p2 || !m.p1 && m.p2) {
            m.winner = m.p1 || m.p2;
            m.finished = true;
@@ -276,7 +268,7 @@ class RockPaperScissors {
     this.activeMatches = currentRoundSlots.filter(m => !m.finished && m.p1 && m.p2);
     
     if (this.activeMatches.length === 0 && this.byesCurrentRound.length > 0) {
-        // Fast-forward this empty round if everyone is a bye
+        
         this.advanceRound();
     } else if (this.activeMatches.length === 0) {
         this.finished = true;
@@ -296,7 +288,7 @@ class RockPaperScissors {
       timer: Math.max(0, Math.ceil(this.timer)),
       roundNumber: this.roundNumber,
       matches: this.activeMatches,
-      bracketTree: this.bracketTree, // Send full tree representation
+      bracketTree: this.bracketTree, 
       totalRoundsEstimate: this.totalRoundsEstimate,
       byes: this.byesCurrentRound
     };
@@ -307,7 +299,7 @@ class RockPaperScissors {
     let isBye = this.byesCurrentRound.includes(player.id);
     let hasChosen = match ? (match.p1 === player.id ? match.choice1 !== null : match.choice2 !== null) : false;
     
-    // Keep controls visible during countdown and resolution so mobile UI stays consistent
+    
     let showControls = (match && !match.finished && (this.state === 'countdown' || this.state === 'resolution'));
 
     let matchResult = null;

@@ -1,9 +1,4 @@
-/**
- * 1, 2, 3… Soleil ! (Red Light Green Light)
- * 
- * Players must run to the finish line. When the light turns red,
- * any player still moving is eliminated.
- */
+
 class RedLightGreenLight {
   constructor(arenaWidth, arenaHeight) {
     this.arenaWidth = arenaWidth;
@@ -24,7 +19,7 @@ class RedLightGreenLight {
   }
 
   setup(players) {
-    // Place players at the bottom of the arena
+    // placement joueurs en bas
     for (const player of players) {
       player.x = 100 + Math.random() * (this.arenaWidth - 200);
       player.y = this.arenaHeight - 80;
@@ -50,7 +45,7 @@ class RedLightGreenLight {
     this.toEliminate = [];
 
     if (this.roundTimer <= 0) {
-      // Time's up — eliminate everyone who hasn't crossed
+      
       for (const player of players) {
         if (player.alive && player.y > this.finishLine) {
           this.toEliminate.push(player.id);
@@ -63,31 +58,31 @@ class RedLightGreenLight {
     this.phaseTimer -= dt;
 
     if (this.greenLight) {
-      // Check for warning phase
+      
       if (this.phaseTimer <= this.warningTime && !this.warning) {
         this.warning = true;
       }
-      // Transition to red
+      
       if (this.phaseTimer <= 0) {
         this.greenLight = false;
         this.phaseTimer = this.redDuration;
         this.warning = false;
       }
     } else {
-      // Red light — check who is still moving (skip players who already crossed)
+      
       for (const player of players) {
         if (player.alive && player.moving && player.y > this.finishLine) {
           this.toEliminate.push(player.id);
         }
       }
-      // Transition back to green
+      
       if (this.phaseTimer <= 0) {
         this.startNewCycle();
       }
     }
 
 
-    // Check for players crossing the finish line
+    // vérif ligne d'arrivée
     for (const player of players) {
       if (player.alive && player.y <= this.finishLine) {
         player.moving = false;
@@ -95,7 +90,7 @@ class RedLightGreenLight {
       }
     }
 
-    // End game if all alive players have crossed
+    
     const alive = players.filter(p => p.alive);
     const crossed = alive.filter(p => p.y <= this.finishLine);
     if (crossed.length === alive.length && alive.length > 0) {

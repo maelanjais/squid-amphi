@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Audio Unlock Overlay -->
+  <!-- Son -->
   <div id="audio-unlock">
     <div class="unlock-content">
       <div class="svg-icon svg-audio"></div>
@@ -18,9 +18,9 @@
     </div>
   </div>
 
-  <!-- Lobby Screen -->
+  <!-- Lobby -->
   <div id="lobby-screen" class="screen active">
-    <!-- Geometric abstract background (Squid stairs/labyrinth) -->
+    <!-- Fond géométrique -->
     <div class="maze-bg">
       <div class="maze-stair stair-1"></div>
       <div class="maze-stair stair-2"></div>
@@ -33,10 +33,35 @@
     <div class="lobby-container">
       <div class="lobby-main">
         <div class="logo-section">
-          <div class="squid-shapes">
-            <div class="shape circle"></div>
-            <div class="shape triangle"></div>
-            <div class="shape square"></div>
+          <div class="premium-logo">
+            <svg class="logo-svg" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+              <!-- Filtres -->
+              <defs>
+                <filter id="pink-glow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="5" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+                <filter id="teal-glow-filter" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="8" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+                <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style="stop-color:var(--pink);stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:var(--teal);stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              
+              <!-- Demi-cercle -->
+              <path class="logo-arc logo-arc-1" d="M 100 140 A 100 100 0 0 1 300 140" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4" stroke-dasharray="10 5" />
+              <path class="logo-arc logo-arc-2" d="M 120 140 A 80 80 0 0 1 280 140" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3" stroke-dasharray="8 4" />
+              
+              <!-- Cercle -->
+              <circle cx="200" cy="120" r="35" class="logo-shape circle" style="filter:url(#teal-glow-filter)" />
+              
+              <!-- Formes -->
+              <path d="M 115 110 L 140 150 L 90 150 Z" class="logo-shape triangle" style="filter:url(#pink-glow)" />
+              <rect x="260" y="110" width="40" height="40" rx="4" class="logo-shape square" style="filter:url(#pink-glow)" />
+            </svg>
           </div>
           <h1 class="game-title">SQUID<br><span>AMPHI</span></h1>
           <p class="tagline">À LA FIN IL N'EN RESTERA QU'UN.</p>
@@ -74,7 +99,7 @@
       </div>
     </div>
     
-    <!-- Credits (positioned over the teal maze background) -->
+    <!-- Crédits -->
     <div style="position: absolute; bottom: 140px; left: 25px; z-index: 5; font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.8; letter-spacing: 0.5px; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">
       <span style="font-weight: 800; color: rgba(255,255,255,0.9); letter-spacing: 1px; font-size: 11px; text-transform: uppercase;">Développé par</span><br>
       JAHIER Maëlan<br>
@@ -85,7 +110,7 @@
 
   <button class="btn-reset" id="btn-reset">RÉINITIALISER (R)</button>
 
-  <!-- Betting Screen (full-screen overlay) -->
+  <!-- Paris -->
   <div id="betting-screen" class="screen" style="z-index: 50;">
     <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(20,20,40,0.98) 0%, rgba(5,5,15,1) 100%); display: flex; align-items: center; justify-content: center;">
       <div style="text-align: center; max-width: 900px; padding: 60px;">
@@ -105,7 +130,7 @@
     </div>
   </div>
 
-  <!-- Explanation Screen -->
+  <!-- Explication -->
   <div id="explanation-screen" class="screen">
     <div class="maze-bg-alt"><div class="maze-stair-alt stair-alt-1"></div><div class="maze-stair-alt stair-alt-2"></div></div>
     <div class="explanation-container">
@@ -121,7 +146,7 @@
     </div>
   </div>
 
-  <!-- Countdown Screen -->
+  <!-- Décompte -->
   <div id="countdown-screen" class="screen">
     <div class="maze-bg-alt"><div class="maze-stair-alt stair-alt-1"></div><div class="maze-stair-alt stair-alt-2"></div></div>
     <div class="countdown-container">
@@ -131,7 +156,7 @@
     </div>
   </div>
 
-  <!-- Game Canvas -->
+  <!-- Canvas jeu -->
   <div id="game-screen" class="screen">
     <canvas id="game-canvas"></canvas>
     <div class="game-hud">
@@ -146,7 +171,7 @@
     </div>
   </div>
 
-  <!-- Transition: Piggy Bank / Briefcase -->
+  <!-- Transition: Cagnotte -->
   <div id="transition-bank-screen" class="screen">
     <div class="maze-bg-alt"><div class="maze-stair-alt stair-alt-1"></div><div class="maze-stair-alt stair-alt-2"></div></div>
     <div class="bank-container" id="bank-container">
@@ -154,7 +179,7 @@
       <div class="prize-pool-display" id="prize-pool">0 ₩</div>
       <p class="eliminated-round" id="bank-eliminated">+ 0 joueurs éliminés</p>
       
-      <!-- Zone de la malette et des billets -->
+      <!-- Mallette -->
       <div class="briefcase-area">
         <div id="money-rain-container"></div>
         <div class="mallette-icon" id="piggy-icon">💼</div>
@@ -162,24 +187,24 @@
     </div>
   </div>
 
-  <!-- Transition: Dead Memorial Grid -->
+  <!-- Transition: Éliminés -->
   <div id="transition-dead-screen" class="screen">
     <div class="maze-bg-alt"><div class="maze-stair-alt stair-alt-1"></div><div class="maze-stair-alt stair-alt-2"></div></div>
     <div class="memorial-container">
       <div class="memorial-grid" id="memorial-grid">
-        <!-- JS va injecter les tuiles joueurs ici -->
+        <!-- Injection JS -->
       </div>
     </div>
   </div>
 
-  <!-- Transition: Fall Guys Roulette -->
+  <!-- Transition: Roulette -->
   <div id="transition-roulette-screen" class="screen">
     <div class="maze-bg-alt"><div class="maze-stair-alt stair-alt-1"></div><div class="maze-stair-alt stair-alt-2"></div></div>
     <div class="roulette-container">
       <h2>PROCHAINE ÉPREUVE</h2>
       <div class="roulette-window">
         <div class="roulette-reel" id="roulette-reel">
-          <!-- JS va injecter les noms de jeux -->
+          <!-- Injection JS -->
         </div>
       </div>
     </div>

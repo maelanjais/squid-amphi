@@ -1,11 +1,7 @@
-/**
- * Squid Amphi — Controller (Phone) Client
- * Handles all touch-based controls and Socket.IO communication
- */
+
 (function () {
   const socket = io();
 
-  // ---- Screens ----
   const screens = {
     join: document.getElementById('join-screen'),
     waiting: document.getElementById('waiting-screen'),
@@ -28,7 +24,6 @@
   let currentControls = null;
   let tapCount = 0;
 
-  // ---- POSITION INDICATOR ----
   const positionDot = document.getElementById('position-dot');
   const positionLabel = document.getElementById('position-label');
   function updatePositionDot(px, py) {
@@ -39,7 +34,6 @@
     positionDot.style.top = y + '%';
   }
 
-  // ---- JOIN ----
   document.getElementById('btn-join').addEventListener('click', joinGame);
   document.getElementById('player-name').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') joinGame();
@@ -73,7 +67,6 @@
     playerInfo = data;
     document.getElementById('badge-number').textContent = data.number;
     document.getElementById('player-name-display').textContent = data.name;
-    // Set badge color
     document.getElementById('player-badge').style.background =
       `linear-gradient(135deg, ${data.color}, ${data.color}dd)`;
     showScreen('waiting');
@@ -83,15 +76,12 @@
     alert(data.message);
   });
 
-  // ---- BETTING PHASE ----
   socket.on('start-betting', (alivePlayers) => {
     if (!playerInfo) return;
     
-    // Switch to betting screen
     showScreen('betting');
     document.getElementById('betting-waiting').style.display = 'none';
     
-    // Build list
     const container = document.getElementById('betting-list');
     container.innerHTML = '';
     
@@ -121,8 +111,8 @@
         
         card.addEventListener('click', () => {
           socket.emit('player-bet', { targetId: p.id });
-          container.innerHTML = ''; // Clear list
-          document.getElementById('betting-waiting').style.display = 'flex'; // Show waiting indicator
+          container.innerHTML = '';
+          document.getElementById('betting-waiting').style.display = 'flex';
         });
         
         container.appendChild(card);
@@ -130,16 +120,13 @@
     }
     
     if (!hasValidTargets) {
-        // Fallback if they are alone
         socket.emit('player-bet', { targetId: socket.id });
         document.getElementById('betting-waiting').style.display = 'flex';
     }
   });
 
-  // ---- PHASE CHANGES ----
   socket.on('phase', (data) => {
     if (!playerInfo) return;
-    // Lobby handles normally, except we override if we are in betting
     if (data.phase === 'lobby') {
         const betScreen = document.getElementById('betting-screen');
         if (betScreen && !betScreen.classList.contains('active')) {
@@ -148,12 +135,11 @@
     }
     if (data.phase === 'explanation' || data.phase === 'countdown') {
       showScreen('controller');
-      currentControls = null; // Reset so controls will be re-applied
+      currentControls = null;
       if (data.currentGame) {
         document.getElementById('ctrl-game-name').textContent = data.currentGame.name;
       }
     }
-    // Transition phases — show feedback on phone
     if (data.phase === 'transition_bank' || data.phase === 'transition_dead' || data.phase === 'transition_roulette') {
       showScreen('victory');
       switchControls(null);
@@ -164,18 +150,15 @@
       document.getElementById('ctrl-status').textContent = 'Vous avez survécu ! Prochaine épreuve bientôt...';
     }
     if (data.phase === 'gameover') {
-      // Handled by controller-state which knows if we're the winner
       switchControls(null);
     }
   });
 
-  // ---- CONTROLLER STATE (from server, 30fps) ----
   const positionIndicator = document.getElementById('position-indicator');
 
   socket.on('controller-state', (state) => {
     if (!playerInfo) return;
 
-    // Check elimination
     if (!state.alive) {
       showScreen('eliminated');
       if (navigator.vibrate) {
@@ -184,12 +167,11 @@
       return;
     }
 
-    // Update position dot
     if (state.playerX !== undefined) {
       updatePositionDot(state.playerX, state.playerY);
     }
 
-    // Transition phases — keep showing feedback
+    
     if (state.phase === 'transition_bank' || state.phase === 'transition_dead' || state.phase === 'transition_roulette') {
       showScreen('victory');
       switchControls(null);
@@ -202,20 +184,18 @@
       return;
     }
 
-    // Game over — show final screen on phone
+    
     if (state.phase === 'gameover') {
       switchControls(null);
       currentControls = null;
       if (positionIndicator) positionIndicator.style.display = 'none';
       
       if (state.isWinner) {
-        // CHAMPION! Show the golden winner screen
         showScreen('winner');
         const winnerNameEl = document.getElementById('winner-name');
         if (winnerNameEl) winnerNameEl.textContent = state.playerName || playerInfo.name;
         if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200, 100, 300]);
       } else {
-        // Not the winner — generic end screen
         showScreen('controller');
         document.getElementById('ctrl-game-name').textContent = 'FIN DE PARTIE';
         document.getElementById('ctrl-status').textContent = 'La partie est terminée. Regardez le grand écran !';
@@ -223,7 +203,7 @@
       return;
     }
 
-    // RLGL: Show survival screen as soon as you cross the finish line
+    
     if (state.phase === 'playing' && state.gameState && state.gameState.crossed) {
       showScreen('victory');
       switchControls(null);
@@ -243,7 +223,6 @@
         `Préparation... ${state.explanation || ''}s`;
       switchControls(null);
       currentControls = null;
-      // Show position map large
       if (positionIndicator) positionIndicator.classList.add('large');
       if (positionIndicator) positionIndicator.style.display = 'flex';
     }
@@ -261,18 +240,13 @@
       const gs = state.gameState;
       const controls = gs.controls;
 
-      // Always switch controls — don't guard with currentControls cache
-      // This ensures controls always show up even on reconnect
       if (controls !== currentControls) {
         switchControls(controls);
         currentControls = controls;
       }
 
-      // Status text
       if (controls === 'none') {
-        // Game over for this game, or waiting (RPS bye, etc)
         if (gs.gameOver) {
-          // TugOfWar over
           if (gs.winningTeam && gs.team) {
             if (gs.winningTeam === gs.team) {
               document.getElementById('ctrl-status').textContent = 'VICTOIRE ! Votre équipe a gagné !';
@@ -297,7 +271,6 @@
           state.countdown > 0 ? `Début dans ${state.countdown}...` : '';
       }
 
-      // Hide position map during gameplay
       if (positionIndicator) positionIndicator.style.display = 'none';
       if (positionIndicator) positionIndicator.classList.remove('large');
 
@@ -305,7 +278,6 @@
     }
   });
 
-  // ---- ELIMINATED ----
   socket.on('eliminated', (data) => {
     document.getElementById('elim-game').textContent = data.game;
     showScreen('eliminated');
@@ -314,11 +286,7 @@
     }
   });
 
-  // ============================
-  //    CONTROL IMPLEMENTATIONS
-  // ============================
-
-  // ---- MOVE CONTROL (1,2,3 Soleil + Group Game + Duel) ----
+  
   const moveZone = document.getElementById('move-zone');
   let moveTouch = null;
   let joystickOrigin = null;
@@ -345,7 +313,6 @@
 
       if (dist > 10) {
         socket.emit('player-input', { type: 'move', pressing: true, dirX: dx, dirY: dy });
-        // Update joystick thumb visual
         const maxDist = 50;
         const clampedDist = Math.min(dist, maxDist);
         const normX = (dx / dist) * clampedDist;
@@ -375,7 +342,7 @@
     });
   }
 
-  // ---- TAP CONTROL (Tug of War) ----
+  
   const tapZone = document.getElementById('tap-zone');
   if (tapZone) {
     tapZone.addEventListener('touchstart', (e) => {
@@ -384,7 +351,6 @@
       document.getElementById('tap-counter').textContent = tapCount;
       tapZone.classList.add('tapping');
       socket.emit('player-input', { type: 'tap' });
-      // Brief vibration feedback
       if (navigator.vibrate) navigator.vibrate(10);
     });
     tapZone.addEventListener('touchend', (e) => {
@@ -393,7 +359,7 @@
     });
   }
 
-  // ---- ATTACK ZONE (Night Fight) ----
+  
   const attackZone = document.getElementById('attack-zone');
   if (attackZone) {
     attackZone.addEventListener('touchstart', (e) => {
@@ -408,7 +374,7 @@
     });
   }
 
-  // Mini joystick for Night Fight
+  
   const miniJoystickArea = document.getElementById('mini-joystick-area');
   if (miniJoystickArea) {
     let miniTouch = null;
@@ -451,7 +417,7 @@
     });
   }
 
-  // ---- CHOICE (Glass Bridge) ----
+  
   document.getElementById('btn-left')?.addEventListener('click', () => {
     socket.emit('player-input', { type: 'choice', choice: 'left' });
     if (navigator.vibrate) navigator.vibrate(30);
@@ -461,7 +427,7 @@
     if (navigator.vibrate) navigator.vibrate(30);
   });
 
-  // ---- RPS (Tournament) ----
+  
   ['rock', 'paper', 'scissors'].forEach(choice => {
     document.getElementById(`btn-${choice}`)?.addEventListener('click', (e) => {
       document.querySelectorAll('.btn-rps').forEach(b => b.classList.remove('selected'));
@@ -471,9 +437,7 @@
     });
   });
 
-  // ============================
-  //    UI HELPERS
-  // ============================
+
 
   function showScreen(name) {
     Object.values(screens).forEach(s => s.classList.remove('active'));
@@ -484,7 +448,6 @@
     Object.values(ctrlAreas).forEach(a => { if (a) a.style.display = 'none'; });
     if (ctrlAreas[controls]) ctrlAreas[controls].style.display = 'block';
 
-    // Reset tap counter when switching to tap controls
     if (controls === 'tap') {
       tapCount = 0;
       document.getElementById('tap-counter').textContent = '0';
@@ -492,7 +455,6 @@
   }
 
   function updateControllerUI(gs) {
-    // Tap controls (Tug Of War)
     if (gs.controls === 'tap') {
         let teamIndicator = tapZone.querySelector('.team-indicator');
         if (!teamIndicator) {
@@ -530,7 +492,6 @@
         }
     }
 
-    // Move controls — show light indicator for Red Light Green Light
     if (gs.controls === 'move' && gs.greenLight !== undefined) {
       let indicator = moveZone.querySelector('.light-indicator');
       if (!indicator) {
@@ -545,7 +506,6 @@
         indicator.classList.add('red');
       }
 
-      // Show crossed status or progress
       const inst = moveZone.querySelector('.move-instruction');
       if (gs.crossed) {
         inst.innerHTML = 'Ligne d\'arrivée franchie !';
@@ -556,7 +516,6 @@
       }
     }
 
-    // Tap move controls (Night Fight) — update HP
     if (gs.controls === 'tap-and-move') {
       const hpBar = document.getElementById('hp-bar');
       const hpText = document.getElementById('hp-text');
@@ -567,7 +526,6 @@
       }
     }
 
-    // Choice controls (Glass Bridge)
     if (gs.controls === 'choice') {
       document.getElementById('choice-timer').textContent = gs.timer + 's';
       document.getElementById('choice-progress').textContent =
@@ -591,15 +549,12 @@
       }
     }
 
-    // RPS controls
     if (gs.controls === 'rps') {
       document.getElementById('rps-timer').textContent = gs.timer + 's';
       if (gs.hasChosen) {
         document.getElementById('rps-info').textContent = 'Choix envoyé ! En attente de votre adversaire...';
-        // Let the button remain selected visually (class already toggled)
       } else {
         document.getElementById('rps-info').textContent = 'Duel : Choisissez votre arme !';
-        // Reset selections if the server didn't register one
         document.querySelectorAll('.btn-rps').forEach(b => b.classList.remove('selected'));
       }
     }

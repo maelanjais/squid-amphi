@@ -6,7 +6,6 @@ const bots = [];
 
 console.log(`🤖 Démarrage du simulateur avec ${NUM_BOTS} bots...`);
 
-// ---- OBSERVER SETUP ----
 // S'enregistre comme un display pour pouvoir voir l'état global 
 // (ce qui permet aux bots de voir le danger, etc.)
 let globalState = null;
@@ -19,11 +18,11 @@ observer.on("game-state", (state) => {
   globalState = state;
 });
 
-// Lancement différé
+
 for (let i = 0; i < NUM_BOTS; i++) {
   setTimeout(() => {
     createBot(i + 1);
-  }, i * 50); // Connexion décalée
+  }, i * 50); 
 }
 
 function createBot(index) {
@@ -84,7 +83,7 @@ function createBot(index) {
   function startBehavior() {
     if (behaviorInterval) return;
     
-    // Le bot actualise ses inputs 10 fois par seconde
+    
     behaviorInterval = setInterval(() => {
       if (!alive || !globalState || !ctrlState) {
         if (!alive) stopBehavior();
@@ -105,7 +104,6 @@ function createBot(index) {
     }, 100); 
   }
 
-  // --- ACTIONS DES BOTS ---
 
   function actRLGL(me) {
     let shouldMove = false;
@@ -114,7 +112,7 @@ function createBot(index) {
     } else if (ctrlState.greenLight && ctrlState.warning) {
       shouldMove = Math.random() > 0.4;
     } else {
-      shouldMove = Math.random() < 0.005; // Très faible erreur
+      shouldMove = Math.random() < 0.005; 
     }
 
     if (ctrlState.crossed) shouldMove = false;

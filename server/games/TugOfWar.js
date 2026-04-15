@@ -1,9 +1,4 @@
-/**
- * Jeu de la Corde (Tug of War)
- * 
- * Players are split into two teams. Tap as fast as possible
- * to pull the rope. The losing team is eliminated.
- */
+ 
 class TugOfWar {
   constructor(arenaWidth, arenaHeight) {
     this.arenaWidth = arenaWidth;
@@ -14,21 +9,21 @@ class TugOfWar {
     this.duration = 20; // seconds
     this.timer = this.duration;
     this.finished = false;
-    this.decay = 2; // rope slowly returns to center
+    this.decay = 2; // retour lent au centre
     this.winThreshold = 100;
-    this.endDelayTimer = 2; // wait 2 seconds before eliminating
+    this.endDelayTimer = 2;
     this.winnerDetermined = false;
     this.winningTeam = 0;
     this.toEliminate = [];
   }
 
   setup(players) {
-    // Split into two teams
+    
     const shuffled = [...players].sort(() => Math.random() - 0.5);
     const half = Math.ceil(shuffled.length / 2);
     
-    // We want to line them up logically along the rope.
-    // Adaptive spacing: shrink when more players per team
+    // alignement sur la corde
+    
     const teamSize = half;
     const maxCols = Math.ceil(teamSize / 3);
     const spacingX = Math.max(35, Math.min(65, 350 / maxCols));
@@ -42,7 +37,7 @@ class TugOfWar {
       const row = teamLocalIndex % 3;              // 0, 1, 2
       
       player.offsetX = isTeam1 ? (col * -spacingX + 150) : (col * spacingX - 150);
-      player.offsetY = (row - 1) * spacingY; // stagger vertically along the rope
+      player.offsetY = (row - 1) * spacingY;
 
       if (isTeam1) {
         player.team = 1;
@@ -66,7 +61,7 @@ class TugOfWar {
     this.timer -= dt;
     const toEliminate = [];
 
-    // Count taps from each team
+    
     let team1Taps = 0;
     let team2Taps = 0;
 
@@ -76,21 +71,21 @@ class TugOfWar {
           if (player.team === 1) team1Taps++;
           if (player.team === 2) team2Taps++;
         }
-        player.input.tap = false; // consume the tap
+        player.input.tap = false; // consommer le tap
       }
     }
 
-    // Move rope based on difference
+    
     if (!this.winnerDetermined) {
       const force = (team1Taps - team2Taps) * 3;
       this.ropePosition += force;
 
-      // Apply decay toward center
+      
       this.ropePosition -= Math.sign(this.ropePosition) * this.decay * dt;
       this.ropePosition = Math.max(-this.winThreshold, Math.min(this.winThreshold, this.ropePosition));
     }
 
-    // Update player positions based on rope
+    // maj positions
     for (const player of players) {
       if (player.alive) {
         const offset = this.ropePosition * 0.5;
@@ -102,18 +97,18 @@ class TugOfWar {
       }
     }
 
-    // Check win condition
+    
     if (Math.abs(this.ropePosition) >= this.winThreshold || this.timer <= 0) {
       if (!this.winnerDetermined) {
         this.winnerDetermined = true;
-        this.timer = 0; // Enforce zero if someone won early
+        this.timer = 0;
 
         if (this.ropePosition > 0) {
           this.winningTeam = 1;
         } else if (this.ropePosition < 0) {
           this.winningTeam = 2;
         } else {
-          this.winningTeam = 0; // Tie
+          this.winningTeam = 0; 
         }
         
         let losingTeam = this.winningTeam === 1 ? 2 : (this.winningTeam === 2 ? 1 : 0);

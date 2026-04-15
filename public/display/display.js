@@ -1,14 +1,10 @@
-/**
- * Squid Amphi — Display Client
- * Connects to server and drives the renderer
- */
 (function () {
   const socket = io();
-  window.socket = socket; // Expose globally for debug menu
+  window.socket = socket;
   const canvas = document.getElementById('game-canvas');
   const renderer = new Renderer(canvas);
 
-  // Screen elements
+  
   const screens = {
     lobby: document.getElementById('lobby-screen'),
     betting: document.getElementById('betting-screen'),
@@ -26,43 +22,43 @@
   let lastPhase = null;
   let rouletteAnimationFrame = null;
   
-  // Game state tracking for SFX
+  
   let lastGreenLight = null;
   let lastWarning = null;
   let lastTimerValue = null;
   let lastCountdownValue = null;
 
-  // Simple quintic out easing for the roulette (mimics cubic-bezier(0.1, 0, 0.1, 1))
+  
   function easeOut(t) {
     return 1 - Math.pow(1 - t, 4);
   }
 
-  // Init audio on first user interaction (required by browsers)
+  
   document.addEventListener('click', () => { 
     window.soundManager.init(); 
     document.getElementById('audio-unlock')?.remove();
   }, { once: true });
   document.addEventListener('keydown', () => { window.soundManager.init(); }, { once: true });
 
-  // Register as display
+  
   socket.emit('register-display');
 
-  // Generate join URL
+  
   const protocol = window.location.protocol;
   const host = window.location.host;
   const joinUrl = `${protocol}//${host}/play`;
   document.getElementById('join-url-display').textContent = joinUrl;
 
-  // Generate QR code
+  
   generateQR(joinUrl);
 
-  // Start button (admin control)
+  
   const btnStart = document.getElementById('btn-start');
   btnStart.addEventListener('click', () => {
     socket.emit('admin-start');
   });
 
-  // Also allow keyboard shortcuts for admin
+  
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       socket.emit('admin-start');
@@ -79,20 +75,20 @@
     socket.emit('admin-reset');
   });
 
-  // Bot control
+  
   document.getElementById('btn-add-bots')?.addEventListener('click', () => {
     const count = parseInt(document.getElementById('bot-count').value) || 5;
     socket.emit('admin-add-bots', { count });
   });
 
-  // Handle phase changes
+  
   socket.on('phase', (data) => {
     showScreen(data.phase);
 
-    // Trigger audio for the new phase
+    
     if (data.phase !== lastPhase) {
       lastPhase = data.phase;
-      // Pass the whole data object to handle game-specific music in 'playing' phase
+      
       window.soundManager.onPhaseChange(data.phase, data.currentGame);
     }
     if (data.phase === 'countdown' && data.currentGame) {
@@ -103,7 +99,7 @@
     }
   });
 
-  // Handle player list updates
+  
   socket.on('player-list', (list) => {
     updatePlayerList(list);
     document.getElementById('player-count-num').textContent = list.length;
@@ -111,11 +107,11 @@
     window.soundManager.playSfxPlayerJoin();
   });
 
-  // Main game state — 30fps
+  
   socket.on('game-state', (state) => {
     currentState = state;
 
-    // Check for newly eliminated players
+    
     if (state.players) {
       const currentAlive = new Set(
         state.players.filter(p => p.alive).map(p => p.id)
@@ -132,26 +128,26 @@
       previousAlivePlayers = currentAlive;
     }
 
-    // Update HUD
+    
     if (state.phase === 'playing') {
       document.getElementById('hud-alive').textContent =
         `${state.alivePlayers} survivants`;
 
-      // Game-specific HUD center
+      
       const hc = document.getElementById('hud-center');
       if (state.currentGame && state.currentGame.state) {
         if (state.currentGame.name === 'Jeu Final') {
-          hc.style.display = 'none'; // Use pure native canvas timer for RPS without interference
+          hc.style.display = 'none';
         } else {
           hc.style.display = 'block';
         }
 
         const gs = state.currentGame.state;
         if (gs.greenLight !== undefined) {
-          // Red Light Green Light
-          hc.innerHTML = ''; // Visuals are handled completely by the Canvas rendering
+          
+          hc.innerHTML = '';
             
-          // Audio Sync — Trigger SFX on change
+          
           if (gs.greenLight !== lastGreenLight) {
               if (gs.greenLight) {
                   window.soundManager.playDollSong(gs.phaseTimer);
@@ -167,10 +163,10 @@
           }
           lastWarning = gs.warning;
         } else if (gs.timer !== undefined) {
-          // General timer games (Tug of War, Glass Bridge, etc)
+          
           hc.textContent = `${gs.timer}s`;
           
-          // Sound on each second change
+          
           if (gs.timer !== lastTimerValue && gs.timer <= 10) {
               window.soundManager.playTick(0.15);
               lastTimerValue = gs.timer;
@@ -181,7 +177,7 @@
       }
     }
 
-    // Update explanation
+    // explication
     if (state.phase === 'explanation') {
       if (state.currentGame) {
         document.getElementById('expl-game-name').textContent = state.currentGame.name || 'Jeu Inconnu';
@@ -191,7 +187,7 @@
       document.getElementById('expl-timer').textContent = state.explanation;
     }
 
-    // Update countdown
+    
     if (state.phase === 'countdown') {
       const countdownEl = document.getElementById('countdown-number');
       if (state.countdown !== lastCountdownValue) {
@@ -208,10 +204,10 @@
         `${state.alivePlayers} joueurs en lice`;
     }
 
-    // Transition: Piggy Bank
+    
     if (state.phase === 'transition_bank') {
       const bankEl = document.getElementById('prize-pool');
-      // Only start animation once per phase entry
+      
       if (!bankEl.hasAttribute('data-animating')) {
         bankEl.setAttribute('data-animating', 'true');
         document.getElementById('bank-eliminated').textContent = `+ ${state.eliminatedThisRoundCount} joueurs éliminés`;
@@ -234,7 +230,7 @@
         }
         requestAnimationFrame(updateBank);
 
-        // Falling Money Animation
+        
         function spawnMoney() {
           if(!bankEl.hasAttribute('data-animating')) return;
           const rain = document.getElementById('money-rain-container');
@@ -248,7 +244,7 @@
           bill.style.animationDuration = duration + 's';
           rain.appendChild(bill);
           
-          // Sound effect for each item falling
+          
           window.soundManager.playTick(0.1); 
 
           setTimeout(() => {
@@ -266,14 +262,14 @@
       if (rain) rain.innerHTML = '';
     }
 
-    // Transition: Memorial Grid
+    
     if (state.phase === 'transition_dead') {
       const grid = document.getElementById('memorial-grid');
       if (!grid.hasAttribute('data-rendered')) {
         grid.setAttribute('data-rendered', 'true');
         grid.innerHTML = '';
         
-        // Find participants: those who survived, plus those who died this round
+        
         const survivors = state.players ? state.players.filter(p => p.alive) : [];
         const deadThisRound = state.eliminatedDetails || [];
         
@@ -281,12 +277,12 @@
         survivors.forEach(p => allParticipants.push({ ...p, justDied: false }));
         deadThisRound.forEach(p => allParticipants.push({ ...p, justDied: true }));
         
-        // Sort by number
+        
         allParticipants.sort((a, b) => a.number - b.number);
 
         const count = allParticipants.length;
         if (count > 0) {
-            // Adjust Grid Columns dynamically to fit the 16:9 screen
+            
             const cols = Math.ceil(Math.sqrt(count * (16/9)));
             const rows = Math.ceil(count / cols);
             grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
@@ -300,12 +296,12 @@
               pDiv.style.animationDelay = `${(i % cols) * 0.08}s`;
               
               if (p.justDied) {
-                // Trigger death animation slowly after the interface appears
+                
                 setTimeout(() => {
                   pDiv.classList.add('eliminated-anim');
-                  // Deep boom when they turn grey
-                  window.soundManager.playTick(0.3); // High-pitched tick for tile
-                  window.soundManager.playNote(60, 'sine', window.soundManager.ctx.currentTime, 0.5, 0.4); // Deep boom
+                  
+                  window.soundManager.playTick(0.3); 
+                  window.soundManager.playNote(60, 'sine', window.soundManager.ctx.currentTime, 0.5, 0.4); 
                 }, 1500 + (i * 120)); // staggered rhythm
               }
               
@@ -320,7 +316,7 @@
       if (grid) grid.removeAttribute('data-rendered');
     }
 
-    // Transition: Roulette
+    
     if (state.phase === 'transition_roulette') {
       const reel = document.getElementById('roulette-reel');
       if (!reel.hasAttribute('data-animating')) {
@@ -330,7 +326,7 @@
         const fakeGames = ['Labyrinthe Mortel', 'Cache-cache Acide', 'Pluie de Flèches', 'Saut de la Foi', 'Les 7 Portes', 'Le Gouffre'];
         const pool = (state.allGameNames || []).concat(fakeGames);
         if (pool.length === 0) pool.push('Jeu Inconnu');
-        const totalFiller = 50; // More items for more "ticks"
+        const totalFiller = 50; 
         
         for (let i = 0; i < totalFiller; i++) {
           const item = document.createElement('div');
@@ -355,7 +351,7 @@
 
         // JS-driven animation for sound sync
         let start = null;
-        const duration = 6500; // Longer for more suspense
+        const duration = 6500; 
         const targetScroll = totalFiller * 80 - 80;
         let lastTickIndex = -1;
 
@@ -367,10 +363,10 @@
           
           reel.style.transform = `translateY(-${currentY}px)`;
           
-          // Sound trigger on each item boundary
+          
           const currentTickIndex = Math.floor(currentY / 80);
           if (currentTickIndex !== lastTickIndex) {
-            // Speed-dependent volume/pitch could be added here
+            
             window.soundManager.playTick(0.2 * (1 - progress * 0.8)); 
             lastTickIndex = currentTickIndex;
           }
@@ -378,14 +374,14 @@
           if (progress < 1 && state.phase === 'transition_roulette') {
             rouletteAnimationFrame = requestAnimationFrame(animate);
           } else if (progress >= 1) {
-             // Final landing sound if not already played
-             // Final cleanup if needed
+             
+             
           }
         };
         rouletteAnimationFrame = requestAnimationFrame(animate);
       }
     } else {
-      // Reset roulette when not in phase
+      
       const reel = document.getElementById('roulette-reel');
       if (reel) {
          reel.removeAttribute('data-animating');
@@ -397,7 +393,7 @@
       }
     }
 
-    // Game over
+    
     if (state.phase === 'gameover') {
       const alive = state.players.filter(p => p.alive);
       if (alive.length > 0) {
@@ -424,7 +420,7 @@
       }
     }
 
-    // Update Betting status
+    
     if (state.phase === 'betting') {
        const banner = document.getElementById('betting-status');
        if (banner) {
@@ -432,7 +428,7 @@
        }
     }
 
-    // Render players in all game phases (starting from countdown)
+    
     if (state.phase !== 'lobby' && state.phase !== 'betting') {
       renderer.render(state);
     }
