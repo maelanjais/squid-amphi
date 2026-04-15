@@ -203,21 +203,21 @@ Voici une modélisation arborescente du cerveau du bot :
 
 ```mermaid
 graph TD
-    A[Appel botThink(gs)] --> B{Quel est le jeu courant ?}
-    B -->|RLGL| C(Red Light / Green Light)
-    B -->|TugOfWar| D(Corde)
-    B -->|GlassBridge| E(Pont)
-    B -->|Jeu Final| F(PFC)
+    A["Appel botThink(gs)"] --> B{"Quel est le jeu courant ?"}
+    B -->|RLGL| C("Red Light / Green Light")
+    B -->|TugOfWar| D("Corde")
+    B -->|GlassBridge| E("Pont")
+    B -->|Jeu Final| F("PFC")
     
-    C --> C1{Feu Vert ?}
-    C1 -->|OUI| C2[Bouger avec erreur 30%]
-    C1 -->|NON| C3[Glisser (Mort provoquée) à 0.3%]
+    C --> C1{"Feu Vert ?"}
+    C1 -->|OUI| C2["Bouger avec erreur 30%"]
+    C1 -->|NON| C3["Glisser (Mort provoquée) à 0.3%"]
     
-    D --> D1[Tapoter Aléatoirement : 45% de probabilité par appel]
+    D --> D1["Tapoter Aléatoirement : 45% de probabilité par appel"]
     
-    E --> E1{Panneau du pont révélé?}
-    E1 -->|OUI| E2[Choix certain (Aucun risque)]
-    E1 -->|NON| E3[RNG (Pile ou face = 50% mort)]
+    E --> E1{"Panneau du pont révélé?"}
+    E1 -->|OUI| E2["Choix certain (Aucun risque)"]
+    E1 -->|NON| E3["RNG (Pile ou face = 50% mort)"]
 ```
 
 > **Astuce de Botting** : Les variables parasites (Les jeux annulés Duel Final / Dalgona) provoquaient des embranchements morts. Leur récente suppression a optimisé le Garbage Collector (V8 Engine) pour NodeJS et rendu la routine comportementale ultra-performante.
@@ -249,10 +249,7 @@ pie
 ### 6.2. Le Tir à la Corde (`TugOfWar.js`)
 Calculs mathématiques linéaires et asymétrie impaire.
 
-- **Désintégration de Parité** : Si l'effectif survivant à ce stade est impair (ex. 19 survivants), pour éviter le déséquilibre mathématique insurmontable flagrant, le serveur choisit un **Bot** au hasard et invoque `bot.eliminate()` discrètement, recalibrant le jeu à `9 vs 9`.
-- **Mécanique Linéaire Vectorielle** : Un seul repère 1D appelé `ropePosition` [-100, 100]. Il subit un amortissement drastique (`decay = 2`), tirant inlassablement la corde vers l'axe `0`.
-- **Force de Frappe (Tap)** : L'envoie du WebSocket `{type: 'tap'}` déclenche l'implémentation de la fonction pas-à-pas de l'équipe (Gauche ajoute `-3`, Droite ajoute `+3`.). L'équipe qui amène le marqueur à son repaire (`±100`) annihile complètement la liste adverse via un `.forEach()`.
-
+- **Désintégration de Parité** : Si l'effectif survivant à ce stade est impair (ex. 19 survivants), pour éviter le déséquilibre mathématique insurmontable flagrant, le serveur choisit un **Bot** au hasard et invoque `bot.eliminate()` discrètement, recalibrant le jeu à `9 vs 9`.g
 ### 6.3. Le Pont de Verre (`GlassBridge.js`)
 Structure asynchrone type Arbre Graph Queue (FiLO).
 
@@ -308,18 +305,18 @@ Le projet a renié la balise dépressive `<audio autoplay>` classique, jugée in
 ### L'Automate de Mixage (Mixer Routing Graph)
 ```mermaid
 graph LR
-    O(File Loader) --> C1[Source Audio Node]
-    F(Synthesizeur Interne) --> C2[Oscillator Node]
+    O("File Loader") --> C1["Source Audio Node"]
+    F("Synthesizeur Interne") --> C2["Oscillator Node"]
     
-    C1 --> M1[Music Gain Node Volume]
-    C1 -.-> M3[Auxiliaire SFX Gain]
-    C2 --> M2[SFX Gain Node Volume]
+    C1 --> M1["Music Gain Node Volume"]
+    C1 -.-> M3["Auxiliaire SFX Gain"]
+    C2 --> M2["SFX Gain Node Volume"]
     
-    M1 --> MASTER[Gain Master Node (1.0)]
+    M1 --> MASTER["Gain Master Node (1.0)"]
     M2 --> MASTER
     M3 --> MASTER
     
-    MASTER --> DST[Speakers/Amplificateur Amphi]
+    MASTER --> DST["Speakers/Amplificateur Amphi"]
 ```
 
 #### Fondus Audio Professionnels (`LinearRampToValueAtTime()`)
