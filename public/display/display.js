@@ -134,7 +134,8 @@
             renderer.addElimEffect(player.x, player.y);
             
             let playShotgun = false;
-            if (latestGameInfo.name === 'Le Pont de Verre') {
+            const shotgunGames = ['1, 2, 3… Soleil !', 'Le Jeu de la Corde', 'Le Pont de Verre'];
+            if (shotgunGames.includes(latestGameInfo.name)) {
                 playShotgun = true;
             } else if (latestGameInfo.name === 'Jeu Final' && latestGameInfo.roundNumber >= latestGameInfo.totalRounds && latestGameInfo.totalRounds > 0) {
                 playShotgun = true;
