@@ -2,97 +2,53 @@
 
 **50 JOUEURS. 1 SEUL SURVIVANT.**
 
-Squid Amphi est un jeu multijoueur inspiré de Squid Game, conçu pour être joué dans un amphithéâtre avec jusqu'à 50 personnes en simultané. Le grand écran de l'amphi affiche l'arène de jeu, et chaque joueur utilise son téléphone comme manette.
+Squid Amphi est un jeu multijoueur inspiré de *Squid Game*, conçu pour être joué dans un amphithéâtre ou sur écran géant avec un large public de participants. Le grand écran de l'amphi affiche le terrain de jeu et les morts en temps réel, tandis que chaque joueur utilise son **propre téléphone comme manette intelligente**.
 
-> **TP4A-G2** : JAHIER Maëlan, GRILLOT Thomas, SALLE-PIERRET Maxence
+> **Auteurs** : JAHIER Maëlan, GRILLOT Thomas, SALLE-PIERRET Maxence  
+> **Projet Universitaire** : BUT 2 - Architecture logicielle et web temps-réel
 
-## 🎮 Comment jouer ?
+---
 
-### Grand Écran (Projecteur)
-1. Lancer le serveur : `npm start`
-2. Ouvrir `http://localhost:3000/` sur le PC connecté au projecteur
-3. Le lobby s'affiche avec un QR code
+## 🎮 Le Concept et le Support
 
-### Téléphone (Manette)
-1. Scanner le QR code ou aller sur l'URL affichée (`/play`)
-2. Entrer un pseudo et rejoindre
-3. Utiliser les contrôles tactiles :
-   - **Toucher** = courir
-   - **Glisser** = diriger
-   - **Lâcher** = s'arrêter
+Le système se compose de deux parties :
+- **Grand Écran (Display)** : Projeté à l'amphithéâtre. C'est l'écran de visionnage du jeu.
+- **Téléphone (Manette)** : Les joueurs se connectent via un **QR code** au jeu. L'interface tactile de leur téléphone change *en direct* pour s'adapter mécaniquement au mini-jeu en cours. 
 
-### Lancer la partie
-- Appuyer sur **COMMENCER LE JEU** sur le grand écran (ou touche Entrée)
-- Les 6 épreuves se lancent les unes après les autres
+## 🏆 Les 4 Épreuves de la Mort
 
-## 🏆 Les 6 Épreuves
+Les joueurs se voient affronter 4 épreuves mortelles, éliminatoires à la chaîne. La partie se termine que lorsqu'un ultime survivant en ressort.
 
-| # | Épreuve | Contrôle | Description |
-|---|---------|----------|-------------|
-| 1 | 🚦 1, 2, 3 Soleil | Toucher/Lâcher + Glisser | Courir vers la ligne. Stop au feu rouge ! |
-| 2 | 🪢 Jeu de la Corde | Tap rapide | 2 équipes, tapez vite pour tirer ! |
-| 3 | 🎠 Jeu du Manège | Joystick | Formez des groupes du bon nombre |
-| 4 | 🌙 Bataille du Dortoir | Joystick + Attaque | Combat dans le noir, 3 PV |
-| 5 | 🌉 Pont de Verre | Gauche/Droite | Choisissez la bonne dalle ! |
-| 6 | ⚔️ Duel Final | Swipe | Poussez les adversaires hors du cercle |
+| # | Épreuve | Objectif | Type de Contrôle Manette |
+|---|---------|-------------|----------|
+| 1 | 🚦 1, 2, 3 Soleil ! | Franchissez la ligne rouge en évitant d'être chopé en mouvement. | **Toucher-maintenir** pour courir |
+| 2 | 🪢 Le Jeu de la Corde | Combat asymétrique ; tirez l'équipe adverse dans le vide. | **Pianoter (Tap)** très rapidement |
+| 3 | 🌉 Le Pont de Verre | 50% de chance. Choisissez la bonne plaque ou tombez dans le vide. | **Choix Binaire** (Gauche / Droite) |
+| 4 | ⚔️ Le Jeu Final (Pierre-Feuille-Ciseaux) | Tournoi éliminatoire à base de RPS avec un bracket live interactif. | **Trois Boutons** classiques |
 
-## 🛠️ Installation
+---
 
-```bash
-# Cloner le projet
-git clone https://git.iut-orsay.fr/mjahier/saes4.git
-cd saes4
+## 🎲 Autres Fonctionnalités Clés
 
-# Installer les dépendances
-npm install
+- 💰 **Système de Paris** : En début de partie, chaque participant doit parier sur un autre joueur. S'ils meurent, ils peuvent tout de même gagner une reconnaissance finale si leur poulain l'emporte !
+- 🤖 **Bot IA Inclus** : Le jeu peut être rempli de bots (intelligences artificielles) pour palier le manque de joueurs.
+- 🎵 **Sound Design complet** : Le jeu possède des ambiances variables, des fondus audio et des sons lors des éliminations (ex: effet Fusil à pompe dans certaines phases).
 
-# Lancer le serveur
-npm start
-# ou en mode développement (avec rechargement auto)
-npm run dev
-```
+---
 
-Le serveur démarre sur le **port 3000** par défaut.
+## 📖 Documentations Complémentaires
 
-## 📁 Structure du projet
+Le projet étant vaste, la documentation a été éclatée en dossiers pour que les lecteurs s'y retrouvent :
+- **[A lire pour le mode d'emploi de Déploiement (VM & Local) 👉 `DEPLOYMENT.md`](./DEPLOYMENT.md)**
+- **[Documentation complète, code, architecture réseau et détails d'implémentation 👉 `DOCUMENTATION.md`](./DOCUMENTATION.md)**
 
-```
-saes4/
-├── server/
-│   ├── index.js              # Serveur Express + Socket.IO
-│   ├── GameManager.js         # Gestion du jeu (lobby, transitions)
-│   ├── Player.js              # Entité joueur
-│   └── games/                 # Les 6 mini-jeux
-│       ├── RedLightGreenLight.js
-│       ├── TugOfWar.js
-│       ├── GroupGame.js
-│       ├── NightFight.js
-│       ├── GlassBridge.js
-│       └── FinalDuel.js
-├── public/
-│   ├── display/               # Grand écran (Canvas 2D)
-│   │   ├── index.html
-│   │   ├── display.js
-│   │   └── renderer.js
-│   ├── controller/            # Téléphone-manette
-│   │   ├── index.html
-│   │   └── controller.js
-│   └── css/
-│       ├── display.css
-│       └── controller.css
-└── package.json
-```
+---
 
-## 🔧 Technologies
+## ⌨️ Raccourcis Administrateur Secrêts (Grand Écran)
 
-- **Backend** : Node.js, Express, Socket.IO
-- **Frontend** : HTML5 Canvas, Vanilla JavaScript, CSS3
-- **QR Code** : `qrcode` (npm)
-- **Contrôles** : Touch Events API, Vibration API
-
-## ⌨️ Raccourcis Admin (Grand Écran)
+Le claviériste côté serveur dispose de touches secrètes cachées dans la page :
 
 | Touche | Action |
 |--------|--------|
-| `Entrée` / `Espace` | Démarrer la partie |
-| `S` | Passer l'épreuve en cours |
+| `D` | Ouvre/ferme la boite d'administration globale secrète |
+| `R` | Bouton physique - Reset complet des parties et de la file d'attente |

@@ -237,6 +237,36 @@ class SoundManager {
     this.playNote(50, 'sine', this.ctx.currentTime, 0.8, 0.4); 
   }
 
+  playSfxShotgun() {
+    if (!this.initialized) return;
+    const audio = new Audio('/audio/pump-shotgun-fortnite-loud.mp3');
+    
+    audio.addEventListener('loadedmetadata', () => {
+        if (this.ctx) {
+           const source = this.ctx.createMediaElementSource(audio);
+           const gainNode = this.ctx.createGain();
+           
+           const now = this.ctx.currentTime;
+           gainNode.gain.setValueAtTime(1, now);
+           // Démarre le fondu de sortie (fade out) à 1.5 secondes
+           gainNode.gain.setValueAtTime(1, now + 1.5);
+           // Termine le fondu à 2.0 secondes
+           gainNode.gain.linearRampToValueAtTime(0.001, now + 2.0);
+           
+           source.connect(gainNode);
+           gainNode.connect(this.sfxGain);
+        }
+        
+        audio.play().catch(e => console.warn(e));
+        
+        // Stopper le son complètement après ~2.1 secondes pour éviter le reste du clip
+        setTimeout(() => {
+            audio.pause();
+            audio.src = "";
+        }, 2100);
+    });
+  }
+
   playTick(volume = 0.15) {
     if (!this.ctx) return;
     this.playNote(1200, 'sine', this.ctx.currentTime, 0.05, volume); 

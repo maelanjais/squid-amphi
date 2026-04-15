@@ -14,10 +14,8 @@
   const ctrlAreas = {
     move: document.getElementById('ctrl-move'),
     tap: document.getElementById('ctrl-tap'),
-    'tap-and-move': document.getElementById('ctrl-tap-move'),
     choice: document.getElementById('ctrl-choice'),
-    rps: document.getElementById('ctrl-rps'),
-    'swipe-and-move': document.getElementById('ctrl-swipe')
+    rps: document.getElementById('ctrl-rps')
   };
 
   let playerInfo = null;
@@ -359,63 +357,7 @@
     });
   }
 
-  
-  const attackZone = document.getElementById('attack-zone');
-  if (attackZone) {
-    attackZone.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      attackZone.classList.add('attacking');
-      socket.emit('player-input', { type: 'tap' });
-      if (navigator.vibrate) navigator.vibrate(20);
-    });
-    attackZone.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      attackZone.classList.remove('attacking');
-    });
-  }
 
-  
-  const miniJoystickArea = document.getElementById('mini-joystick-area');
-  if (miniJoystickArea) {
-    let miniTouch = null;
-    let miniOrigin = null;
-
-    miniJoystickArea.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      const t = e.touches[0];
-      miniTouch = { id: t.identifier };
-      miniOrigin = { x: t.clientX, y: t.clientY };
-      socket.emit('player-input', { type: 'move', pressing: true, dirX: 0, dirY: 0 });
-    });
-
-    miniJoystickArea.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      if (!miniTouch || !miniOrigin) return;
-      const t = Array.from(e.touches).find(t => t.identifier === miniTouch.id);
-      if (!t) return;
-
-      const dx = t.clientX - miniOrigin.x;
-      const dy = t.clientY - miniOrigin.y;
-      socket.emit('player-input', { type: 'move', pressing: true, dirX: dx, dirY: dy });
-
-      const maxDist = 40;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const clampedDist = Math.min(dist, maxDist);
-      const normX = dist > 0 ? (dx / dist) * clampedDist : 0;
-      const normY = dist > 0 ? (dy / dist) * clampedDist : 0;
-      const thumb = document.getElementById('mini-joystick-thumb');
-      if (thumb) thumb.style.transform = `translate(${normX}px, ${normY}px)`;
-    });
-
-    miniJoystickArea.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      miniTouch = null;
-      miniOrigin = null;
-      socket.emit('player-input', { type: 'move', pressing: false });
-      const thumb = document.getElementById('mini-joystick-thumb');
-      if (thumb) thumb.style.transform = '';
-    });
-  }
 
   
   document.getElementById('btn-left')?.addEventListener('click', () => {
@@ -513,16 +455,6 @@
         inst.innerHTML = `Avancement : ${gs.progress}%<br>TOUCHER pour courir<br>GLISSER pour diriger`;
       } else {
         inst.innerHTML = 'TOUCHER pour courir<br>GLISSER pour diriger';
-      }
-    }
-
-    if (gs.controls === 'tap-and-move') {
-      const hpBar = document.getElementById('hp-bar');
-      const hpText = document.getElementById('hp-text');
-      if (hpBar && gs.hp !== undefined) {
-        hpBar.style.width = `${(gs.hp / gs.maxHP) * 100}%`;
-        hpBar.style.background = gs.hp > 1 ? '#39e75f' : '#ff3b3b';
-        hpText.textContent = `PV: ${gs.hp}/${gs.maxHP}`;
       }
     }
 

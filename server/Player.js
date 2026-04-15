@@ -72,10 +72,6 @@ class Player {
     } else if (data.type === 'choice') {
       // pont de verre
       this.input.choice = data.choice; // 'left' or 'right'
-    } else if (data.type === 'swipe') {
-      // duel final
-      this.input.swipeX = data.swipeX;
-      this.input.swipeY = data.swipeY;
     }
   }
 

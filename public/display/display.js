@@ -21,6 +21,9 @@
   let previousAlivePlayers = new Set();
   let lastPhase = null;
   let rouletteAnimationFrame = null;
+
+  // Tracking persistant du dernier jeu pour les morts de fin de manche (quand state.currentGame devient null)
+  let latestGameInfo = { name: null, roundNumber: 0, totalRounds: 0 };
   
   
   let lastGreenLight = null;
@@ -112,6 +115,14 @@
     currentState = state;
 
     
+    if (state.currentGame) {
+      latestGameInfo.name = state.currentGame.name;
+      if (state.currentGame.state) {
+        latestGameInfo.roundNumber = state.currentGame.state.roundNumber || 0;
+        latestGameInfo.totalRounds = state.currentGame.state.totalRoundsEstimate || 0;
+      }
+    }
+
     if (state.players) {
       const currentAlive = new Set(
         state.players.filter(p => p.alive).map(p => p.id)
@@ -121,7 +132,19 @@
           const player = state.players.find(p => p.id === id);
           if (player) {
             renderer.addElimEffect(player.x, player.y);
-            window.soundManager.playSfxElimination();
+            
+            let playShotgun = false;
+            if (latestGameInfo.name === 'Le Pont de Verre') {
+                playShotgun = true;
+            } else if (latestGameInfo.name === 'Jeu Final' && latestGameInfo.roundNumber >= latestGameInfo.totalRounds && latestGameInfo.totalRounds > 0) {
+                playShotgun = true;
+            }
+
+            if (playShotgun) {
+                window.soundManager.playSfxShotgun();
+            } else {
+                window.soundManager.playSfxElimination();
+            }
           }
         }
       }

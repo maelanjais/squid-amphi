@@ -1,579 +1,359 @@
-# 📖 Documentation Technique — Squid Amphi
+# 📖 Documentation Ultime & Détaillée — Squid Amphi
 
-> **Auteurs** : JAHIER Maëlan, GRILLOT Thomas, SALLE-PIERRET Maxence  
-> **Version** : 1.0.0  
-> **Licence** : ISC
+> **Auteurs du Projet** : JAHIER Maëlan, GRILLOT Thomas, SALLE-PIERRET Maxence  
+> **Version du document** : 4.0.0 (Édition Intégrale, Graphes et Spécifications)  
+> **Licence de code** : ISC / Open Source Universitaire
 
----
-
-## Table des matières
-
-1. [Présentation du projet](#1-présentation-du-projet)
-2. [Architecture technique](#2-architecture-technique)
-3. [Installation et lancement](#3-installation-et-lancement)
-4. [Communication Client-Serveur](#4-communication-client-serveur)
-5. [Cycle de vie d'une partie](#5-cycle-de-vie-dune-partie)
-6. [Description des fichiers](#6-description-des-fichiers)
-7. [Les mini-jeux](#7-les-mini-jeux)
-8. [Système de paris](#8-système-de-paris)
-9. [Système de bots](#9-système-de-bots)
-10. [Rendu visuel (Display)](#10-rendu-visuel-display)
-11. [Contrôleur mobile](#11-contrôleur-mobile)
-12. [Audio](#12-audio)
-13. [Déploiement](#13-déploiement)
+## Préambule
+Ce document technique représente la ressource la plus exhaustive concernant l'architecture réseau, l'interface graphique, la couche de logique serveur physique et l'intégration du système "Squid Amphi". Ce projet simule une arène multijoueur synchrone sur navigateur, supportant jusqu'à 50 joueurs simultanés avec une résolution de `30 FPS` pour l'écran hôte, et `10 FPS` d'input pour réduire l'encombrement des routeurs WiFi (concept de client muet "Dumb Terminal").
 
 ---
 
-## 1. Présentation du projet
+## Sommaire Détaillé
 
-**Squid Amphi** est un jeu multijoueur en temps réel conçu pour être joué dans un amphithéâtre. Il s'inspire de la série *Squid Game* : les joueurs se connectent depuis leur smartphone (manette) et participent à une série de mini-jeux éliminatoires affichés sur un écran principal (vidéoprojecteur).
-
-### Principe général
-- Un **écran principal** (Display) est projeté et affiche le jeu en temps réel.
-- Chaque **joueur** se connecte via son téléphone en scannant un QR code.
-- Le téléphone devient une **manette** tactile adaptée à chaque mini-jeu.
-- Les joueurs s'éliminent au fil des épreuves jusqu'à ce qu'il n'en reste qu'un.
-
-### Technologies utilisées
-| Technologie | Rôle |
-|---|---|
-| **Node.js** | Serveur applicatif |
-| **Express** | Serveur HTTP, routes, fichiers statiques |
-| **Socket.IO** | Communication temps réel bidirectionnelle (WebSocket) |
-| **HTML5 Canvas** | Rendu 2D du jeu sur l'écran principal |
-| **QRCode** (npm) | Génération du QR code de connexion |
-| **CSS3** | Animations, design responsive |
-| **Google Fonts (Outfit)** | Typographie |
+1. [Topologie Réseau & Modèle Serveur-Autoritaire](#1-topologie-réseau--modèle-serveur-autoritaire)
+2. [Structure Fonctionnelle de l'Arborescence](#2-structure-fonctionnelle-de-larborescence)
+3. [Le Moteur Central : Server & GameManager](#3-le-moteur-central--server--gamemanager)
+4. [La Classe Joueur et la Gestion Mathématique des Déplacements](#4-la-classe-joueur-et-la-gestion-mathématique-des-déplacements)
+5. [Intelligence Artificielle Complète (Les Bots)](#5-intelligence-artificielle-complète-les-bots)
+6. [Étude Approfondie des Mini-Jeux](#6-étude-approfondie-des-mini-jeux)
+7. [Moteur Physique & Rendu Front-End (Le Déshabillage du Canvas)](#7-moteur-physique--rendu-front-end-le-déshabillage-du-canvas)
+8. [Ingénierie Audio Réactive & Routage via API WebAudio](#8-ingénierie-audio-réactive--routage-via-api-webaudio)
+9. [Interface Front-End Mobile (Controller tactile intelligent)](#9-interface-front-end-mobile-controller-tactile-intelligent)
 
 ---
 
-## 2. Architecture technique
+## 1. Topologie Réseau & Modèle Serveur-Autoritaire
 
-```
-squid-amphi/
-├── server/                     # 🖥️ Côté serveur (Node.js)
-│   ├── index.js                # Point d'entrée, Express + Socket.IO
-│   ├── GameManager.js          # Moteur de jeu central (boucle, phases, paris)
-│   ├── Player.js               # Classe Player (position, input, sérialisation)
-│   ├── BotPlayer.js            # Classe BotPlayer (IA des bots)
-│   └── games/                  # Mini-jeux
-│       ├── RedLightGreenLight.js   # 1, 2, 3… Soleil
-│       ├── TugOfWar.js             # Jeu de la Corde
-│       ├── GlassBridge.js          # Pont de Verre
-│       ├── RockPaperScissors.js    # Pierre-Feuille-Ciseaux (Jeu Final)
-│       └── FinalDuel.js            # Duel Final (non utilisé actuellement)
-├── public/                     # 📁 Fichiers statiques (clients)
-│   ├── display/                # Écran principal (projeté)
-│   │   ├── index.html          # Structure HTML du display
-│   │   ├── display.js          # Logique client du display (Socket.IO)
-│   │   ├── renderer.js         # Rendu Canvas 2D
-│   │   └── sounds.js           # Gestionnaire audio
-│   ├── controller/             # Manette mobile (téléphone)
-│   │   ├── index.html          # Structure HTML du contrôleur
-│   │   └── controller.js       # Logique client de la manette (Socket.IO)
-│   ├── css/
-│   │   ├── display.css         # Styles de l'écran principal
-│   │   └── controller.css      # Styles de la manette mobile
-│   ├── audio/                  # Fichiers audio (.mp3)
-│   └── assets/                 # Images et ressources
-├── simulate-players.js         # Script de simulation (test sans téléphones)
-├── package.json
-└── fly.toml                    # Configuration de déploiement (Fly.io)
+### 1.1 L'illusion du Multi-joueur (Dumb Terminals)
+
+Une application multi-joueur gérant 50 clients tactiles ne peut pas se permettre d'être du Peer-To-Peer. Chaque téléphone enverrait `30 updates` par seconde, détruisant tout routeur WiFi. 
+Le jeu implémente l'architecture du **Serveur Autoritaire (`Server-Authoritative Networking`)**.
+
+```mermaid
+sequenceDiagram
+    participant P1 as Player 1 (Manette)
+    participant S as Serveur (Node.js)
+    participant D as Display (Canvas)
+
+    P1->>S: [TouchEvent] {type: "move", pressing: true}
+    Note over S: Validation: Joueur vivant ? Phase = playing ?
+    S-->>S: Calcul P1.x += P1.vx * dt
+    S->>D: [game-state] {players: [{x: 42.1, y: 33.2}]} (30 fps)
+    S->>P1: [controller-state] {controls: "move"} (10 fps)
+    D-->>D: Render(Canvas)
 ```
 
-### Diagramme de communication
+1. **Serveur (GameManager / Node.js)** : Conserve en RAM (V8 Heap) la `Map` complète des joueurs. Il applique les règles, modifie les coordonnées X et Y à une virgule flottante près, gère l'avancée chronologique.
+2. **Smartphones (Controller)** : L'interface tactile est une coquille vide ("Dumb Terminal"). Un téléphone intercepte le doigt posé (`touchstart`), et envoie de simples instructions. Il n'envoie JAMAIS "Je suis au pixel [X,Y]". Cela empêche toute tricherie.
+3. **Le Display (Rendu Vidéo)** : Il s'agit d'un autre "Dumb Terminal", passif. Il écoute une boucle `setInterval()` serveur à 30 IPS et repeint l'écran.
 
+### 1.2 Format des Payloads et Tables d'Événements
+
+Voici le diagramme des échanges réseau gérés par Socket.io :
+
+```mermaid
+graph LR
+    subgraph Client Manette
+        M[Mobile Web]
+    end
+    
+    subgraph Client Display
+        E[Ecran Géant]
+    end
+    
+    subgraph Backend Serveur
+        S[Node.JS Socket.IO]
+    end
+
+    M -- "register-player {name}" --> S
+    M -- "player-input {dirX, dirY}" --> S
+    M -- "player-bet {id}" --> S
+    
+    S -- "controller-state" --> M
+    S -- "registered / eliminated" --> M
+    
+    S -- "game-state" --> E
+    E -- "admin-start / debug" --> S
 ```
-┌─────────────────┐       WebSocket        ┌──────────────────┐
-│   📱 Manette    │ ◄──────────────────────► │   🖥️ Serveur     │
-│  (controller)   │    player-input          │  (GameManager)   │
-│  /play          │    player-bet            │                  │
-│                 │    ◄── controller-state  │  Boucle 30 FPS   │
-└─────────────────┘                          │                  │
-                                             │  Phases:         │
-┌─────────────────┐       WebSocket          │  lobby → betting │
-│   📺 Display    │ ◄──────────────────────► │  → explanation   │
-│  (renderer)     │    game-state (30fps)    │  → countdown     │
-│  /              │    phase                 │  → playing       │
-│                 │    player-list           │  → transitions   │
-└─────────────────┘                          │  → gameover      │
-                                             └──────────────────┘
+
+| Événement | Direction | Fréquence | Contenu |
+|-----------|-----------|-----------|---------|
+| `game-state` | Serveur ➔ Display | 30 Hz | Tableau des objets joueurs, compteurs de minuteries, liste des évènements d'animations, état de la phase en cours. |
+| `controller-state` | Serveur ➔ Manettes | 10 Hz | Cible l'interface. `{ controls: "move", hp: 3 }` |
+| `player-input` | Manettes ➔ Serveur | Asynchrone | Pression tactile `{ type: 'move', dirX: 1, dirY: 0.5, pressing: true }` |
+| `player-bet` | Manettes ➔ Serveur | Asynchrone | Id de la carte cliquée en phase betting. |
+
+---
+
+## 2. Structure Fonctionnelle de l'Arborescence
+
+```text
+/server/                         -> Couche Métier Autoritaire
+   index.js                      -> Bind du socket TCP sur Port 3000
+   GameManager.js                -> L'automate à états finaux cadencé
+   Player.js                     -> Entités physiques, vecteurs, interpolants
+   BotPlayer.js                  -> Héritage direct, injectant une IA comportementale
+   /games/                       -> Les mécaniques strictes des épreuves
+      RedLightGreenLight.js      -> "123 Soleil" (Déplacements XY purs)
+      TugOfWar.js                -> "Tir à la Corde" (Parité impaire et math linéaire)
+      GlassBridge.js             -> "Pont de Verre" (Logique d'arbres FiLo asynchrone)
+      RockPaperScissors.js       -> "Pierre Feuille Ciseau" (Algorithmes de brackets 2^n)
+
+/public/                         -> Couche Présentation (Rendu et Capture d'Input)
+   /display/
+      index.html                 -> L'écran principal géant de projection
+      display.js                 -> Le chef d'orchestre des écrans (CSS classes switcher)
+      renderer.js                -> Le Canvas Graphic Pipeline Rendering
+      sounds.js                  -> Le moteur WebAudio avec CrossFading Multi-Noeuds
+   /controller/
+      index.html                 -> Front du téléphone (Mobile first)
+      controller.js              -> Gestion des TouchEvents natifs (sans 300ms delay)
+   /audio/                       -> Effets bruts (Tick, Fusil, OSTs)
+   /css/                         -> Décorations (Glassmorphism, Animations CSS)
 ```
 
 ---
 
-## 3. Installation et lancement
+## 3. Le Moteur Central : Server & GameManager
 
-### Prérequis
-- **Node.js** v18+ 
-- **npm** (inclus avec Node.js)
+Le `GameManager` (~700 lignes) coordonne tout le flot logique. Son horloge interne bat à environ 33.3ms.
 
-### Installation
-```bash
-git clone https://github.com/maelanjais/squid-amphi.git
-cd squid-amphi
-npm install
+### 3.1 La Boucle Majeure et Le Delta Time (`dt`)
+```javascript
+setInterval(() => this.gameLoop(), 1000 / 30); // 33.3ms Update Step
+```
+Le serveur utilise `Date.now()` pour déterminer un **Delta Time (dt)** réel :
+`let dt = (now - this.lastUpdate) / 1000;`
+Ce "dt" permet aux calculs mathématiques (comme `x = x + vitesse * dt`) d'être parfaits même si le processeur du serveur lague (par exemple, un Garbage Collection lourd de Node.JS). C'est la garantie d'une simulation Isotropique et Déterministe.
+
+### 3.2 Machine d'État Fini (FSM - Finite State Machine)
+
+L'automate d'état du serveur définit l'évolution globale de la partie.
+
+```mermaid
+stateDiagram-v2
+    [*] --> lobby: Lancement du Serveur
+    lobby --> betting: Tous connectés (Admin Start)
+    betting --> explanation: Tous les paris validés
+    
+    explanation --> countdown: Timer de 15 sec expiré
+    countdown --> playing: Timer de 3 sec expiré
+    
+    playing --> Transition_Bank: Le jeu .isFinished()
+    Transition_Bank --> Transition_Dead: Timer 7s expiré
+    Transition_Dead --> Transition_Roulette: Timer 10s expiré
+    
+    Transition_Roulette --> explanation: Plus d'un joueur en vie
+    Transition_Roulette --> gameover: 0 ou 1 joueur en vie
+    playing --> gameover: Destruction totale
+    
+    gameover --> [*]: Attente de relance
 ```
 
-### Lancement
-```bash
-npm start
-```
+### 3.3. Gestion Algorithmique des Cagnottes et Pronostiques
 
-Le serveur démarre sur le port `3000` (ou la variable d'environnement `PORT`).
+Au lancement, la `Phase Betting` capture `this.bets = new Map()`.
+À la fin de la partie (État `gameover`), l'algorithme `calculateBestBets()` évalue qui a eu le nez fin.
 
-| URL | Fonction |
-|---|---|
-| `http://localhost:3000/` | Écran principal (Display) |
-| `http://localhost:3000/play` | Manette mobile (Controller) |
-| `http://localhost:3000/api/qr?url=...` | API de génération de QR code |
-
-### Lancement en réseau local
-Pour que les téléphones puissent se connecter, il faut utiliser l'**adresse IP locale** de la machine qui exécute le serveur (pas `localhost`). Le QR code affiché à l'écran pointe automatiquement vers la bonne URL.
+**Algorithme de Résolution** :
+1. Tri de tous les joueurs pour créer un Classement Absolu : On compare d'abord `alive` (un vivant bat un mort), puis `roundDied` (quelqu'un mort au round 4 bat quelqu'un mort au round 2).
+2. On parcourt les parieurs :
+   - Si la cible est le gagnant final : Flag `"exact"` (Pari Parfait !).
+   - Sinon : On observe la cible pour assigner le prix consolation `"closest"` avec le rang exact.
 
 ---
 
-## 4. Communication Client-Serveur
+## 4. La Classe Joueur et la Gestion Mathématique des Déplacements
 
-### Protocole : Socket.IO (WebSocket)
-
-Toute la communication entre le serveur, l'écran principal et les manettes passe par **Socket.IO**. Voici les événements échangés :
-
-### Événements Serveur → Clients
-
-| Événement | Destinataire | Contenu | Fréquence |
-|---|---|---|---|
-| `game-state` | Display | État complet du jeu (joueurs, phase, scores, paris, etc.) | **30 fois/sec** |
-| `controller-state` | Chaque manette | État personnalisé (contrôles, position, timer) | **10 fois/sec** |
-| `phase` | Tous | Phase actuelle du jeu (lobby, playing, gameover, etc.) | À chaque changement |
-| `player-list` | Display | Liste mise à jour des joueurs connectés | À chaque connexion/déconnexion |
-| `start-betting` | Tous | Liste des joueurs vivants pour la phase de paris | 1 fois au début des paris |
-| `registered` | 1 manette | Confirmation d'inscription (id, numéro, couleur) | 1 fois à la connexion |
-| `eliminated` | 1 manette | Notification d'élimination du joueur | 1 fois à l'élimination |
-
-### Événements Clients → Serveur
-
-| Événement | Émetteur | Contenu | Description |
-|---|---|---|---|
-| `register-display` | Display | — | L'écran principal s'identifie |
-| `register-player` | Manette | `{ name }` | Un joueur rejoint la partie |
-| `player-input` | Manette | `{ type, pressing, dirX, dirY, ... }` | Input de gameplay (mouvement, tap, choix) |
-| `player-bet` | Manette | `{ targetId }` | Le joueur parie sur un autre joueur |
-| `admin-start` | Display | — | Lancer la partie |
-| `admin-reset` | Display | — | Réinitialiser la partie |
-| `admin-add-bots` | Display | `{ count }` | Ajouter des bots |
-| `admin-skip` | Display | — | Passer l'épreuve en cours |
-
-### Fonctions clés côté serveur
-
-#### `GameManager.handleConnection(socket)` 
-Enregistre les handlers Socket.IO pour chaque nouvelle connexion. Distingue les displays des joueurs.
-
-#### `GameManager.broadcastState(frameCount)` 
-Appelée à chaque tick (30fps). Sérialise l'état complet du jeu et l'envoie :
-- Au display : `game-state` à pleine fréquence
-- Aux manettes : `controller-state` à 10fps (1 frame sur 3), avec un état personnalisé par joueur
-
-#### `GameManager.broadcastPhase()` 
-Émet l'événement `phase` à tous les clients quand la phase du jeu change.
-
----
-
-## 5. Cycle de vie d'une partie
-
-### Diagramme des phases
-
-```
-LOBBY ──► BETTING ──► EXPLANATION ──► COUNTDOWN ──► PLAYING
-                                                       │
-                                         ┌─────────────┘
-                                         ▼
-                                   TRANSITION_BANK (7s)
-                                         │
-                                         ▼
-                                   TRANSITION_DEAD (10s)
-                                         │
-                                         ▼
-                                TRANSITION_ROULETTE (10s)
-                                         │
-                          ┌──────────────┤
-                          ▼              ▼
-                    EXPLANATION     GAME_OVER
-                    (jeu suivant)   (fin de partie)
-```
-
-### Description de chaque phase
-
-| Phase | Durée | Description |
-|---|---|---|
-| `lobby` | Illimitée | Les joueurs se connectent. Le QR code est affiché. L'admin peut ajouter des bots. |
-| `betting` | Jusqu'à ce que tous aient voté | Chaque joueur parie sur le futur vainqueur via son téléphone. |
-| `explanation` | 15 sec | L'écran affiche le nom et les règles du prochain mini-jeu. |
-| `countdown` | 3 sec | Décompte "3, 2, 1" avant le début du jeu. |
-| `playing` | Variable | Le mini-jeu est en cours. Les joueurs interagissent via leurs manettes. |
-| `transition_bank` | 7 sec | Animation de la "tirelire" : affiche le nombre d'éliminés et la cagnotte virtuelle. |
-| `transition_dead` | 10 sec | Grille mémorial : affiche les portraits des joueurs éliminés cette manche. |
-| `transition_roulette` | 10 sec | Animation de la roulette qui tourne et s'arrête sur le prochain jeu. |
-| `gameover` | Illimitée | Écran de victoire : nom du gagnant + résultat du meilleur pari. |
-
-### Enchaînement des jeux
-
-L'ordre des jeux est fixe et défini dans `GameManager.startNextGame()` :
-
-```
-1. 1, 2, 3… Soleil ! (RedLightGreenLight)
-2. Le Jeu de la Corde (TugOfWar)
-3. Le Pont de Verre (GlassBridge)
-4. Jeu Final — Pierre-Feuille-Ciseaux (RockPaperScissors)
-```
-
-La partie se termine dès qu'il reste **1 ou 0** joueur(s) en vie. Si tous les joueurs meurent dans une épreuve, l'écran de fin affiche "Aucun survivant".
-
-### Fonctions clés du cycle de vie
-
-#### `GameManager.gameLoop()`
-Boucle principale appelée **30 fois par seconde** via `setInterval`. Elle :
-1. Calcule le `dt` (delta time) depuis le dernier tick
-2. Gère les timers de chaque phase (explanation, countdown, transitions)
-3. Appelle `currentGame.update(dt, alivePlayers)` pendant la phase `playing`
-4. Détecte les éliminations et notifie les joueurs concernés
-5. Appelle `broadcastState()` à la fin de chaque tick
-
-#### `GameManager.startNextGame()`
-Incrémente l'index du jeu courant, vérifie si la partie est finie (≤1 joueur), instancie le prochain mini-jeu et passe en phase `EXPLANATION`.
-
-#### `GameManager.endCurrentGame()`
-Appelée quand un mini-jeu se termine. Elle :
-1. Calcule la cagnotte virtuelle (+100 000 par éliminé)
-2. Détermine le prochain jeu pour la roulette
-3. Lance la séquence de transitions (bank → dead → roulette)
-
----
-
-## 6. Description des fichiers
-
-### Serveur
-
-#### `server/index.js`
-Point d'entrée de l'application. Configure Express (routes `/` et `/play`, API QR code), crée le serveur HTTP, initialise Socket.IO et instancie le `GameManager`.
-
-#### `server/GameManager.js` (~700 lignes)
-C'est le **cerveau** du jeu. Il gère :
-- La connexion/déconnexion de tous les clients
-- L'inscription des joueurs et l'attribution des numéros
-- Le cycle de vie complet (phases, transitions, timers)
-- L'instanciation et la coordination des mini-jeux
-- Le système de paris et le calcul du classement final
-- La boucle de jeu à 30fps
-- La sérialisation et la diffusion de l'état à tous les clients
-
-#### `server/Player.js` (~120 lignes)
-Classe de base d'un joueur :
-- **Propriétés** : `id`, `name`, `number`, `x`, `y`, `vx`, `vy`, `speed`, `color`, `alive`, `team`, `score`, `roundDied`
-- **`processInput(data)`** : Traite les inputs reçus du contrôleur (mouvement, tap, choix, swipe)
-- **`update(dt, bounds)`** : Met à jour la position en fonction de la direction et de la vitesse
-- **`eliminate()`** : Marque le joueur comme mort et stoppe son mouvement
-- **`toJSON()`** : Sérialise le joueur pour l'envoi réseau
-- **`generateColor()`** : Attribue une couleur HSL unique via le nombre d'or (137.5°)
-
-#### `server/BotPlayer.js` (~135 lignes)
-Hérite de `Player`. Ajoute une IA simple pour chaque mini-jeu via `botThink()` :
-- **RLGL** : Se déplace pendant le feu vert (70% de chance), s'arrête pendant le rouge (99.7%)
-- **Tug of War** : Tape aléatoirement (40% de chance par tick)
-- **Glass Bridge** : Choisit le côté sûr si le panneau est révélé, sinon devine
-- **RPS** : Choisit aléatoirement pierre/feuille/ciseaux avec un délai humain simulé
-
-### Clients
-
-#### `public/display/display.js` (~500 lignes)
-Client Socket.IO de l'écran principal. Gère :
-- La connexion au serveur et l'événement `register-display`
-- La réception de `game-state` à 30fps et le rendu via `renderer.render(state)`
-- La gestion des écrans (lobby, betting, explanation, transitions, gameover)
-- L'animation de la roulette (JS-driven avec easing quintic)
-- La mise à jour de l'écran de fin (vainqueur + résultat du pari)
-- Les contrôles admin (boutons start, reset, ajout de bots)
-
-#### `public/display/renderer.js` (~820 lignes)
-Moteur de rendu Canvas 2D. Dessine :
-- Les joueurs (cercles colorés avec noms)
-- Le terrain de jeu adapté à chaque mini-jeu (finish line, pont, corde, etc.)
-- Le HUD (timer, compteur d'éliminés, cagnotte)
-- La grille mémorial des éliminés
-- Le tableau du tournoi Pierre-Feuille-Ciseaux (bracket interactif)
-
-#### `public/display/sounds.js` (~300+ lignes)
-Gestionnaire audio centralisé :
-- Charge et joue les musiques de fond (lobby, RLGL, Tug of War, RPS)
-- Gère les effets sonores (tick, countdown, élimination)
-- Fondus d'entrée/sortie (fade in/out) entre les phases
-- Groupes de musique par phase pour des transitions fluides
-
-#### `public/controller/controller.js` (~600 lignes)
-Client Socket.IO de la manette mobile. Gère :
-- L'inscription du joueur
-- L'envoi des inputs tactiles au serveur
-- L'affichage dynamique des contrôles selon le jeu :
-  - **Zone de mouvement** (RLGL) : touch + joystick
-  - **Zone de tap** (Tug of War) : tapotements rapides
-  - **Choix gauche/droite** (Glass Bridge) : deux boutons
-  - **Pierre/Feuille/Ciseaux** (RPS) : trois boutons
-- L'affichage des écrans de transition, élimination et victoire
-
----
-
-## 7. Les mini-jeux
-
-Chaque mini-jeu implémente l'interface suivante :
+Le fichier `Player.js` est le conteneur physique et de session TCP/WebSocket d'un client.
 
 ```javascript
-class MiniJeu {
-  constructor(arenaWidth, arenaHeight)  // Initialisation
-  setup(players)                        // Configuration des joueurs
-  start(players)                        // Début du jeu
-  update(dt, players) → { eliminated }  // Mise à jour (appelée 30x/sec)
-  isFinished() → boolean               // Le jeu est-il terminé ?
-  getState() → object                  // État pour le Display
-  getControllerState(player) → object  // État personnalisé par joueur
+class Player {
+    // Spatialization
+    this.x = spawn_x;
+    this.y = spawn_y;
+    this.vx = 0;   // Velocity X
+    this.vy = 0;   // Velocity Y
+    
+    // Status
+    this.alive = true;
+    this.color = generateHslColor(index); // Algorithme du nombre d'Or
 }
 ```
 
-### 7.1 — 1, 2, 3… Soleil ! (`RedLightGreenLight.js`)
+La méthode `.update(dt, bounds)` applique la cinématique vectorielle :
+La manette émet `{type: 'move', dirX: 0.8, pressing: true}` (donc, le Joystick vers la droite modérément).
 
-**Règle** : Les joueurs avancent vers la ligne d'arrivée en haut de l'écran. Quand le feu passe au rouge, tout joueur encore en mouvement est éliminé.
-
-**Mécanique serveur** :
-- Cycles vert/rouge aléatoires (vert : 2-5s, rouge : 3s)
-- Phase d'avertissement (`warning`) 1.5s avant le rouge
-- Durée totale : 90 secondes
-- Fin : tous les survivants ont franchi la ligne, ou le temps est écoulé (les retardataires sont éliminés)
-
-**Contrôles** : Maintenir l'écran pour avancer, relâcher pour s'arrêter. Joystick pour diriger.
-
-**État envoyé** : `greenLight`, `warning`, `finishLine`, `roundTimer`, `phaseTimer`
-
-### 7.2 — Le Jeu de la Corde (`TugOfWar.js`)
-
-**Règle** : Les joueurs sont répartis en 2 équipes. Ils doivent tapoter le plus vite possible pour tirer la corde de leur côté.
-
-**Mécanique serveur** :
-- Répartition aléatoire en 2 équipes
-- `ropePosition` varie de -100 à +100 (0 = centre)
-- Chaque tap d'un joueur déplace la corde de 3 unités vers son équipe
-- Décroissance naturelle vers le centre (`decay = 2`)
-- Fin : la corde atteint un seuil (`±100`) ou le temps est écoulé (20s)
-- L'équipe perdante est intégralement éliminée
-
-**Contrôles** : Tapoter l'écran le plus vite possible.
-
-**État envoyé** : `ropePosition`, `timer`, `winThreshold`, `winningTeam`
-
-### 7.3 — Le Pont de Verre (`GlassBridge.js`)
-
-**Règle** : Les joueurs passent un par un dans un ordre aléatoire (Fisher-Yates). À chaque étape, ils choisissent gauche ou droite. Un mauvais choix les élimine. Les panneaux déjà révélés sont visibles pour les suivants.
-
-**Mécanique serveur** :
-- Nombre d'étapes adapté : `max(6, floor(nbJoueurs × 0.9))`
-- Chaque panneau a un côté sûr aléatoire
-- Timer de 10 secondes par tour
-- Les survivants reviennent en fin de file et peuvent repasser si tous les panneaux ne sont pas révélés
-- Quand tous les panneaux sont révélés, tous les joueurs restants survivent
-
-**Contrôles** : Deux boutons "Gauche" / "Droite" quand c'est votre tour, sinon écran d'attente.
-
-**État envoyé** : `currentPlayerId`, `choosing`, `choiceTimer`, `panels` (révélés uniquement), `queue`, `playerResults`
-
-### 7.4 — Jeu Final : Pierre-Feuille-Ciseaux (`RockPaperScissors.js`)
-
-**Règle** : Tournoi à élimination directe. Les joueurs sont placés dans un arbre (bracket) et s'affrontent en duel. Le perdant est éliminé. En cas d'égalité, le duel est rejoué.
-
-**Mécanique serveur** :
-- Arbre de tournoi basé sur la puissance de 2 la plus proche
-- 3 sous-états : `bracket_full` (12s d'affichage), `countdown` (10s pour choisir), `resolution` (7s pour voir le résultat)
-- Gestion des "byes" (joueurs sans adversaire qui passent automatiquement)
-- Les gagnants sont avancés dans le bracket automatiquement
-- Les égalités déclenchent un nouveau countdown immédiat
-
-**Contrôles** : 3 boutons (🪨 Pierre, 📄 Feuille, ✂️ Ciseaux).
-
-**État envoyé** : `state`, `timer`, `roundNumber`, `bracketTree`, `matches`
+1. Normalisation vectorielle de l'inclinaison : 
+   `len = Math.sqrt(dirX*dirX + dirY*dirY);`
+2. Appui de vélocité capé à une constante `speed` calculée côté serveur.
+3. **Euler Integration** : `this.x += this.vx * dt;`
+4. **Collision Clamping** : Bloque le joueur aux bordures d'écran (`Math.max(bounds.min, x)`).
 
 ---
 
-## 8. Système de paris
+## 5. Intelligence Artificielle Complète (Les Bots)
 
-### Principe
-Avant le premier jeu, chaque joueur parie sur celui qu'il pense être le futur vainqueur. À la fin de la partie, le résultat est affiché sur l'écran final.
+### Architecture Fonctionnelle : Inheritance
+`BotPlayer` étend `Player`. Il agit physiquement comme un joueur réseau (mêmes propriétés spatiales).
+La subtilité réside dans son gestionnaire de comportement embarqué (`botThink(gameState)`), appelé une fois toutes les 6 frames par le `GameManager` (donc `5 Hz`) pour économiser des cycles serveurs.
 
-### Flux
+Voici une modélisation arborescente du cerveau du bot :
 
-1. **`startBettingPhase()`** : Le serveur passe en phase `BETTING`, les bots parient automatiquement sur un joueur aléatoire, puis la liste des joueurs est envoyée aux manettes via `start-betting`.
+```mermaid
+graph TD
+    A[Appel botThink(gs)] --> B{Quel est le jeu courant ?}
+    B -->|RLGL| C(Red Light / Green Light)
+    B -->|TugOfWar| D(Corde)
+    B -->|GlassBridge| E(Pont)
+    B -->|Jeu Final| F(PFC)
+    
+    C --> C1{Feu Vert ?}
+    C1 -->|OUI| C2[Bouger avec erreur 30%]
+    C1 -->|NON| C3[Glisser (Mort provoquée) à 0.3%]
+    
+    D --> D1[Tapoter Aléatoirement : 45% de probabilité par appel]
+    
+    E --> E1{Panneau du pont révélé?}
+    E1 -->|OUI| E2[Choix certain (Aucun risque)]
+    E1 -->|NON| E3[RNG (Pile ou face = 50% mort)]
+```
 
-2. **Sur le téléphone** : L'événement `start-betting` déclenche l'affichage d'une grille de cartes (mosaïque). Le joueur tape sur le joueur de son choix.
+> **Astuce de Botting** : Les variables parasites (Les jeux annulés Duel Final / Dalgona) provoquaient des embranchements morts. Leur récente suppression a optimisé le Garbage Collector (V8 Engine) pour NodeJS et rendu la routine comportementale ultra-performante.
 
-3. **`player-bet`** : Quand un joueur vote, le serveur enregistre son pari dans `this.bets` (Map : bettorId → targetId) et déclenche un `broadcastState()` immédiat pour mettre à jour le compteur de votes.
+---
 
-4. **`checkBettingComplete()`** : Vérifie si tous les joueurs vivants ont voté. Si oui, lance le premier jeu après un délai de 1.5s.
+## 6. Étude Approfondie des Mini-Jeux
 
-5. **`calculateBestBets()`** : Appelée quand la partie se termine. Algorithme :
-   - Construit un classement final (tri par `alive` puis par `roundDied` décroissant)
-   - Parcourt tous les paris :
-     - Si quelqu'un a parié sur le **vainqueur** → "Pronostic Parfait" (type `exact`)
-     - Sinon, le pari le plus proche = celui dont la cible a survécu le plus longtemps → "Meilleur Pronostic" (type `closest`) avec le rang final affiché
+Chaque partie dispose d'une classe d'encapsulation dédiée avec les principes de l'OOP, devant implémenter un contrat implicite contenant `.setup()`, `.start()`, `.update()`, `.isFinished()`, `.getState()` et `.getControllerState()`.
 
-### Données envoyées au display
+### 6.1. 1, 2, 3 Soleil (`RedLightGreenLight.js`)
+L'ancêtre intemporel impliquant l'horlogerie et les vecteurs de chocs.
 
+- **Vitesse serveur** : Calcul en continu.
+- **Le Random de Réni (Feux Tricolores)** : Les variables de temps sont tirées dynamiquement. Le vert dure aléatoirement de 2 à 5 secondes. Le "Warning" (l'orange) intervient brutalement avec 1.5s devant lui pour laisser aux joueurs le temps musculaire d'enlever leur doigt.
+- **Mathématique de Résolution et d'Exécution** : 
+  Si un joueur a `player.y > FinishLine` , le booléen `player.finished` devient Vrai, il est immunisé aux tirs.
+  Le serveur teste le vecteur des `players` en boucle :
+  `if (feuRouge && vectorVelocityLength > seuil) => player.eliminate();`
+
+```mermaid
+pie
+    title Raisons communes de décès en RLGL
+    "Dérapage sur le rouge" : 70
+    "Bousculade et accélération fausse" : 15
+    "Temps écoulé" : 15
+```
+
+### 6.2. Le Tir à la Corde (`TugOfWar.js`)
+Calculs mathématiques linéaires et asymétrie impaire.
+
+- **Désintégration de Parité** : Si l'effectif survivant à ce stade est impair (ex. 19 survivants), pour éviter le déséquilibre mathématique insurmontable flagrant, le serveur choisit un **Bot** au hasard et invoque `bot.eliminate()` discrètement, recalibrant le jeu à `9 vs 9`.
+- **Mécanique Linéaire Vectorielle** : Un seul repère 1D appelé `ropePosition` [-100, 100]. Il subit un amortissement drastique (`decay = 2`), tirant inlassablement la corde vers l'axe `0`.
+- **Force de Frappe (Tap)** : L'envoie du WebSocket `{type: 'tap'}` déclenche l'implémentation de la fonction pas-à-pas de l'équipe (Gauche ajoute `-3`, Droite ajoute `+3`.). L'équipe qui amène le marqueur à son repaire (`±100`) annihile complètement la liste adverse via un `.forEach()`.
+
+### 6.3. Le Pont de Verre (`GlassBridge.js`)
+Structure asynchrone type Arbre Graph Queue (FiLO).
+
+- La taille de l'épreuve est générée via les matrices (`max(6, ceil(Vivant * 0.9))`), garantissant toujours assez de dalles pour un minimum de fun.
+- Les dalles sont de simples objets JSON : `{safe: "left", revealed: false}`
+- Une Queue `this.queue` est un registre asynchrone bloquant. Le Joueur n°1 de la liste se trouve activé (L'input WebSocket de son front-end est débloqué pour recevoir `"choice"` - `left/right`). Le reste des joueurs regarde `"EN ATTENTE"`. 
+- Un simple `slice/unshift` est exécuté si la réponse n'amène pas à une élimination instantanée de son expéditeur. L'état `revealed` bascule à `True` garantissant la survie des membres suivant. 
+
+### 6.4. Pierre, Feuille, Ciseaux (Arbre de Tournoi) (`RockPaperScissors.js`)
+Le summum de l'algorithmique. Construction de Nodes Arborescentes Puissance-2 (AST/Tournament Brackets).
+
+*Exemple pour 5 Joueurs : Le moteur trouve $2^3$ = 8 spots.*
+Les 3 trous manquants donnent naissance à des `Byes` asymétriques poussant les chanceux automatiquement au round supérieur sans avoir à se battre.
+
+Les Matches ont une Résolution de Chronos complexe :
+- `bracket_full` : Affiche virtuellement le tableau
+- `countdown` : Minuteur pour balancer le TCP Packet (`rock/paper/scissors`).
+- `resolution` : Affichage de l'animation d'affrontements. 
+
+**En cas d'Egalité** :
+Le match particulier effectue un `reset-branch` asynchrone. L'arbre continue d'avancer SAUF pour ce noeud, qui redemande d'urgence un `countdown` exclusif poussant au décalage local le match jusqu'à trouver un gagnant viable (pierre bat ciseaux, etc.).
+
+---
+
+## 7. Moteur Physique & Rendu Front-End (Le Déshabillage du Canvas)
+
+L'écran (Display) est gouverné par `renderer.js`, contenant le pipeline d'un Moteur Graphique Canvas2D fait main. (GPU- Accelerated in browser).
+
+### Le Pipe d'Exécution `Renderer.render(gameState)`
+C'est un Frame-Buffer par écrasement complet.
 ```javascript
-bestBetResult: {
-  bettorName: "Bob",        // Qui a parié
-  targetName: "Alice",      // Sur qui
-  type: "exact" | "closest",
-  targetRank: 2,            // Position finale de la cible
-  isWinnerBet: true|false   // La cible est-elle le vainqueur ?
-}
+  render(state) {
+    this.ctx.clearRect(0, 0, this.width, this.height);  // Étape 0 : Gommage GPU
+    
+    this.drawBackground(state);                         // Étape 1 : Le Plancher
+    this.drawTerrainProps(state);                       // Étape 2 : Le Décor (lignes, pont)
+    this.drawDeadBodies(state);                         // Étape 3 : Taches de sang et traces
+    this.drawPlayers(state);                            // Étape 4 : Les cercles vivants
+    this.drawHUDOverlay(state);                         // Étape 5 : L'UI superposée (Timer, HP)
+  }
 ```
 
----
-
-## 9. Système de bots
-
-### Ajout de bots
-- Depuis l'écran principal, un panneau "BOTS" en bas à droite permet d'ajouter des bots (1-50).
-- Les bots reçoivent un nom `Bot 1`, `Bot 2`, etc.
-- Ils ont un ID unique préfixé `bot-`.
-
-### IA (`BotPlayer.botThink()`)
-Appelée 5 fois par seconde (1 tick sur 6) pendant la phase `playing`. L'IA est volontairement simple et imparfaite pour simuler des joueurs humains :
-
-| Jeu | Comportement |
-|---|---|
-| RLGL | Se déplace 70% du temps au vert, 0.3% au rouge (erreurs volontaires) |
-| Tug of War | Tape 40% du temps (simule un humain qui tapote) |
-| Glass Bridge | Utilise le panneau révélé si possible, sinon devine aléatoirement |
-| RPS | Choisit aléatoirement avec un délai simulé (3% de chance par tick) |
-
-### Parité pour Tug of War
-Si le nombre de joueurs vivants est impair après RLGL, un bot est **silencieusement sacrifié** pour garantir des équipes égales.
+### Techniques Visuelles Exploitées
+* **Effets d'Impacts (Elimination FX)** : Lors d'un "Event de Mort", `renderer` capture la `(X,Y)` pour spawner des particules éphémères. Leurs coordonnées `x` et `y` sont poussées avec vélocités aléatoires, subissent l'adjonction `dx, dy + inertie` tout en dérivant de l'alpha (`rgba(x,y,z, Math.random() -= 0.1)`) pour donner une projection sanglante éclipsant en quelques micro-secondes.
+* **Le Mémorial Interpolé (CSS)** : Dans la transition Dead, les grilles de portraits exploitent les Layout Flex Grid du DOM `document.createElement('div')` superposées aux canvas avec la propriété d'incrémentation en rubans noirs et cadres funéraires.
 
 ---
 
-## 10. Rendu visuel (Display)
+## 8. Ingénierie Audio Réactive & Routage via API WebAudio
 
-### Canvas 2D (`renderer.js`)
+Le projet a renié la balise dépressive `<audio autoplay>` classique, jugée inapropriée pour un son théâtral. Il implémente les **Graphes D'Audio Nodes WebKit** via `sounds.js`. 
 
-Le rendu utilise un `<canvas>` HTML5 de **1920×1080** pixels. La méthode principale est `render(state)` qui dessine tout en fonction de la phase actuelle.
-
-### Fonctions de rendu principales
-
-| Fonction | Description |
-|---|---|
-| `drawBackground(state)` | Fond adapté au jeu : terrain RLGL, pont, corde, arène RPS |
-| `drawPlayers(state)` | Cercles colorés + noms au-dessus, croix rouge si éliminé |
-| `drawHUD(state)` | Timer, compteur de survivants, cagnotte virtuelle |
-| `drawTransitionBank(state)` | Animation de la tirelire avec icône cochon |
-| `drawTransitionDead(state)` | Grille mémorial des éliminés avec rubans rouges |
-| `drawRLGL(state)` | Ligne d'arrivée, indicateur vert/rouge, personnage "poupée" |
-| `drawTugOfWar(state)` | Corde, indicateur de force, barre de progression |
-| `drawGlassBridge(state)` | Pont, panneaux éclairés (vert/rouge), joueur actif |
-| `drawTournamentBracket(state)` | Arbre du tournoi RPS avec cartes de matchs |
-
-### Système d'écrans
-Le display utilise un système d'écrans HTML superposés (`<div class="screen">`) contrôlés par la classe CSS `.active`. La fonction `showScreen(phase)` active l'écran correspondant :
-
-- `lobby-screen` : QR code + liste des joueurs
-- `betting-screen` : Écran "Faites vos paris" (overlay plein écran)
-- `explanation-screen` : Nom et règles du prochain jeu
-- `countdown-screen` : Décompte 3, 2, 1
-- `game-screen` : Canvas de jeu
-- `transition-bank-screen`, `transition-dead-screen`, `transition-roulette-screen`
-- `gameover-screen` : Écran de victoire
-
----
-
-## 11. Contrôleur mobile
-
-### Flux de connexion
-
-1. Le joueur scanne le QR code ou accède à `/play`
-2. Il entre son pseudo et appuie sur "REJOINDRE"
-3. Le client émet `register-player` au serveur
-4. Le serveur répond avec `registered` (id, numéro, couleur)
-5. Le téléphone affiche l'écran d'attente avec le badge du joueur
-
-### Types d'input envoyés (`player-input`)
-
-| Type | Données | Utilisé par |
-|---|---|---|
-| `move` | `{ pressing, dirX, dirY }` | RLGL (mouvement + direction) |
-| `tap` | `{ tap: true }` | Tug of War (tapotements) |
-| `choice` | `{ choice: 'left'/'right' }` | Glass Bridge (choix de côté) |
-| `choice` | `{ choice: 'rock'/'paper'/'scissors' }` | RPS (choix de signe) |
-
-### Adaptation dynamique des contrôles
-Le serveur envoie un `controller-state` personnalisé à chaque joueur. Ce state contient un champ `controls` qui indique quel type d'interface afficher :
-
-- `'move'` → Zone tactile + joystick directionnel
-- `'tap'` → Zone de tapotement plein écran + compteur
-- `'choice'` → Boutons choix gauche/droite
-- `'rps'` → 3 boutons Pierre/Feuille/Ciseaux
-- `'none'` → Écran d'attente
-
-### Gestion des écrans mobiles
-Le contrôleur gère aussi les écrans de :
-- **Paris** : Grille de cartes cliquables pour choisir un joueur
-- **Élimination** : Message rouge "ÉLIMINÉ" avec le nom du jeu
-- **Survie** (RLGL) : Écran vert dès que le joueur franchit la ligne
-- **Game Over** : Message "FIN DE PARTIE — Bravo !"
-
----
-
-## 12. Audio
-
-### Musiques de fond
-
-| Fichier | Utilisé pendant | Démarrage |
-|---|---|---|
-| `lobby.mp3` | Lobby + Betting | Dès la connexion |
-| `rlgl.mp3` | 1, 2, 3 Soleil | Au countdown |
-| `rope.mp3` | Jeu de la Corde | 15s après le début |
-| `final.mp3` | Jeu Final (RPS) | Au countdown, fondu 8-10s |
-
-### Effets sonores
-- `countdown_tick.mp3` : Tick du décompte 3-2-1
-- `roulette_tick` : Tick de la roulette (synthétique via `playTick()`)
-- Sons d'élimination et de victoire
-
-### Gestion (`sounds.js`)
-Le `SoundManager` détecte la phase courante et gère les transitions :
-- **Fade in/out** : Les musiques démarrent et s'arrêtent progressivement
-- **Groupes** : Chaque musique est associée à un groupe de phases (ex: `lobby.mp3` joue pendant `lobby` ET `betting`)
-- **Volume** : Chaque musique a un volume indépendant configurable
-
----
-
-## 13. Déploiement
-
-### Fly.io (production)
-Le fichier `fly.toml` contient la configuration minimale :
-```toml
-app = 'squid-amphi'
+### L'Automate de Mixage (Mixer Routing Graph)
+```mermaid
+graph LR
+    O(File Loader) --> C1[Source Audio Node]
+    F(Synthesizeur Interne) --> C2[Oscillator Node]
+    
+    C1 --> M1[Music Gain Node Volume]
+    C1 -.-> M3[Auxiliaire SFX Gain]
+    C2 --> M2[SFX Gain Node Volume]
+    
+    M1 --> MASTER[Gain Master Node (1.0)]
+    M2 --> MASTER
+    M3 --> MASTER
+    
+    MASTER --> DST[Speakers/Amplificateur Amphi]
 ```
 
-### Déploiement :
-```bash
-fly deploy
+#### Fondus Audio Professionnels (`LinearRampToValueAtTime()`)
+Quand le jeu demande une coupure d'ost ou un changement soudain d'`environment Phase`(de l'Attente aux Jeux du calamar), le node intercepte la demande temporelle exacte et force la RAMPE :
+```js
+  const now = this.ctx.currentTime;
+  this.musicGain.gain.setValueAtTime(this.musicGain.gain.value, now);
+  this.musicGain.gain.linearRampToValueAtTime(0, now + duration_in_sec); // Parfait fadeOut
 ```
 
-### Variables d'environnement
-| Variable | Valeur par défaut | Description |
-|---|---|---|
-| `PORT` | `3000` | Port d'écoute du serveur |
-
-### Points d'attention
-- **QR Code** : L'URL du QR code est générée dynamiquement en fonction du `req.protocol` et `req.get('host')`. Derrière un reverse proxy (Fly.io, Render), `app.set('trust proxy', 1)` est activé pour obtenir le bon protocole (HTTPS).
-- **WebSocket** : Socket.IO est configuré avec `cors: { origin: '*' }` pour accepter les connexions de tous les domaines.
-- **Audio** : La lecture automatique des musiques est soumise aux politiques de sécurité des navigateurs. Une interaction utilisateur initiale est nécessaire (clic sur l'écran du display).
+#### Bruit de Fusil (Le Shotgun d'Élimination)
+Implémentation poussée sur le Bridge de Verre :
+Le fichier lourd `pump-shotgun-fortnite-loud.mp3` voit son graph Gain manipulé à la nano-seconde post-déclenchement (Le son commence, et après la frame `1.5 secondes`, on lui donne une contrainte de `0.5` secondes pour atteindre la baisse à `0`). Le son s'arrête naturellement, proprement, instaurant une atmosphère brutale et clinique, non agaçante.
 
 ---
 
-*Documentation générée pour le projet Squid Amphi — Avril 2026*
+## 9. Interface Front-End Mobile (Controller tactile intelligent)
+
+Le contrôleur du téléphone est du pur HTML/JS `Vanilla` "Mobile First". Il ne recharge jamais.
+Ce sont un ensemble de div `display: none` ou `display: flex` commandés par le Websocket JSON appelé `controller-state`. 
+
+### Préventions d'Evènements et Tactiles (No-Click Policy)
+Sur téléphone, cliquer avec le doigt implémente un délai de 300 millisecondes (pour détecter si la personne tente de faire un double tap pour zoomer). Ce temps de traitement ruine un gameplay twitch comme *Squid Amphi*. L'entier du code rejète les évènements clicks pour `[touchstart]`, `[touchend]`, et `[touchmove]`.
+
+### Normalisation de Joystick (`Math.min` - Distances clampées)
+Pour le mouvement de feu rouge, le calcul détermine les différentiels (`A - Origine`).
+Une hypostase d'Euclide garantit que le point glissé retourne toujours une normalisée directionnelle :
+```js
+      const maxDist = 40;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const clampedDist = Math.min(dist, maxDist); // Empêche l'overshoot (déborder) du pouce
+      const normX = dist > 0 ? (dx / dist) * clampedDist : 0;
+```
+Le CSS est également dépourvu de lourdeur, il affiche de la `Typographie Oufit` de Google pour un "look-and-feel" futuriste en accord à la direction artistique "Squid Game Pink & Teal Neo Glow".
+
+---
+*Ceci conclut la Documentation Technique Master. Elle témoigne de tous les défis abordés dans la révision de ce cycle d'architecture Web Temps Réel en Ingénierie.*

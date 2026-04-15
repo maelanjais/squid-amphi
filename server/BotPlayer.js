@@ -14,8 +14,6 @@ class BotPlayer extends Player {
     if (currentGameName === '1, 2, 3… Soleil !') this.actRLGL(gameState);
     else if (currentGameName === 'Le Jeu de la Corde') this.actTugOfWar();
     else if (currentGameName === 'Le Pont de Verre') this.actGlassBridge(gameState);
-    else if (currentGameName === 'Le Duel Final') this.actFinalDuel(gameState, allPlayers);
-    else if (currentGameName === 'Le Sablé Dalgona') this.actDalgona(gameState);
     else if (currentGameName === 'Jeu Final') this.actRockPaperScissors(gameState);
   }
 
@@ -80,55 +78,7 @@ class BotPlayer extends Player {
     }
   }
 
-  actFinalDuel(gs, allPlayers) {
-    const enemies = allPlayers.filter(p => p.alive && p.id !== this.id);
-    let closest = null, minDist = Infinity;
-    for (const e of enemies) {
-      const dist = Math.sqrt((e.x - this.x) ** 2 + (e.y - this.y) ** 2);
-      if (dist < minDist) { minDist = dist; closest = e; }
-    }
 
-    const cx = gs.centerX, cy = gs.centerY;
-    let targetX = cx, targetY = cy;
-
-    if (closest && minDist < 200) {
-      targetX = closest.x;
-      targetY = closest.y;
-    }
-
-    const noiseX = (Math.random() - 0.5) * 150;
-    const noiseY = (Math.random() - 0.5) * 150;
-    const dx = (targetX + noiseX) - this.x;
-    const dy = (targetY + noiseY) - this.y;
-    const len = Math.sqrt(dx * dx + dy * dy);
-
-    this.moving = true;
-    if (len > 5) {
-      this.direction.x = dx / len;
-      this.direction.y = dy / len;
-    }
-
-    if (closest && minDist < 60 && Math.random() < 0.3) {
-      this.input.swipeX = dx;
-      this.input.swipeY = dy;
-    }
-  }
-
-  actDalgona(gs) {
-    if (!gs.playerStates) return;
-    const state = gs.playerStates[this.id];
-    if (!state || state.done) return;
-
-    if (state.tension < 80) {
-      if (Math.random() < 0.6) {
-        this.input.tap = true;
-      }
-    } else {
-      if (Math.random() < 0.05) {
-        this.input.tap = true;
-      }
-    }
-  }
 }
 
 module.exports = BotPlayer;
