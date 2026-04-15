@@ -21,6 +21,15 @@
   let playerInfo = null;
   let currentControls = null;
   let tapCount = 0;
+  let hasPlayedDeathSound = false;
+
+  function checkPlayDeathSound() {
+    if (!hasPlayedDeathSound) {
+      hasPlayedDeathSound = true;
+      const audio = new Audio('/audio/allo-selem.mp3');
+      audio.play().catch(e => console.warn('Death sound blocked on mobile:', e));
+    }
+  }
 
   const positionDot = document.getElementById('position-dot');
   const positionLabel = document.getElementById('position-label');
@@ -63,6 +72,7 @@
 
   socket.on('registered', (data) => {
     playerInfo = data;
+    hasPlayedDeathSound = false;
     document.getElementById('badge-number').textContent = data.number;
     document.getElementById('player-name-display').textContent = data.name;
     document.getElementById('player-badge').style.background =
@@ -162,6 +172,7 @@
       if (navigator.vibrate) {
         navigator.vibrate([200, 100, 200, 100, 400]);
       }
+      checkPlayDeathSound();
       return;
     }
 
@@ -282,6 +293,7 @@
     if (navigator.vibrate) {
       navigator.vibrate([200, 100, 200, 100, 400]);
     }
+    checkPlayDeathSound();
   });
 
   

@@ -237,6 +237,19 @@ class SoundManager {
     this.playNote(50, 'sine', this.ctx.currentTime, 0.8, 0.4); 
   }
 
+  playSfxPlayerJoin() {
+    if (!this.initialized) return;
+    const audio = new Audio('/audio/shocked-sound-effect.mp3');
+    
+    audio.addEventListener('loadedmetadata', () => {
+        if (this.ctx) {
+           const source = this.ctx.createMediaElementSource(audio);
+           source.connect(this.sfxGain);
+        }
+        audio.play().catch(e => console.warn(e));
+    });
+  }
+
   playSfxShotgun() {
     if (!this.initialized) return;
     const audio = new Audio('/audio/pump-shotgun-fortnite-loud.mp3');
